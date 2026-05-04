@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마음 정원: 인천 청소년 감정 기상도 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --accent-blue: #818cf8;
+            --accent-pink: #f472b6;
+            --text-main: #2d3436;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Nanum Myeongjo', serif; overflow: hidden;
+            background: #f0f2f5;
+        }
+
+        /* Background Layer */
+        .bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('assets/stat_garden_bg.png') no-repeat center center;
+            background-size: cover; z-index: 1; transition: 1.5s ease;
+        }
+
+        /* Weather Overlays */
+        .weather-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2; pointer-events: none; transition: 1s;
+            opacity: 0;
+        }
+        .rain { background: rgba(0, 0, 50, 0.1); }
+        .fog { background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(5px); }
+        .sunny { background: rgba(255, 255, 200, 0.05); }
+
+        /* Main Container */
+        .container {
+            position: relative; z-index: 10;
+            width: 100%; height: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto 1fr 1fr;
+            gap: 15px; padding: 25px; box-sizing: border-box;
+        }
+
+        /* Header (Full Width) */
+        header {
+            grid-column: 1 / span 4;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 25px; background: rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        header h1 { font-family: 'Gaegu'; font-size: 2.2rem; margin: 0; color: var(--text-main); }
+
+        .nav-tabs { display: flex; gap: 8px; }
+        .nav-tab {
+            padding: 8px 16px; border-radius: 30px; border: 1px solid var(--glass-border);
+            background: white; cursor: pointer; transition: 0.3s;
+            font-family: 'Gaegu'; font-size: 1.1rem;
+        }
+        .nav-tab.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
+        /* Bento Cards - Performance Optimized */
+        .card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 25px; border: 1px solid var(--glass-border);
+            padding: 22px; box-shadow: 0 8px 25px rgba(0,0,0,0.03);
+            display: flex; flex-direction: column; transition: 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(0,0,0,0.08); }
+
+        .card-main { grid-column: 1 / span 2; grid-row: 2 / span 2; }
+        .card-sub { grid-column: 3 / span 1; }
+        .card-mini { grid-column: 4 / span 1; }
+        .card-wide { 
+            grid-column: 3 / span 2; 
+            display: flex; 
+            flex-direction: row !important; 
+            align-items: center; 
+            gap: 20px;
+            background: rgba(248, 250, 255, 0.95) !important; /* 미세한 푸른빛 미색으로 조정 */
+        }
+
+        .card-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card-title { font-family: 'Gaegu'; font-size: 1.6rem; color: var(--accent-blue); margin: 0; }
+        
+        /* Chart Type Toggle */
+        .chart-toggle {
+            display: flex; background: #eee; border-radius: 20px; padding: 3px; gap: 2px;
+        }
+        .toggle-btn {
+            padding: 4px 12px; border-radius: 15px; border: none; background: none;
+            font-size: 0.8rem; cursor: pointer; transition: 0.2s; font-weight: 700;
+        }
+        .toggle-btn.active { background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); color: var(--accent-blue); }
+
+        .stat-value { font-size: 3rem; font-weight: 800; color: var(--text-main); margin: 5px 0; }
+        .stat-unit { font-size: 1rem; font-weight: 400; opacity: 0.6; margin-left: 5px; }
+
+        /* Character Image - Circle Crop & Multiply */
+        .guardian-img {
+            width: 140px; height: 140px; object-fit: cover;
+            mix-blend-mode: multiply; /* 하얀 배경 제거 */
+            clip-path: circle(46% at 50% 50%); /* 사각형 모서리 강제 제거 */
+            filter: contrast(1.05) brightness(1.02);
+            animation: float 4s ease-in-out infinite;
+            background: white; /* 크롭 영역 안쪽을 채움 */
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+
+        /* Chart Canvas */
+        canvas { width: 100% !important; height: 100% !important; max-height: 400px; }
+
+        /* Message Box */
+        .message-box {
+            flex: 1; background: rgba(255, 255, 255, 0.9); padding: 20px; border-radius: 20px;
+            font-size: 1.05rem; line-height: 1.6; border-left: 6px solid var(--accent-pink);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.02);
+            word-break: keep-all;
+        }
+
+        /* Source Tag */
+        .source-tag {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(5px);
+            padding: 10px 20px; font-size: 0.85rem; color: #444; z-index: 100;
+            display: flex; justify-content: center; gap: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+        .source-tag a { color: var(--accent-blue); text-decoration: none; font-weight: 700; }
+        .source-tag a:hover { text-decoration: underline; }
+
+        /* Rain Animation */
+        #rain-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; display: none; }
+
+    </style>
+</head>
+<body>
+    <div class="bg-layer" id="bg"></div>
+    <div class="weather-overlay" id="fog-overlay"></div>
+    <canvas id="rain-canvas"></canvas>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>인천 청소년 마음 정원</h1>
+                <p>2023-2024 국가정신건강지표 기반 데이터 시뮬레이션</p>
+            </div>
+            <div class="nav-tabs">
+                <div class="nav-tab active" onclick="updateView('stress')">스트레스</div>
+                <div class="nav-tab" onclick="updateView('depression')">우울감</div>
+                <div class="nav-tab" onclick="updateView('sleep')">수면만족</div>
+            </div>
+        </header>
+
+        <!-- Main Chart Card -->
+        <div class="card card-main">
+            <div class="card-title-row">
+                <div class="card-title" id="main-chart-title">주요 지표 추이</div>
+                <div class="chart-toggle">
+                    <button class="toggle-btn active" id="btn-line" onclick="setChartType('line')">선형</button>
+                    <button class="toggle-btn" id="btn-bar" onclick="setChartType('bar')">막대형</button>
+                </div>
+            </div>
+            <div style="flex: 1; position: relative;">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Stat Card 1 -->
+        <div class="card card-sub">
+            <div class="card-title-row">
+                <div class="card-title">인천 지역 현황</div>
+            </div>
+            <div class="stat-value" id="local-val">39.5<span class="stat-unit">%</span></div>
+            <p id="local-desc" style="font-size: 0.95rem; line-height: 1.5; color: #555;">인천 청소년 10명 중 약 4명이 일상에서 높은 스트레스를 느끼고 있습니다.</p>
+        </div>
+
+        <!-- Stat Card 2 -->
+        <div class="card card-mini">
+            <div class="card-title-row">
+                <div class="card-title">전국 평균</div>
+            </div>
+            <div class="stat-value" id="national-val">37.3<span class="stat-unit">%</span></div>
+            <p style="font-size: 0.95rem; line-height: 1.5; color: #555;">전국 평균보다 다소 높은 수준을 보이고 있습니다.</p>
+        </div>
+
+        <!-- Insight Card -->
+        <div class="card card-wide">
+            <img src="assets/bear_guardian.png" class="guardian-img" alt="마음 가디언">
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <div class="card-title" style="margin-bottom: 10px;">마음의 처방전</div>
+                <div class="message-box" id="insight-msg">
+                    "요즘 학업과 미래에 대한 걱정으로 마음이 무겁나요? 혼자서 고민하지 말고 등대지기에게 전화를 걸어보세요."
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="source-tag">
+        <span>📊 데이터 출처:</span>
+        <a href="https://www.kdca.go.kr/yhs/" target="_blank">질병관리청(건강행태조사)</a>
+        <a href="https://kosis.kr/statHtml/statHtml.do?orgId=117&tblId=DT_11702_N101" target="_blank">국가통계포털(KOSIS)</a>
+        <a href="https://www.ice.go.kr" target="_blank">인천광역시교육청</a>
+    </div>
+
+    <script>
+        const dataSet = {
+            stress: {
+                title: "스트레스 인지율 (%)",
+                local: 39.5,
+                national: 37.3,
+                weather: 'fog',
+                chart: [35.2, 38.1, 41.3, 39.5],
+                msg: "인천 친구들이 느끼는 스트레스 지수는 바다 안개처럼 조금 짙은 편이에요. 하지만 안개는 햇살이 비치면 금방 걷힌다는 걸 잊지 마세요.",
+                years: ['2021', '2022', '2023', '2024(예상)']
+            },
+            depression: {
+                title: "우울감 경험률 (%)",
+                local: 26.8,
+                national: 25.9,
+                weather: 'rain',
+                chart: [23.1, 25.5, 28.2, 26.8],
+                msg: "마음에 비가 내리는 날이 늘어나고 있어요. 비가 온 뒤에 땅이 굳고 예쁜 무지개가 뜨는 것처럼, 지금의 힘듦도 성장의 과정일 거예요.",
+                years: ['2021', '2022', '2023', '2024(예상)']
+            },
+            sleep: {
+                title: "수면만족도 (%)",
+                local: 22.1,
+                national: 21.4,
+                weather: 'sunny',
+                chart: [18.5, 20.2, 23.1, 22.1],
+                msg: "잠은 마음의 보약이에요. 충분히 쉬는 것만으로도 정원에 햇살이 가득 차오를 수 있답니다. 오늘 밤엔 핸드폰을 내려놓고 푹 쉬어볼까요?",
+                years: ['2021', '2022', '2023', '2024(예상)']
+            }
+        };
+
+        let mainChart;
+        let currentType = 'stress';
+        let currentChartType = 'line';
+
+        function initChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            mainChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dataSet.stress.years,
+                    datasets: [{
+                        label: '인천 데이터',
+                        data: dataSet.stress.chart,
+                        borderColor: '#818cf8',
+                        backgroundColor: 'rgba(129, 140, 248, 0.2)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 4,
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 1000 },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function setChartType(type) {
+            currentChartType = type;
+            mainChart.destroy();
+            
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            const data = dataSet[currentType];
+            
+            mainChart = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: data.years,
+                    datasets: [{
+                        label: '인천 데이터',
+                        data: data.chart,
+                        borderColor: type === 'line' ? '#818cf8' : 'transparent',
+                        backgroundColor: type === 'line' ? 'rgba(129, 140, 248, 0.2)' : '#818cf8',
+                        fill: type === 'line',
+                        tension: 0.4,
+                        borderWidth: type === 'line' ? 4 : 0,
+                        borderRadius: type === 'bar' ? 15 : 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            document.getElementById('btn-line').classList.toggle('active', type === 'line');
+            document.getElementById('btn-bar').classList.toggle('active', type === 'bar');
+        }
+
+        function updateView(type) {
+            currentType = type;
+            const data = dataSet[type];
+            
+            // Update Tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if(tab.innerText === (type === 'stress' ? '스트레스' : type === 'depression' ? '우울감' : '수면만족')) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Update Stats
+            document.getElementById('local-val').innerHTML = `${data.local}<span class="stat-unit">%</span>`;
+            document.getElementById('national-val').innerHTML = `${data.national}<span class="stat-unit">%</span>`;
+            document.getElementById('main-chart-title').innerText = `${data.title} 추이`;
+            document.getElementById('insight-msg').innerText = data.msg;
+
+            // Update Chart Data
+            mainChart.data.labels = data.years;
+            mainChart.data.datasets[0].data = data.chart;
+            mainChart.data.datasets[0].backgroundColor = currentChartType === 'line' ? 'rgba(129, 140, 248, 0.2)' : (type === 'sleep' ? '#f59e0b' : '#818cf8');
+            if(currentChartType === 'line') mainChart.data.datasets[0].borderColor = type === 'sleep' ? '#f59e0b' : '#818cf8';
+            
+            mainChart.update();
+            applyWeather(data.weather);
+        }
+
+        function applyWeather(type) {
+            const fog = document.getElementById('fog-overlay');
+            const rainCanvas = document.getElementById('rain-canvas');
+            const bg = document.getElementById('bg');
+
+            fog.style.opacity = '0';
+            rainCanvas.style.display = 'none';
+            bg.style.filter = 'none';
+
+            if(type === 'fog') {
+                fog.style.opacity = '1';
+                fog.classList.add('fog');
+            } else if(type === 'rain') {
+                rainCanvas.style.display = 'block';
+                startRain();
+                bg.style.filter = 'brightness(0.7) contrast(1.1)';
+            } else if(type === 'sunny') {
+                bg.style.filter = 'brightness(1.05) saturate(1.1)';
+            }
+        }
+
+        function startRain() {
+            const canvas = document.getElementById('rain-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const raindrops = [];
+            for(let i = 0; i < 40; i++) { // 입자 수를 100 -> 40으로 줄여 성능 개선
+                raindrops.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    length: Math.random() * 15 + 10,
+                    speed: Math.random() * 12 + 8
+                });
+            }
+
+            function draw() {
+                if(canvas.style.display === 'none') return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'rgba(174, 194, 224, 0.4)';
+                ctx.lineWidth = 1;
+                ctx.lineCap = 'round';
+
+                raindrops.forEach(r => {
+                    ctx.beginPath();
+                    ctx.moveTo(r.x, r.y);
+                    ctx.lineTo(r.x, r.y + r.length);
+                    ctx.stroke();
+                    r.y += r.speed;
+                    if(r.y > canvas.height) r.y = -r.length;
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        window.onload = () => {
+            initChart();
+            updateView('stress');
+        };
+    </script>
+</body>
+</html>

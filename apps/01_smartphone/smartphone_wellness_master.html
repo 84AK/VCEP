@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smartphone Wellness Master | VCEP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --secondary: #6366f1;
+            --accent: #10b981;
+            --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* --- Sidebar --- */
+        aside {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 3rem;
+        }
+        .logo i {
+            font-size: 2rem;
+            color: #fbbf24;
+            filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.5));
+        }
+        .logo h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            background: linear-gradient(to right, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-group { margin-bottom: 2rem; }
+        .nav-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 4px;
+        }
+        .nav-item:hover {
+            background: var(--glass);
+            color: var(--text-main);
+        }
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+        .nav-item i { width: 20px; text-align: center; }
+
+        /* --- Main Content --- */
+        main {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            height: 80px;
+            padding: 0 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--glass);
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+        }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .sync-badge {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* --- Viewport (Iframe) --- */
+        #content-area {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        #app-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 24px;
+            background: rgba(15, 23, 42, 0.4);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        /* --- Dashboard (Bento Grid) --- */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto auto;
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .bento-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        .bento-card:hover { transform: translateY(-5px); }
+
+        .card-large { grid-column: span 2; grid-row: span 2; }
+        .card-tall { grid-row: span 2; }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .hero-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+        .hero-desc { color: var(--text-dim); line-height: 1.6; margin-bottom: 2rem; }
+
+        .start-btn {
+            background: white;
+            color: var(--primary);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 800;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .start-btn:hover { background: var(--primary); color: white; }
+
+        /* --- GAS Modal --- */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #1e293b;
+            width: 90%;
+            max-width: 600px;
+            padding: 2.5rem;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-close { cursor: pointer; font-size: 1.5rem; }
+        
+        input {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .app-status { font-size: 0.8rem; margin-top: 0.5rem; color: var(--text-dim); }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 1100px) {
+            aside { width: 80px; padding: 2rem 0.5rem; align-items: center; }
+            .logo h1, .nav-label, .nav-item span { display: none; }
+            .logo { justify-content: center; margin-bottom: 2rem; }
+            .nav-item { justify-content: center; padding: 0.8rem; }
+            .nav-item i { font-size: 1.2rem; }
+            header { padding: 0 1.5rem; }
+            .dashboard { grid-template-columns: repeat(2, 1fr); }
+            .hero-title { font-size: 1.8rem; }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .card-large { grid-column: span 1; grid-row: span 1; }
+            .card-tall { grid-row: span 1; }
+            #content-area { padding: 1rem; }
+            header { height: 60px; }
+            .user-profile span { display: none; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <aside>
+        <div class="logo">
+            <i class="fas fa-trophy"></i>
+            <h1>웰니스 마스터</h1>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-label">Main</span>
+            <div class="nav-item active" onclick="showDashboard()">
+                <i class="fas fa-th-large"></i><span>대시보드</span>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-label">Modules</span>
+            <div class="nav-item" onclick="launchApp('screen_record', this)">
+                <i class="fas fa-bullseye"></i><span>시간 도둑</span>
+            </div>
+            <div class="nav-item" onclick="launchApp('pattern_analyzer', this)">
+                <i class="fas fa-brain"></i><span>도파민 수사대</span>
+            </div>
+            <div class="nav-item" onclick="launchApp('nophone_timer', this)">
+                <i class="fas fa-clock"></i><span>폰 안 보기</span>
+            </div>
+            <div class="nav-item" onclick="launchApp('focus_session', this)">
+                <i class="fas fa-gem"></i><span>반려돌 키우기</span>
+            </div>
+            <div class="nav-item" onclick="launchApp('phonedown_challenge', this)">
+                <i class="fas fa-ticket-alt"></i><span>심심함 자판기</span>
+            </div>
+            <div class="nav-item" onclick="launchApp('offline_topic', this)">
+                <i class="fas fa-bomb"></i><span>시한폭탄 토크</span>
+            </div>
+            <div class="nav-item" onclick="launchApp('sleep_routine', this)">
+                <i class="fas fa-cloud-moon"></i><span>양 떼 목장</span>
+            </div>
+            <div class="nav-item" onclick="launchApp('sleep_correlation', this)">
+                <i class="fas fa-book-open"></i><span>오늘의 시간 일기</span>
+            </div>
+        </div>
+
+        <div style="margin-top: auto;">
+            <div class="nav-item" onclick="openSettings()">
+                <i class="fas fa-cog"></i><span>설정 & GAS</span>
+            </div>
+        </div>
+    </aside>
+
+    <main>
+        <header>
+            <div class="sync-badge">
+                <i class="fas fa-cloud"></i>
+                <span id="sync-status">Cloud Inactive (Local Only)</span>
+            </div>
+            <div class="user-profile">
+                <span id="user-name">User</span>
+                <div class="user-avatar">U</div>
+            </div>
+        </header>
+
+        <div id="content-area">
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="dashboard">
+                <div class="bento-card card-large" style="background: linear-gradient(45deg, #8b5cf6, #6366f1);">
+                    <div class="card-icon" style="background: rgba(255,255,255,0.2);"><i class="fas fa-medal"></i></div>
+                    <h2 class="hero-title">스마트폰 웰니스 마스터</h2>
+                    <p class="hero-desc">8개의 모든 기능이 하나로 통합되었습니다. <br>당신의 디지털 웰니스 점수를 한눈에 확인하고 클라우드로 관리하세요.</p>
+                    <button class="start-btn" onclick="launchApp('screen_record', document.querySelectorAll('.nav-item')[1])">지금 시작하기</button>
+                </div>
+
+                <div class="bento-card">
+                    <div class="card-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;"><i class="fas fa-hourglass-end"></i></div>
+                    <h3>오늘의 집중</h3>
+                    <div id="stat-focus" class="hero-title" style="font-size: 1.8rem; margin-top: 10px;">0분</div>
+                    <p class="app-status">Nophone Timer 기준</p>
+                </div>
+
+                <div class="bento-card">
+                    <div class="card-icon" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;"><i class="fas fa-star"></i></div>
+                    <h3>반려돌 레벨</h3>
+                    <div id="stat-pet" class="hero-title" style="font-size: 1.8rem; margin-top: 10px;">Lv.1</div>
+                    <p class="app-status">성장 포인트 기반</p>
+                </div>
+
+                <div class="bento-card card-tall">
+                    <div class="card-icon" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;"><i class="fas fa-history"></i></div>
+                    <h3>최근 활동 로그</h3>
+                    <div id="activity-log" style="font-size: 0.85rem; color: var(--text-dim); margin-top: 1rem;">
+                        로그가 없습니다.
+                    </div>
+                </div>
+
+                <div class="bento-card">
+                    <div class="card-icon" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;"><i class="fas fa-moon"></i></div>
+                    <h3>오늘의 수면</h3>
+                    <div id="stat-sleep" class="hero-title" style="font-size: 1.8rem; margin-top: 10px;">0 마리</div>
+                    <p class="app-status">양 떼 목장 기준</p>
+                </div>
+            </div>
+
+            <!-- Iframe View -->
+            <iframe id="app-iframe"></iframe>
+        </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>설정 및 클라우드 연동</h2>
+                <i class="fas fa-times modal-close" onclick="closeSettings()"></i>
+            </div>
+            <label>사용자 이름</label>
+            <input type="text" id="setting-user" placeholder="이름을 입력하세요">
+            
+            <label>GAS Web App URL (클라우드 저장용)</label>
+            <input type="text" id="setting-gas" placeholder="https://script.google.com/macros/s/.../exec">
+            
+            <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                <button class="start-btn" onclick="saveSettings()" style="flex: 1; border: none; cursor: pointer;">저장 및 적용</button>
+                <button class="start-btn" onclick="syncAllToCloud()" style="flex: 1; background: var(--accent); color: white; border: none; cursor: pointer;">전체 데이터 클라우드 전송</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = localStorage.getItem('vcep_userId') || "익명유저";
+        let gasUrl = localStorage.getItem('vcep_gas_url') || "";
+
+        function init() {
+            document.getElementById('user-name').innerText = currentUser;
+            document.querySelector('.user-avatar').innerText = currentUser[0];
+            if(gasUrl) {
+                document.getElementById('sync-status').innerText = "Cloud Synced (GAS Ready)";
+                document.querySelector('.sync-badge').style.background = "rgba(16, 185, 129, 0.2)";
+            }
+            updateDashboardStats();
+        }
+
+        function showDashboard() {
+            document.getElementById('dashboard-view').style.display = 'grid';
+            document.getElementById('app-iframe').style.display = 'none';
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.nav-item')[0].classList.add('active');
+            updateDashboardStats();
+        }
+
+        function launchApp(appId, el) {
+            const iframe = document.getElementById('app-iframe');
+            document.getElementById('dashboard-view').style.display = 'none';
+            iframe.style.display = 'block';
+            
+            // 사이드바 활성화 표시
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            el.classList.add('active');
+
+            const pathMap = {
+                'screen_record': 'screen_record.html',
+                'pattern_analyzer': 'pattern_analyzer.html',
+                'nophone_timer': 'nophone_timer.html',
+                'focus_session': 'focus_session.html',
+                'phonedown_challenge': 'phonedown_challenge.html',
+                'offline_topic': 'offline_topic.html',
+                'sleep_routine': 'sleep_routine.html',
+                'sleep_correlation': 'sleep_correlation.html'
+            };
+            
+            iframe.src = pathMap[appId];
+        }
+
+        function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+
+        function saveSettings() {
+            const user = document.getElementById('setting-user').value.trim();
+            const url = document.getElementById('setting-gas').value.trim();
+            if(user) {
+                currentUser = user;
+                localStorage.setItem('vcep_userId', user);
+            }
+            if(url) {
+                gasUrl = url;
+                localStorage.setItem('vcep_gas_url', url);
+            }
+            init();
+            closeSettings();
+        }
+
+        // --- 클라우드 동기화 로직 ---
+        async function syncToCloud(category, payload) {
+            if(!gasUrl) {
+                console.log("GAS URL not set. Saving locally only.");
+                addLog(`[Local] ${category} 데이터 저장됨`);
+                return;
+            }
+
+            const nameMap = {
+                "thieves_v2": "시간 도둑",
+                "persona_results": "도파민 수사대",
+                "nophone_timer": "폰 안 보기",
+                "focus_session": "반려돌 키우기",
+                "phonedown_challenge": "심심함 자판기",
+                "offline_topic": "시한폭탄 토크",
+                "sleep_routine": "양 떼 목장",
+                "time_diary": "오늘의 시간 일기"
+            };
+
+            try {
+                const response = await fetch(gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({
+                        userId: currentUser,
+                        category: category,
+                        sheetName: nameMap[category] || category,
+                        payload: payload
+                    })
+                });
+                addLog(`[Cloud] ${nameMap[category] || category} 동기화 완료`);
+            } catch (error) {
+                console.error("Cloud Sync Error:", error);
+                addLog(`[Error] 클라우드 동기화 실패`);
+            }
+        }
+
+        function syncAllToCloud() {
+            const keys = [
+                'vcep_focus_session', 'vcep_phonedown_challenge', 
+                'vcep_offline_topic', 'vcep_sleep_routine', 
+                'vcep_time_diary', 'vcep_thieves_v2', 'vcep_nophone_timer',
+                'vcep_persona_results'
+            ];
+            
+            if(!gasUrl) return alert("GAS URL을 먼저 설정해주세요!");
+            
+            keys.forEach(key => {
+                const raw = localStorage.getItem(key);
+                if(raw) {
+                    const data = JSON.parse(raw);
+                    syncToCloud(key.replace('vcep_', ''), data);
+                }
+            });
+            alert("전체 데이터 전송을 시작했습니다. (브라우저 정책상 응답 확인은 지연될 수 있습니다)");
+        }
+
+        function addLog(msg) {
+            const logArea = document.getElementById('activity-log');
+            if(logArea.innerText === "로그가 없습니다.") logArea.innerHTML = "";
+            const now = new Date().toLocaleTimeString();
+            logArea.innerHTML = `<div><span style="color:#fbbf24">${now}</span> ${msg}</div>` + logArea.innerHTML;
+        }
+
+        function updateDashboardStats() {
+            // 집중 시간 합산 (nophone_timer)
+            const timerData = JSON.parse(localStorage.getItem('vcep_nophone_timer')) || [];
+            const totalFocus = timerData.reduce((acc, curr) => acc + (parseInt(curr.duration) || 0), 0);
+            document.getElementById('stat-focus').innerText = `${totalFocus}분`;
+
+            // 반려돌 레벨 (focus_session)
+            const petData = JSON.parse(localStorage.getItem('vcep_focus_session')) || {};
+            const petLv = petData.level || 1;
+            document.getElementById('stat-pet').innerText = `Lv.${petLv}`;
+
+            // 수면 점수 (sleep_routine) - 가장 최근 기록의 양 마리수
+            const sleepData = JSON.parse(localStorage.getItem('vcep_sleep_routine')) || [];
+            if(sleepData.length > 0) {
+                const lastCount = sleepData[sleepData.length-1].count || 0;
+                document.getElementById('stat-sleep').innerText = `${lastCount}마리`;
+            }
+        }
+
+        // --- Iframe과 통신 시스템 ---
+        // 1. Iframe에서 부모에게 메시지를 보낼 때 처리 (가장 확실함)
+        window.addEventListener('message', (e) => {
+            if(e.data && e.data.type === 'vcep_save') {
+                const { category, data } = e.data;
+                updateDashboardStats();
+                syncToCloud(category, data);
+            }
+        });
+
+        // 2. 다른 창에서 storage를 수정할 때 처리 (Iframe 포함)
+        window.addEventListener('storage', (e) => {
+            if(e.key && e.key.startsWith('vcep_')) {
+                updateDashboardStats();
+                const category = e.key.replace('vcep_', '');
+                const data = JSON.parse(e.newValue);
+                // 배열인 경우 마지막 요소만, 아니면 전체 전송
+                const payload = Array.isArray(data) ? data[data.length-1] : data;
+                syncToCloud(category, payload);
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

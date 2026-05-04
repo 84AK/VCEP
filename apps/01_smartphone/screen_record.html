@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시간 도둑 현상수배 - GAMIFIED</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;900&family=Pretendard:wght@600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-board: #fdf6e3;
+            --primary-red: #ff4757;
+            --accent-yellow: #ffde59;
+            --accent-orange: #ff9f43;
+            --text-main: #2f3542;
+            --card-white: #ffffff;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: var(--bg-board);
+            /* 코르크 보드 텍스처 느낌 */
+            background-image: 
+                radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+                radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            margin: 0; padding: 20px 20px 100px 20px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; overflow-x: hidden;
+        }
+
+        /* 게이미피케이션 타이틀 */
+        .header {
+            text-align: center; margin-bottom: 30px; animation: bounceIn 0.8s ease;
+        }
+        .wanted-badge {
+            background: var(--primary-red); color: #fff; padding: 5px 15px;
+            border-radius: 50px; font-family: 'Outfit', sans-serif; font-weight: 900;
+            font-size: 1.1rem; display: inline-block; margin-bottom: 10px;
+            box-shadow: 0 5px 0px #b33939;
+        }
+        .title {
+            font-size: 2.4rem; font-weight: 900; color: var(--text-main); margin: 0;
+            text-shadow: 2px 2px 0 #fff, 4px 4px 0 rgba(0,0,0,0.05);
+        }
+
+        /* 입력 패널 - 더 게임 같은 디자인 (Chunky UI) */
+        .input-card {
+            background: #fff;
+            border: 4px solid var(--text-main);
+            border-radius: 32px;
+            padding: 30px; width: 100%; max-width: 420px;
+            box-shadow: 8px 8px 0px var(--text-main);
+            margin-bottom: 50px; position: relative;
+            z-index: 10;
+        }
+        .input-group { margin-bottom: 20px; }
+        .input-group label {
+            display: block; font-weight: 900; font-size: 1rem; margin-bottom: 10px;
+            color: var(--accent-orange); display: flex; align-items: center; gap: 5px;
+        }
+        
+        .custom-input {
+            width: 100%; padding: 18px; border: 3px solid #eee; border-radius: 20px;
+            font-size: 1.1rem; font-weight: 800; background: #f8f9fa;
+            transition: all 0.3s; outline: none;
+        }
+        .custom-input:focus { border-color: var(--accent-orange); background: #fff; transform: scale(1.02); }
+
+        .btn-issue {
+            width: 100%; padding: 20px; border: none; border-radius: 24px;
+            background: var(--primary-red); color: #fff; font-size: 1.3rem; font-weight: 900;
+            cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 8px 0px #b33939;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-issue:hover { transform: translateY(-2px); box-shadow: 0 10px 0px #b33939; }
+        .btn-issue:active { transform: translateY(4px); box-shadow: 0 4px 0px #b33939; }
+
+        /* 수배 게시판 */
+        .bounty-board {
+            width: 100%; max-width: 960px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px;
+        }
+
+        /* 포스터 디자인 */
+        .poster {
+            background: #fff; border: 2px solid #ddd; padding: 20px 15px; border-radius: 10px;
+            box-shadow: 5px 10px 20px rgba(0,0,0,0.1);
+            position: relative; display: flex; flex-direction: column; align-items: center;
+            animation: slamDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .poster:hover { transform: scale(1.05) translateY(-5px); }
+
+        /* 테이프 효과 */
+        .poster::before {
+            content: ''; position: absolute; top: -12px; left: 50%; transform: translateX(-50%) rotate(-2deg);
+            width: 70px; height: 28px; background: rgba(255,255,255,0.7); border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); z-index: 2;
+        }
+
+        .poster.rank-s { border: 4px solid var(--primary-red); background: linear-gradient(135deg, #fff, #fff5f5); }
+        .poster.rank-a { border: 4px solid var(--accent-orange); }
+        
+        .wanted-text { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 900; margin: 10px 0; }
+        .rank-s .wanted-text { color: var(--primary-red); }
+
+        .monster-frame {
+            width: 130px; height: 130px; background: #f1f2f6; border: 3px dashed #ced4da;
+            border-radius: 15px; overflow: hidden; margin-bottom: 15px; position: relative;
+        }
+        .thief-canvas { width: 100%; height: 100%; }
+
+        .poster-app-name { font-size: 1.2rem; font-weight: 900; margin-bottom: 8px; }
+        .poster-bounty {
+            background: var(--accent-yellow); padding: 5px 15px; border-radius: 50px;
+            font-weight: 800; font-size: 1.1rem; box-shadow: 3px 3px 0px rgba(0,0,0,0.1);
+        }
+
+        /* 말풍선 (Thief's Excuse) */
+        .speech-bubble {
+            position: absolute; top: -60px; left: 50%; transform: translateX(-50%) scale(0);
+            background: #333; color: #fff; padding: 10px 15px; border-radius: 15px;
+            font-size: 0.85rem; font-weight: 700; width: 160px; text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none; z-index: 20;
+        }
+        .speech-bubble::after {
+            content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+            border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid #333;
+        }
+        .poster.show-speech .speech-bubble { transform: translateX(-50%) scale(1); }
+
+        /* 검거 버튼 (Arrest Mission) */
+        .btn-arrest {
+            margin-top: 15px; width: 100%; padding: 10px; border-radius: 12px;
+            border: none; background: #2f3542; color: #fff; font-weight: 900;
+            cursor: pointer; transition: 0.2s;
+        }
+        .btn-arrest:hover { background: var(--primary-red); }
+
+        /* 미션 모달 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center;
+            z-index: 1000; padding: 20px; backdrop-filter: blur(5px);
+        }
+        .modal-card {
+            background: #fff; border-radius: 40px; padding: 40px; width: 100%; max-width: 360px;
+            text-align: center; border: 6px solid var(--text-main); box-shadow: 15px 15px 0px var(--text-main);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-card h2 { font-size: 2rem; margin: 0 0 15px 0; color: var(--primary-red); }
+        .mission-text {
+            font-size: 1.3rem; font-weight: 800; background: #f1f2f6; padding: 20px;
+            border-radius: 20px; margin-bottom: 25px; border: 2px dashed #ccc;
+        }
+        .btn-complete {
+            width: 100%; padding: 20px; border-radius: 24px; border: none;
+            background: #2ed573; color: #fff; font-size: 1.2rem; font-weight: 900;
+            cursor: pointer; box-shadow: 0 8px 0px #218c4f;
+        }
+        .btn-complete:active { transform: translateY(4px); box-shadow: 0 4px 0px #218c4f; }
+
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 0.9; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slamDown {
+            0% { opacity: 0; transform: scale(2) rotate(15deg); }
+            100% { opacity: 1; transform: scale(1) rotate(var(--rot)); }
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <img id="sourceMonster" src="assets/time_thief_monster.png" style="display:none;">
+
+    <div class="header">
+        <div class="wanted-badge">LIMITED EDITION</div>
+        <h1 class="title">🎬 시간 도둑 체포 작전</h1>
+    </div>
+
+    <div class="input-card">
+        <div class="input-group">
+            <label>🕵️ 누가 당신의 시간을 훔쳤나요?</label>
+            <input type="text" id="appName" class="custom-input" placeholder="예: 인스타, 유튜브, 넷플릭스">
+        </div>
+        <div class="input-group">
+            <label>⏳ 얼마나 훔쳐갔나요? (분 단위)</label>
+            <input type="number" id="timeStolen" class="custom-input" placeholder="분 단위로 입력">
+        </div>
+        <button class="btn-issue" onclick="catchThief()">
+            수배령 발동! 🧨
+        </button>
+    </div>
+
+    <div class="bounty-board" id="board">
+        <!-- 수배 전단지 영역 -->
+    </div>
+
+    <!-- 미션 모달 -->
+    <div class="modal-overlay" id="missionModal">
+        <div class="modal-card">
+            <h2>⚠️ 검거 미션</h2>
+            <p>이 도둑을 체포하려면 아래 미션을 수행하세요!</p>
+            <div class="mission-text" id="missionText">눈 깜빡이기 10회 하기</div>
+            <button class="btn-complete" onclick="completeMission()">미션 완료! 체포하기 👮</button>
+        </div>
+    </div>
+
+    <script>
+        // --- VCEP 통합 싱크 시스템 (Iframe 전용) ---
+        (function() {
+            const originalSetItem = localStorage.setItem;
+            localStorage.setItem = function(key, value) {
+                originalSetItem.apply(this, arguments);
+                if(key.startsWith('vcep_')) {
+                    try {
+                        window.parent.postMessage({
+                            type: 'vcep_save',
+                            category: key.replace('vcep_', ''),
+                            data: JSON.parse(value)
+                        }, '*');
+                    } catch(e) { console.warn("Parent sync failed", e); }
+                }
+            };
+        })();
+
+        const board = document.getElementById('board');
+        const sourceImg = document.getElementById('sourceMonster');
+        const modal = document.getElementById('missionModal');
+        const missionText = document.getElementById('missionText');
+        
+        let thieves = JSON.parse(localStorage.getItem('vcep_thieves_v2')) || [];
+        let currentArrestId = null;
+
+        const excuses = [
+            "헤헤, 알고리즘이 절 시켰어요!",
+            "딱 1분만 더 보려고 했잖아요~",
+            "세상 소식이 궁금하지 않으세요?",
+            "도파민이 최고인걸요!",
+            "친구들이 당신을 기다려요!",
+            "지루할 땐 제가 딱이죠?",
+            "어머, 벌써 시간이 이렇게 됐나요?",
+            "중독적인 건 제 잘못이 아니에요!"
+        ];
+
+        const missions = [
+            "👀 눈 깜빡이기 10회 하기",
+            "🙆 기지개 크게 한 번 켜기",
+            "💧 시원한 물 한 잔 마시기",
+            "🌬️ 크게 심호흡 3번 하기",
+            "🌳 창밖 먼 곳 10초간 바라보기",
+            "🧘 제자리에서 스트레칭 하기",
+            "🤝 손바닥 비벼서 눈 마사지 하기"
+        ];
+
+        sourceImg.onload = () => renderBoard();
+        if(sourceImg.complete) renderBoard();
+
+        function catchThief() {
+            const name = document.getElementById('appName').value.trim();
+            const time = parseInt(document.getElementById('timeStolen').value);
+
+            if(!name || isNaN(time) || time <= 0) {
+                alert("정확한 이름과 시간을 입력해주세요!");
+                return;
+            }
+
+            const newThief = {
+                id: Date.now(),
+                name: name,
+                time: time,
+                rotation: (Math.random() * 10 - 5) + 'deg',
+                colorVar: Math.floor(Math.random() * 360),
+                excuse: excuses[Math.floor(Math.random() * excuses.length)]
+            };
+
+            thieves.unshift(newThief);
+            saveData();
+            
+            document.getElementById('appName').value = '';
+            document.getElementById('timeStolen').value = '';
+            
+            if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            renderBoard();
+        }
+
+        function renderBoard() {
+            board.innerHTML = '';
+            if(thieves.length === 0) {
+                board.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #a4b0be; font-weight: 900; padding: 40px;">수배 중인 도둑이 없습니다. 아주 건전한 하루군요! 🌈</div>';
+                return;
+            }
+
+            thieves.forEach(thief => {
+                const isS = thief.time >= 120;
+                const isA = thief.time >= 60;
+                const rankClass = isS ? 'rank-s' : (isA ? 'rank-a' : '');
+                
+                const poster = document.createElement('div');
+                poster.className = `poster ${rankClass}`;
+                poster.style.setProperty('--rot', thief.rotation);
+                
+                poster.onclick = (e) => {
+                    if(e.target.tagName === 'BUTTON') return;
+                    poster.classList.toggle('show-speech');
+                    if(navigator.vibrate) navigator.vibrate(20);
+                };
+
+                poster.innerHTML = `
+                    <div class="speech-bubble">${thief.excuse}</div>
+                    <div class="wanted-text">WANTED</div>
+                    <div class="monster-frame">
+                        <canvas id="canvas-${thief.id}" class="thief-canvas"></canvas>
+                    </div>
+                    <div class="poster-app-name">${thief.name}</div>
+                    <div class="poster-bounty">💰 ${thief.time}분</div>
+                    <button class="btn-arrest" onclick="arrestThief(${thief.id})">체포 미션 🚔</button>
+                `;
+
+                board.appendChild(poster);
+                drawThief(thief);
+            });
+        }
+
+        function drawThief(thief) {
+            const canvas = document.getElementById(`canvas-${thief.id}`);
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = 130;
+            canvas.height = 130;
+            
+            // 색상 변형 적용하여 그리기
+            ctx.filter = `hue-rotate(${thief.colorVar}deg)`;
+            ctx.drawImage(sourceImg, 0, 0, 130, 130);
+
+            // 누끼 처리
+            const imageData = ctx.getImageData(0, 0, 130, 130);
+            const data = imageData.data;
+            const r = data[0], g = data[1], b = data[2];
+            for (let i = 0; i < data.length; i += 4) {
+                if (Math.abs(data[i] - r) < 30 && Math.abs(data[i+1] - g) < 30 && Math.abs(data[i+2] - b) < 30) {
+                    data[i+3] = 0;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function arrestThief(id) {
+            currentArrestId = id;
+            missionText.innerText = missions[Math.floor(Math.random() * missions.length)];
+            modal.style.display = 'flex';
+        }
+
+        function completeMission() {
+            thieves = thieves.filter(t => t.id !== currentArrestId);
+            saveData();
+            modal.style.display = 'none';
+            if(navigator.vibrate) navigator.vibrate([50, 100, 50, 100]);
+            renderBoard();
+        }
+
+        function saveData() {
+            localStorage.setItem('vcep_thieves_v2', JSON.stringify(thieves));
+        }
+
+        // 모달 닫기 (배경 클릭 시)
+        window.onclick = (e) => {
+            if(e.target === modal) modal.style.display = 'none';
+        };
+    </script>
+</body>
+</html>

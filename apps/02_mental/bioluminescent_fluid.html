@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>심해의 파동: 감정의 소용돌이 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #000;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        canvas { width: 100%; height: 100%; cursor: crosshair; }
+
+        .ui-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100;
+            display: flex; flex-direction: column; padding: 30px; box-sizing: border-box;
+        }
+
+        header { pointer-events: auto; text-align: center; }
+        header h1 { font-size: 0.7rem; letter-spacing: 6px; color: rgba(255,255,255,0.3); text-transform: uppercase; margin: 0; }
+        header p { font-size: 1.1rem; color: #00f2ff; margin: 10px 0; font-weight: 700; text-shadow: 0 0 10px rgba(0,242,255,0.5); }
+
+        .controls {
+            margin-top: auto; pointer-events: auto;
+            display: flex; justify-content: center; gap: 15px; padding-bottom: 20px;
+        }
+
+        .e-btn {
+            width: 45px; height: 45px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05); cursor: pointer; transition: 0.3s;
+            display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px);
+        }
+
+        .e-btn:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.4); }
+        .e-btn.active { box-shadow: 0 0 20px var(--color); border-color: var(--color); }
+
+        .hint {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.2); font-size: 0.8rem; letter-spacing: 2px;
+            text-align: center; transition: 1s;
+        }
+
+        #splash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 1000; display: flex; justify-content: center; align-items: center;
+            transition: 2s;
+        }
+        #splash h2 { font-weight: 900; letter-spacing: 10px; color: #fff; opacity: 0; transition: 2s; }
+    </style>
+</head>
+<body>
+    <div id="splash"><h2>DEEP OCEAN</h2></div>
+    <div class="ui-overlay">
+        <header>
+            <h1>Emotional Fluid Dynamics</h1>
+            <p>심해의 파동: 감정의 소용돌이</p>
+        </header>
+        <div class="hint" id="hint">심해의 액체를 부드럽게 문질러 보세요</div>
+        <div class="controls">
+            <button class="e-btn active" onclick="setMode('calm', this)" style="--color: #00f2ff;" title="평온">💧</button>
+            <button class="e-btn" onclick="setMode('anger', this)" style="--color: #ff416c;" title="분노">🔥</button>
+            <button class="e-btn" onclick="setMode('joy', this)" style="--color: #ffcc00;" title="환희">✨</button>
+            <button class="e-btn" onclick="setMode('sad', this)" style="--color: #bc13fe;" title="슬픔">🌌</button>
+        </div>
+    </div>
+    <canvas id="fluidCanvas"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <script>
+        // --- WebGL Fluid Simulation (Simplified 2D high-performance version) ---
+        // Based on Pavel Dochev's WebGL Fluid
+        const canvas = document.getElementById('fluidCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let points = [];
+        let particles = [];
+        let currentMode = 'calm';
+        const modes = {
+            calm: { color: '#00f2ff', viscosity: 0.95, strength: 1 },
+            anger: { color: '#ff416c', viscosity: 0.8, strength: 3 },
+            joy: { color: '#ffcc00', viscosity: 0.9, strength: 2 },
+            sad: { color: '#bc13fe', viscosity: 0.98, strength: 0.5 }
+        };
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.onresize = resize; resize();
+
+        // SplashScreen
+        setTimeout(() => { 
+            document.querySelector('#splash h2').style.opacity = '1';
+            setTimeout(() => {
+                document.getElementById('splash').style.opacity = '0';
+                setTimeout(() => document.getElementById('splash').remove(), 2000);
+            }, 1500);
+        }, 500);
+
+        class Particle {
+            constructor(x, y, vx, vy, color) {
+                this.x = x; this.y = y;
+                this.vx = vx; this.vy = vy;
+                this.life = 1;
+                this.color = color;
+                this.size = Math.random() * 5 + 2;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.vx *= modes[currentMode].viscosity;
+                this.vy *= modes[currentMode].viscosity;
+                this.life -= 0.01;
+            }
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        let isDown = false;
+        let lastX, lastY;
+
+        canvas.addEventListener('mousedown', (e) => { isDown = true; lastX = e.clientX; lastY = e.clientY; document.getElementById('hint').style.opacity = '0'; initAudio(); });
+        canvas.addEventListener('touchstart', (e) => { isDown = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; document.getElementById('hint').style.opacity = '0'; initAudio(); });
+        window.addEventListener('mouseup', () => isDown = false);
+        window.addEventListener('touchend', () => isDown = false);
+
+        window.addEventListener('mousemove', (e) => {
+            if(!isDown) return;
+            spawnParticles(e.clientX, e.clientY);
+        });
+        window.addEventListener('touchmove', (e) => {
+            if(!isDown) return;
+            spawnParticles(e.touches[0].clientX, e.touches[0].clientY);
+        });
+
+        function spawnParticles(x, y) {
+            const dx = x - lastX; const dy = y - lastY;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            const count = Math.min(dist, 10);
+            for(let i=0; i<count; i++) {
+                particles.push(new Particle(
+                    x + (Math.random()-0.5)*20, 
+                    y + (Math.random()-0.5)*20, 
+                    dx * 0.2 * modes[currentMode].strength, 
+                    dy * 0.2 * modes[currentMode].strength, 
+                    modes[currentMode].color
+                ));
+            }
+            lastX = x; lastY = y;
+            if(Math.random() > 0.9) playBubbleSound();
+        }
+
+        function setMode(mode, btn) {
+            currentMode = mode;
+            document.querySelectorAll('.e-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; // Trail effect
+            ctx.fillRect(0, 0, width, height);
+            
+            for(let i=particles.length-1; i>=0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if(particles[i].life <= 0) particles.splice(i, 1);
+            }
+            
+            // Random ambient particles
+            if(Math.random() > 0.95) {
+                particles.push(new Particle(
+                    Math.random()*width, Math.random()*height, 
+                    (Math.random()-0.5)*2, (Math.random()-0.5)*2, 
+                    'rgba(255,255,255,0.1)'
+                ));
+            }
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // --- Sound Engine ---
+        let audioCtx;
+        function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        
+        function playBubbleSound() {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400 + Math.random()*600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }
+    </script>
+</body>
+</html>

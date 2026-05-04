@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>반려돌 키우기 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10b981;
+            --bg: #ecfdf5;
+            --card: #ffffff;
+            --text: #064e3b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background: var(--card);
+            border-radius: 30px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.15);
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            margin: 0 0 10px 0;
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        /* 🪨 반려돌 애니메이션 존 */
+        .stone-stage {
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .stone {
+            font-size: 100px;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            user-select: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 놀랐을 때 흔들림 */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .scared {
+            animation: shake 0.5s;
+            animation-iteration-count: infinite;
+        }
+
+        .sweat {
+            position: absolute;
+            font-size: 40px;
+            top: -10px;
+            right: 80px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 3;
+        }
+
+        .scared + .sweat {
+            opacity: 1;
+        }
+
+        /* 호흡 애니메이션 (평온할 때) */
+        @keyframes breathe {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .peaceful {
+            animation: breathe 3s infinite ease-in-out;
+        }
+
+        /* 상태바 */
+        .status-box {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        #statusText {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #334155;
+            transition: color 0.3s;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.5s ease-out, background-color 0.3s;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-stop {
+            background: #f1f5f9;
+            color: #64748b;
+            box-shadow: none;
+            display: none;
+        }
+        .btn-stop:hover {
+            background: #e2e8f0;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🪨 반려돌 키우기</h1>
+        <p class="subtitle" id="guideText">스마트폰을 책상에 눕혀두세요.<br>가만히 두면 이끼가 자랍니다!</p>
+
+        <div class="stone-stage">
+            <div class="stone peaceful" id="stone">🪨</div>
+            <div class="sweat" id="sweat">💦</div>
+        </div>
+
+        <div class="status-box">
+            <div id="statusText">휴식을 시작해 주세요</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="stats">
+                <span>Lv. <span id="levelNum">1</span></span>
+                <span><span id="growthNum">0</span>%</span>
+            </div>
+        </div>
+
+        <button class="btn" id="startBtn" onclick="requestPermissionAndStart()">휴식 시작하기</button>
+        <button class="btn btn-stop" id="stopBtn" onclick="stopRest()">그만하기</button>
+    </div>
+
+    <script>
+        // --- VCEP 통합 싱크 시스템 (Iframe 전용) ---
+        (function() {
+            const originalSetItem = localStorage.setItem;
+            localStorage.setItem = function(key, value) {
+                originalSetItem.apply(this, arguments);
+                if(key.startsWith('vcep_')) {
+                    try {
+                        window.parent.postMessage({
+                            type: 'vcep_save',
+                            category: key.replace('vcep_', ''),
+                            data: JSON.parse(value)
+                        }, '*');
+                    } catch(e) { console.warn("Parent sync failed", e); }
+                }
+            };
+        })();
+
+        const stone = document.getElementById('stone');
+        const sweat = document.getElementById('sweat');
+        const statusText = document.getElementById('statusText');
+        const progressFill = document.getElementById('progressFill');
+        const growthNum = document.getElementById('growthNum');
+        const levelNum = document.getElementById('levelNum');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const guideText = document.getElementById('guideText');
+
+        const localUserId = localStorage.getItem('vcep_userId') || "익명유저";
+
+        let isTracking = false;
+        let growth = 0;
+        let level = 1;
+        let scaredCount = 0; // 추가: 깜짝 놀란 횟수 기록
+        let growthTimer = null;
+        let penaltyTimer = null;
+        let isScared = false;
+        
+        // 단계별 돌 이모지
+        const stoneLevels = ['🪨', '🪨🌱', '🪨🌿', '🪨🌸', '🪨👑'];
+
+        // iOS 13+ 기기 권한 요청 처리
+        function requestPermissionAndStart() {
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            startRest();
+                        } else {
+                            alert("기기 센서 접근 권한이 필요합니다.");
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Android 또는 PC
+                startRest();
+            }
+        }
+
+        function startRest() {
+            isTracking = true;
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'block';
+            guideText.innerHTML = "조용... 돌이 휴식 중입니다.<br>절대 기기를 움직이지 마세요!";
+            
+            // 모바일 가속도 센서 이벤트
+            window.addEventListener('devicemotion', handleMotion);
+            // PC용 마우스 이동 이벤트 (모바일이 아닐 경우 대비)
+            window.addEventListener('mousemove', handleMouse);
+            
+            startGrowth();
+            updateUI();
+        }
+
+        async function stopRest() {
+            isTracking = false;
+            startBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+            guideText.innerHTML = "스마트폰을 책상에 눕혀두세요.<br>가만히 두면 이끼가 자랍니다!";
+            statusText.innerText = "휴식이 중단되었습니다.";
+            statusText.style.color = "#64748b";
+            stone.className = "stone"; // 애니메이션 정지
+            
+            window.removeEventListener('devicemotion', handleMotion);
+            window.removeEventListener('mousemove', handleMouse);
+            clearInterval(growthTimer);
+            clearTimeout(penaltyTimer);
+
+            // 데이터 전송 준비
+            const data = { growth: growth, level: level, scaredCount: scaredCount };
+
+            // 로컬 스토리지 백업
+            let localData = JSON.parse(localStorage.getItem('vcep_focus_session')) || [];
+            localData.push({ date: new Date().toISOString(), payload: data });
+            localStorage.setItem('vcep_focus_session', JSON.stringify(localData));
+        }
+
+        function startGrowth() {
+            setPeaceful();
+            growthTimer = setInterval(() => {
+                if (!isScared && isTracking) {
+                    growth += 2; // 1초에 2%씩 성장 (약 50초면 1레벨업)
+                    if (growth >= 100) {
+                        levelUp();
+                    }
+                    updateUI();
+                }
+            }, 1000);
+        }
+
+        function levelUp() {
+            growth = 0;
+            if (level < stoneLevels.length) {
+                level++;
+                stone.innerText = stoneLevels[level - 1];
+                statusText.innerText = `레벨 업! (Lv.${level})`;
+            } else {
+                statusText.innerText = "돌이 최종 진화했습니다! 🎉";
+                growth = 100; // 맥스
+            }
+        }
+
+        function triggerScared() {
+            if (isScared || !isTracking) return;
+            
+            isScared = true;
+            scaredCount++; // 놀람 카운트 증가
+            stone.className = "stone scared";
+            progressFill.style.backgroundColor = "var(--danger)";
+            statusText.innerText = "앗! 폰이 움직였어요! 💦";
+            statusText.style.color = "var(--danger)";
+            
+            // 놀리면 성장도 5% 깎임
+            growth = Math.max(0, growth - 5);
+            updateUI();
+
+            // 2초 후 다시 평온 상태로 복귀
+            clearTimeout(penaltyTimer);
+            penaltyTimer = setTimeout(() => {
+                setPeaceful();
+            }, 2000);
+        }
+
+        function setPeaceful() {
+            isScared = false;
+            stone.className = "stone peaceful";
+            progressFill.style.backgroundColor = "var(--primary)";
+            statusText.innerText = "평화롭게 자라나는 중... 🌿";
+            statusText.style.color = "var(--primary)";
+        }
+
+        // 모바일 센서 감지 로직
+        let lastX, lastY, lastZ;
+        function handleMotion(event) {
+            if (!isTracking) return;
+            const acc = event.accelerationIncludingGravity;
+            if (!acc) return;
+
+            // 중력(약 9.8)을 제외한 순수 움직임 계산
+            const deltaX = Math.abs(acc.x - (lastX || acc.x));
+            const deltaY = Math.abs(acc.y - (lastY || acc.y));
+            const deltaZ = Math.abs(acc.z - (lastZ || acc.z));
+
+            // 민감도 설정 (숫자가 작을수록 예민함)
+            if (deltaX > 1.5 || deltaY > 1.5 || deltaZ > 1.5) {
+                triggerScared();
+            }
+
+            lastX = acc.x;
+            lastY = acc.y;
+            lastZ = acc.z;
+        }
+
+        // PC 마우스 감지 로직 (마우스를 크게 움직이면 놀람)
+        let lastMouseX, lastMouseY;
+        function handleMouse(e) {
+            if (!isTracking) return;
+            if (lastMouseX !== undefined) {
+                const moveDist = Math.abs(e.clientX - lastMouseX) + Math.abs(e.clientY - lastMouseY);
+                if (moveDist > 50) { // 마우스를 휙 움직이면 놀람
+                    triggerScared();
+                }
+            }
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        }
+
+        function updateUI() {
+            progressFill.style.width = `${growth}%`;
+            growthNum.innerText = growth;
+            levelNum.innerText = level;
+            
+            // 만렙 처리
+            if (level === stoneLevels.length) {
+                progressFill.style.width = '100%';
+                growthNum.innerText = 'MAX';
+            }
+        }
+    </script>
+</body>
+</html>

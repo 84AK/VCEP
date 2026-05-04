@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAS CRUD Hub | VCEP Sheets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sheet-green: #0F9D58;
+            --sheet-green-dark: #0B8043;
+            --sheet-bg: #F8F9FA;
+            --sheet-border: #E0E0E0;
+            --sheet-text: #3C4043;
+            --sheet-text-light: #5F6368;
+            --accent-purple: #4F46E5;
+            --vcep-green: #0F9D58;
+        }
+
+        /* Standard Nav Styles */
+        nav {
+            background: white;
+            border-bottom: 1px solid var(--sheet-border);
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-left { display: flex; align-items: center; gap: 0.8rem; }
+        .sheet-title { font-weight: 700; font-size: 1.1rem; color: var(--sheet-text); }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-link { text-decoration: none; color: var(--sheet-text-light); font-weight: 500; font-size: 0.9rem; transition: 0.2s; }
+        .nav-link:hover { color: var(--sheet-green); }
+        .nav-link.active { color: var(--sheet-green); font-weight: 700; }
+        .nav-btn { background: var(--sheet-green); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.85rem; transition: 0.2s; }
+        .nav-btn:hover { background: var(--sheet-green-dark); }
+
+        body {
+            font-family: 'Noto Sans KR', 'Outfit', sans-serif;
+            background-color: var(--sheet-bg);
+            background-image: 
+                linear-gradient(var(--sheet-border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--sheet-border) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--sheet-text);
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: 260px;
+            gap: 1.2rem;
+            padding: 3rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .app-card {
+            background: white;
+            border: 1px solid var(--sheet-border);
+            border-radius: 12px;
+            padding: 1.8rem;
+            transition: 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+        .app-card:hover { 
+            box-shadow: 0 8px 24px rgba(60, 64, 67, 0.15);
+            border-color: var(--sheet-green);
+        }
+
+        .app-icon-circle {
+            width: 44px; height: 44px;
+            background: #E6F4EA;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; color: var(--sheet-green);
+            margin-bottom: 1.2rem;
+        }
+
+        .card-large { grid-column: span 2; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(32, 33, 36, 0.6); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .modal-window {
+            background: white; width: 95%; max-width: 1100px; height: 85vh;
+            border-radius: 16px; border: 1px solid var(--sheet-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+        }
+        .modal-header { padding: 1rem 2rem; border-bottom: 1px solid var(--sheet-border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-content { flex: 1; display: flex; overflow: hidden; background: #F1F3F4; }
+        
+        .preview-pane { flex: 1.3; background: white; border-right: 1px solid var(--sheet-border); padding: 1rem; }
+        .preview-pane iframe { width: 100%; height: 100%; border: 1px solid var(--sheet-border); border-radius: 8px; }
+        
+        .info-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: white; }
+        .tabs { display: flex; border-bottom: 1px solid var(--sheet-border); background: #F8F9FA; }
+        .tab-btn { flex: 1; padding: 0.8rem; font-weight: 700; color: var(--sheet-text-light); transition: 0.2s; border-bottom: 3px solid transparent; font-size: 0.9rem; }
+        .tab-btn.active { color: var(--sheet-green); border-bottom-color: var(--sheet-green); background: white; }
+
+        .tab-content { flex: 1; overflow-y: auto; padding: 2rem; display: none; }
+        .tab-content.active { display: block; }
+
+        .launch-btn {
+            background: var(--sheet-green);
+            color: white;
+            width: 100%;
+            padding: 1.2rem;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 20px rgba(15, 157, 88, 0.2);
+        }
+        .launch-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(15, 157, 88, 0.3);
+            background: var(--sheet-green-dark);
+        }
+
+        .guide-box {
+            background: #E6F4EA;
+            border: 1px solid #CEEAD6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .code-container { position: relative; background: #F8F9FA; border-radius: 8px; border: 1px solid var(--sheet-border); margin-top: 1rem; }
+        .code-header { background: #E8EAED; padding: 0.6rem 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .code-body { padding: 1.2rem; font-family: monospace; font-size: 0.8rem; overflow-x: auto; white-space: pre; color: var(--sheet-text); line-height: 1.5; }
+        .copy-btn { background: var(--sheet-green); color: white; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #323232; color: white; padding: 12px 24px; border-radius: 8px;
+            font-size: 0.9rem; z-index: 3000; display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-left">
+            <span class="sheet-title">GAS CRUD Hub_Workspace</span>
+        </div>
+        <div class="nav-links">
+            <a href="../../index.html" class="nav-link">홈</a>
+            <a href="../03_expert/vibecoding.html" class="nav-link">시뮬레이션</a>
+            <a href="gas_hub.html" class="nav-link active">GAS</a>
+            <a href="../app_planner.html" class="nav-link">앱 플래너</a>
+            <a href="../tutorial_hub.html" class="nav-btn">학습 가이드 <i class="fas fa-graduation-cap"></i></a>
+        </div>
+    </nav>
+
+    <header class="max-w-[1400px] mx-auto px-8 py-12">
+        <h1 class="text-4xl font-bold mb-2 text-slate-800">GAS CRUD 어플리케이션 센터</h1>
+        <p class="text-slate-500 font-light">구글 스프레드시트 연동 전문가용 웹 앱 통합 보관함</p>
+    </header>
+
+    <div class="bento-grid" id="hub-grid"></div>
+
+    <div class="modal-overlay" id="appModal">
+        <div class="modal-window">
+            <div class="modal-header">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-file-invoice text-green-600"></i>
+                    <h2 id="modalTitle" class="text-lg font-bold text-slate-700">App Detail</h2>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition-all text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-content">
+                <div class="preview-pane"><iframe id="appIframe" src=""></iframe></div>
+                <div class="info-pane">
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab(event, 'info')">기능 설명</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'code')">HTML 소스</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'gas')">GAS 스크립트</button>
+                    </div>
+                    <div id="tab-info" class="tab-content active">
+                        <h3 id="detailTitle" class="text-2xl font-bold mb-4 text-slate-800"></h3>
+                        <p id="detailDesc" class="text-slate-500 leading-relaxed text-sm"></p>
+                        
+                        <div class="guide-box">
+                            <h4 class="font-bold text-green-700 mb-3 flex items-center"><i class="fas fa-clipboard-check mr-2"></i> 연동 가이드</h4>
+                            <ul class="text-xs text-green-600 space-y-2">
+                                <li class="flex items-start gap-2">• <span>스프레드시트 이름: <b class="text-green-800">PixelData</b></span></li>
+                                <li class="flex items-start gap-2">• <span>헤더 자동 생성 및 스타일링 지원</span></li>
+                                <li class="flex items-start gap-2">• <span>모든 데이터는 압축된 Single Value로 관리</span></li>
+                            </ul>
+                        </div>
+
+                        <button onclick="launchApp()" class="launch-btn">
+                            <i class="fas fa-external-link-alt"></i> 새 창에서 열기
+                        </button>
+                    </div>
+                    <div id="tab-code" class="tab-content">
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span id="codeFileName" class="text-[11px] font-bold text-slate-500">index.html</span>
+                                <button class="copy-btn" onclick="copyCode('codeBody')">코드 복사</button>
+                            </div>
+                            <div id="codeBody" class="code-body"></div>
+                        </div>
+                    </div>
+                    <div id="tab-gas" class="tab-content">
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span class="text-[11px] font-bold text-slate-500">Code.gs</span>
+                                <button class="copy-btn" onclick="copyCode('gasBody')">코드 복사</button>
+                            </div>
+                            <div id="gasBody" class="code-body"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">✅ 코드가 클립보드에 복사되었습니다!</div>
+
+    <script>
+        const apps = {
+            'pixel_wall': {
+                title: 'Pixel Master Pro',
+                path: 'pixel_wall.html',
+                icon: 'fa-brush',
+                desc: '마우스 드래그를 이용한 직관적인 드로잉 환경을 제공하며, 하트 도면 가이드를 통해 초보자도 쉽게 캐릭터를 디자인할 수 있습니다. 400개의 픽셀 데이터를 단일 문자열로 압축하여 구글 시트의 한 셀에 저장하는 최적화된 CRUD 로직을 제공하며, 저장된 그림은 보관함에서 언제든지 선택하여 복원할 수 있습니다.',
+                large: true
+            },
+            'argo_tarot': { 
+                title: '아고의 코딩 운세', 
+                icon: 'fa-dragon', 
+                desc: '귀여운 공룡 마법사 아고가 들려주는 코딩 데이터 운세! 오늘의 로직 컨디션과 버그 발생 확률을 재미로 분석하고, 그 결과를 클라우드(GAS)에 기록하여 학습 일지로 활용할 수 있습니다.', 
+                path: 'ai_tarot.html', 
+                large: false
+            },
+            'digital_relics': { title: 'Digital Relics', icon: 'fa-history', desc: '소중한 기억과 텍스트를 타임라인 형태로 시트에 보관하는 감성 CRUD 앱입니다.', path: '#', large: false },
+            'cyber_pet': { title: 'Pet Shelter', icon: 'fa-cat', desc: '사이버 펫의 허기, 청결도 등 실시간 상태 데이터를 시트와 동기화하여 관리합니다.', path: '#', large: true },
+            'mission_board': { title: 'Mission Board', icon: 'fa-tasks', desc: '협업을 위한 할 일 목록과 미션 완료 상태를 시트를 통해 실시간으로 공유합니다.', path: '#', large: false },
+            'heart_harmony': { title: 'Heart Harmony', icon: 'fa-heartbeat', desc: '매일의 기분 수치를 데이터화하여 시트 그래프로 시각화하는 심리 관리 툴입니다.', path: '#', large: false },
+            'smart_timer': { title: 'Smart Timer', icon: 'fa-stopwatch', desc: '집중 시간 데이터를 누적하여 시트에서 월간 성취도를 분석할 수 있습니다.', path: '#', large: false },
+            'vibe_planner': { title: 'Logic Canvas', icon: 'fa-diagram-project', desc: '복잡한 웹 로직 설계도를 그리고 클라우드에 영구 백업하는 전문 플래너입니다.', path: '#', large: false }
+        };
+
+        let currentAppPath = "";
+
+        function renderGrid() {
+            const grid = document.getElementById('hub-grid');
+            grid.innerHTML = '';
+            Object.entries(apps).forEach(([id, app]) => {
+                const card = document.createElement('div');
+                card.className = `app-card ${app.large ? 'card-large' : ''}`;
+                card.innerHTML = `
+                    <div>
+                        <div class="app-icon-circle"><i class="fas ${app.icon}"></i></div>
+                        <h3 class="text-xl font-bold mb-2 text-slate-800">${app.title}</h3>
+                        <p class="text-slate-500 text-xs leading-relaxed line-clamp-2">${app.desc}</p>
+                    </div>
+                    <div class="flex justify-between items-center pt-4 mt-4 border-t border-slate-100">
+                        <span class="text-[10px] font-bold text-green-600 uppercase">Sheet Connected</span>
+                        <i class="fas fa-chevron-right text-slate-300"></i>
+                    </div>
+                `;
+                card.onclick = () => openModal(id);
+                grid.appendChild(card);
+            });
+        }
+
+        async function openModal(id) {
+            const app = apps[id];
+            if(app.path === '#') return alert('준비 중인 앱입니다.');
+            currentAppPath = app.path;
+            document.getElementById('modalTitle').innerText = app.title;
+            document.getElementById('detailTitle').innerText = app.title;
+            document.getElementById('detailDesc').innerText = app.desc;
+            
+            // Fetch Standard GAS Code (v2)
+            fetch('GAS_SERVER_CODE.js').then(res => res.text()).then(text => {
+                document.getElementById('gasBody').innerText = text;
+            }).catch(e => {
+                document.getElementById('gasBody').innerText = "// GAS 코드를 불러올 수 없습니다.";
+            });
+
+            document.getElementById('appIframe').src = app.path;
+            try {
+                const response = await fetch(app.path);
+                const code = await response.text();
+                document.getElementById('codeBody').innerText = code;
+            } catch (e) { document.getElementById('codeBody').innerText = "Load failed."; }
+            document.getElementById('appModal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('appModal').style.display = 'none'; document.getElementById('appIframe').src = ""; currentAppPath = ""; }
+        
+        function switchTab(e, tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        }
+
+        function copyCode(elementId) {
+            const code = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(code).then(() => { showToast(); });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        }
+
+        function launchApp() { if(currentAppPath && currentAppPath !== '#') window.open(currentAppPath, '_blank'); }
+
+        renderGrid();
+    </script>
+</body>
+</html>

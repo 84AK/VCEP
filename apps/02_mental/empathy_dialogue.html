@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마음의 온도 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&family=Nanum+Myeongjo:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-warm: #fff9f0;
+            --primary: #6366f1;
+            --text-main: #1e293b;
+            --glass: rgba(255, 255, 255, 0.7);
+            --note-yellow: #fef9c3;
+            --note-pink: #fce7f3;
+            --note-blue: #e0f2fe;
+            --board-bg: rgba(255, 255, 255, 0.4);
+        }
+
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Pretendard', sans-serif; overflow: hidden;
+        }
+
+        /* Background */
+        .background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('assets/empathy_cafe_bg.png') no-repeat center center;
+            background-size: cover; z-index: 1; transition: 1.5s ease;
+        }
+
+        /* Full Screen Layout */
+        .container {
+            position: relative; z-index: 10; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+        }
+
+        /* Top: Dialogue Section */
+        .dialogue-section {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            padding: 20px; gap: 15px; overflow-y: auto;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent);
+        }
+
+        header {
+            width: 100%; max-width: 500px; padding: 15px;
+            background: var(--glass); backdrop-filter: blur(15px);
+            border-radius: 25px; border: 1px solid rgba(255,255,255,0.5);
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        header h1 { margin: 0; font-size: 1.1rem; color: var(--primary); font-family: 'Nanum Myeongjo', serif; }
+
+        .gauge-wrapper { width: 100%; margin-top: 10px; }
+        .gauge-label { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 5px; color: #64748b; font-weight: 800; }
+        .gauge-bg { width: 100%; height: 10px; background: rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden; border: 1px solid white; }
+        .gauge-fill { height: 100%; width: 50%; background: linear-gradient(90deg, #60a5fa, #fb923c); transition: 1s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; }
+
+        .character-box {
+            display: flex; align-items: flex-end; gap: 15px;
+            width: 100%; max-width: 500px; margin-top: 20px;
+        }
+        .avatar-container {
+            width: 90px; height: 90px; overflow: hidden; border-radius: 50%;
+            background: white; border: 3px solid white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); flex-shrink: 0;
+        }
+        .avatar-img {
+            width: 300%; height: 300%;
+            background: url('assets/jihoon_sheet.png') no-repeat;
+            background-size: 100% auto;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translate(0%, -5%);
+        }
+        .avatar-img.neutral { transform: translate(0%, -5%); }
+        .avatar-img.happy { transform: translate(-33.33%, -5%); }
+        .avatar-img.sad { transform: translate(-66.66%, -5%); }
+
+        .bubble.friend { 
+            background: white; color: var(--text-main); border-radius: 20px;
+            border-top-left-radius: 4px; padding: 18px 22px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); font-weight: 600;
+            flex: 1; border: 1px solid rgba(0,0,0,0.05); position: relative;
+            line-height: 1.6; word-break: keep-all; font-size: 1rem;
+        }
+        .bubble.friend::after {
+            content: ''; position: absolute; left: -10px; top: 15px;
+            border-top: 10px solid transparent; border-bottom: 10px solid transparent;
+            border-right: 12px solid white;
+        }
+
+        .chat-history {
+            width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .bubble.me { 
+            background: var(--primary); align-self: flex-end; color: white; 
+            border-radius: 18px; border-bottom-right-radius: 2px;
+            padding: 12px 18px; font-size: 0.9rem; max-width: 85%;
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Bottom: Choice Section (Premium Card Hub) */
+        .choice-section {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 25px 20px; display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 -20px 60px rgba(0,0,0,0.08);
+            max-height: 450px;
+        }
+
+        .choice-section::before {
+            content: '✉️ 당신의 따뜻한 답장을 선택해주세요';
+            font-size: 0.9rem; font-weight: 800; color: var(--primary);
+            margin-bottom: 20px; background: white; padding: 6px 20px;
+            border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            letter-spacing: -0.5px;
+        }
+
+        .choices {
+            width: 100%; max-width: 550px; display: flex; flex-direction: column; gap: 18px;
+        }
+
+        .choice-card {
+            background: rgba(255, 255, 255, 0.85); padding: 22px 25px;
+            border-radius: 20px; cursor: pointer; text-align: left;
+            font-size: 1.05rem; font-weight: 700; color: #334155;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+            position: relative; overflow: visible; word-break: keep-all;
+            border: 2px solid transparent;
+            display: flex; align-items: center; gap: 15px;
+        }
+
+        /* Indicator A, B, C */
+        .choice-card::after {
+            content: attr(data-label);
+            width: 36px; height: 36px; background: white;
+            border: 2px solid var(--primary); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; font-weight: 900; color: var(--primary);
+            flex-shrink: 0; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15);
+            order: -1;
+        }
+        
+        .choice-card:hover { 
+            transform: translateY(-8px) scale(1.02); 
+            background: white; border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
+        }
+        .choice-card:hover::after {
+            background: var(--primary); color: white;
+        }
+        .choice-card:active { transform: scale(0.98); }
+
+        /* Feedback Modal */
+        .feedback-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            display: none; align-items: center; justify-content: center; z-index: 100;
+        }
+        .feedback-card {
+            background: white; width: 90%; max-width: 400px; padding: 40px 30px;
+            border-radius: 35px; text-align: center; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            border: 4px solid var(--primary);
+        }
+        .btn-next { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 20px; font-weight: 800; cursor: pointer; font-size: 1rem; }
+
+        @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        /* Intro Overlay */
+        .intro-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-warm); z-index: 200;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; transition: 0.8s ease-in-out;
+        }
+        .intro-overlay.hide { opacity: 0; pointer-events: none; transform: scale(1.1); }
+
+        .comic-grid {
+            display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+            gap: 15px; width: 100%; max-width: 500px; aspect-ratio: 1/1.2;
+            margin-bottom: 30px;
+        }
+        .comic-panel {
+            background: white; border: 4px solid #444; border-radius: 10px;
+            overflow: hidden; position: relative; opacity: 0; transform: translateY(20px);
+            box-shadow: 10px 10px 0 rgba(0,0,0,0.05);
+            display: flex; flex-direction: column;
+        }
+        .comic-panel.show { animation: panelIn 0.6s forwards; }
+        @keyframes panelIn { to { opacity: 1; transform: translateY(0); } }
+
+        .panel-img { flex: 1; overflow: hidden; position: relative; background: #f8fafc; }
+        .panel-img .jihoon { 
+            position: absolute; width: 300%; height: 300%; 
+            background: url('assets/jihoon_sheet.png') no-repeat; background-size: 100% auto;
+        }
+        .panel-img .cafe { 
+            position: absolute; width: 100%; height: 100%; 
+            background: url('assets/empathy_cafe_bg.png') no-repeat center; background-size: cover;
+        }
+        .panel-text { 
+            padding: 10px; font-size: 0.85rem; font-weight: 800; 
+            text-align: center; border-top: 2px solid #444; background: #fffbeb;
+            word-break: keep-all;
+        }
+
+        .btn-start {
+            background: var(--primary); color: white; border: none;
+            padding: 18px 60px; border-radius: 50px; font-weight: 800;
+            font-size: 1.1rem; cursor: pointer; opacity: 0; transition: 0.3s;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+        }
+        .btn-start.show { opacity: 1; animation: pop 0.5s forwards; }
+        .btn-start:hover { transform: scale(1.05); }
+
+    </style>
+</head>
+<body>
+    <div class="intro-overlay" id="introOverlay">
+        <h2 style="font-family: 'Nanum Myeongjo', serif; margin-bottom: 25px; color: var(--primary);">어느 오후, 마음 카페에서</h2>
+        <div class="comic-grid">
+            <div class="comic-panel" id="panel1">
+                <div class="panel-img">
+                    <div class="jihoon" style="transform: translate(-66.6%, -5%);"></div>
+                </div>
+                <div class="panel-text">지훈이가 오늘따라 많이 시무룩해 보여요...</div>
+            </div>
+            <div class="comic-panel" id="panel2">
+                <div class="panel-img" style="display: flex; align-items: center; justify-content: center; font-size: 2rem;">💬❓</div>
+                <div class="panel-text">위로하고 싶지만 무슨 말을 해야 할지 모르겠어요.</div>
+            </div>
+            <div class="comic-panel" id="panel3">
+                <div class="panel-img"><div class="cafe"></div></div>
+                <div class="panel-text">그때 발견한 '마음의 온도' 카페! 공감을 배울 수 있대요.</div>
+            </div>
+            <div class="comic-panel" id="panel4">
+                <div class="panel-img">
+                    <div class="jihoon" style="transform: translate(-33.3%, -5%);"></div>
+                </div>
+                <div class="panel-text">지훈이의 마음 온도를 함께 높여줄까요?</div>
+            </div>
+        </div>
+        <button class="btn-start" id="btnStart" onclick="closeIntro()">이야기 시작하기</button>
+    </div>
+
+    <div class="background" id="bg"></div>
+    <div class="container">
+        <div class="dialogue-section">
+            <header>
+                <h1>마음의 온도: 공감 대화 연습</h1>
+                <div class="gauge-wrapper">
+                    <div class="gauge-label"><span>차가움 ❄️</span><span>따뜻함 🔥</span></div>
+                    <div class="gauge-bg"><div class="gauge-fill" id="tempGauge"></div></div>
+                </div>
+            </header>
+            <div class="character-box">
+                <div class="avatar-container"><div class="avatar-img" id="avatarImg"></div></div>
+                <div class="bubble friend" id="friendMsg"></div>
+            </div>
+            <div class="chat-history" id="chatArea"></div>
+        </div>
+
+        <div class="choice-section">
+            <div class="choices" id="choiceArea"></div>
+        </div>
+    </div>
+    
+    <div class="feedback-overlay" id="feedbackOverlay">
+        <div class="feedback-card">
+            <h2 id="feedbackTitle">잘했어요!</h2>
+            <p id="feedbackText">상대방의 마음을 잘 읽어주었네요.</p>
+            <button class="btn-next" onclick="nextStep()">계속하기</button>
+        </div>
+    </div>
+    <script>
+        const scenarios = [
+            {
+                friend: "지훈",
+                initialAvatar: "neutral",
+                initialMsg: "하... 나 이번에 수학 점수가 너무 안 나왔어. 진짜 열심히 했는데... 나만 바보 된 기분이야.",
+                choices: [
+                    { text: "“점수가 다는 아니야! 다음에 더 잘하면 되지.”", score: -10, feedback: "이것은 '조언/충고'예요. 상대방이 속상해할 때는 정답을 말하기보다 마음을 먼저 알아주는 게 중요해요.", response: "음... 나도 머리로는 아는데 지금은 그냥 속상해.", resultAvatar: "sad" },
+                    { text: "“열심히 한 만큼 결과가 안 나와서 정말 속상하겠구나... 허탈한 마음이 들 수도 있겠어.”", score: 25, feedback: "훌륭해요! 상대방의 '노력'과 '속상한 마음'을 정확히 짚어주는 공감의 정석입니다.", response: "맞아... 진짜 밤새면서 했는데... 네가 내 맘을 알아주니까 좀 낫다.", resultAvatar: "happy" },
+                    { text: "“너 학원을 바꿔보는 건 어때? 효율이 안 좋은 거 아냐?”", score: -20, feedback: "이것은 '평가/판단'입니다. 상대방이 가장 힘들 때 방법부터 제시하면 비난받는 느낌을 줄 수 있어요.", response: "하... 지금 그게 중요한 게 아닌데...", resultAvatar: "sad" }
+                ]
+            },
+            {
+                friend: "지훈",
+                initialAvatar: "sad",
+                initialMsg: "아까 친구들이 내 비밀을 다 말해버렸어... 일부러 그런 것 같아서 너무 화가 나고 억울해.",
+                choices: [
+                    { text: "“설마 일부러 그랬겠어? 실수였을 거야. 너무 화내지 마.”", score: -15, feedback: "상대방의 화를 억누르거나 상황을 무마하려는 태도는 진정한 공감이 아니에요.", response: "넌 누구 편이야? 실수라고 하기엔 너무 정확하게 말했단 말이야.", resultAvatar: "sad" },
+                    { text: "“세상에, 믿었던 친구한테 배신당한 기분이겠다. 정말 당황스럽고 억울했겠는걸?”", score: 25, feedback: "정답입니다! 상대방이 느끼는 '배신감'과 '억울함'을 그대로 비춰주는 것이 최고의 위로입니다.", response: "진짜 내 말이... 어떻게 나한테 그럴 수 있는지 모르겠어. 네가 내 편이라 다행이야.", resultAvatar: "happy" },
+                    { text: "“너도 똑같이 걔 비밀을 말해버려! 당한 만큼 갚아줘야지.”", score: -5, feedback: "복수를 권하는 것은 일시적인 시원함은 줄 수 있지만, 상대방의 감정적 해소에는 도움이 되지 않아요.", response: "그러고 싶긴 한데... 사실 난 그렇게까지 하고 싶진 않아. 그냥 속상할 뿐이야.", resultAvatar: "sad" }
+                ]
+            }
+        ];
+        let currentScenarioIdx = 0;
+        let currentTemperature = 50;
+        function startGame() {
+            const scenario = scenarios[currentScenarioIdx];
+            document.getElementById('avatarImg').className = 'avatar-img ' + scenario.initialAvatar;
+            document.getElementById('friendMsg').innerText = scenario.initialMsg;
+            showChoices();
+        }
+        function addMessage(text, side) {
+            const chatArea = document.getElementById('chatArea');
+            const bubble = document.createElement('div');
+            bubble.className = `bubble ${side}`;
+            bubble.innerText = text;
+            chatArea.appendChild(bubble);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        function showChoices() {
+            const scenario = scenarios[currentScenarioIdx];
+            const choiceArea = document.getElementById('choiceArea');
+            choiceArea.innerHTML = '';
+            const labels = ['A', 'B', 'C'];
+            scenario.choices.forEach((c, idx) => {
+                const card = document.createElement('div');
+                card.className = 'choice-card';
+                card.setAttribute('data-label', labels[idx]);
+                card.innerText = c.text;
+                card.onclick = () => selectChoice(idx);
+                choiceArea.appendChild(card);
+            });
+        }
+        function selectChoice(idx) {
+            const scenario = scenarios[currentScenarioIdx];
+            const choice = scenario.choices[idx];
+            addMessage(choice.text, 'me');
+            setTimeout(() => {
+                updateTemperature(choice.score);
+                document.getElementById('feedbackTitle').innerText = choice.score > 0 ? "따뜻한 공감이에요! ✨" : "조금 더 노력이 필요해요 ❄️";
+                document.getElementById('feedbackText').innerText = choice.feedback;
+                document.getElementById('feedbackOverlay').style.display = 'flex';
+                document.getElementById('friendMsg').innerText = choice.response;
+                document.getElementById('avatarImg').className = 'avatar-img ' + choice.resultAvatar;
+                if(choice.score > 0) {
+                    document.getElementById('bg').classList.add('happy');
+                    document.getElementById('bg').classList.remove('sad');
+                } else {
+                    document.getElementById('bg').classList.add('sad');
+                    document.getElementById('bg').classList.remove('happy');
+                }
+            }, 500);
+        }
+        function updateTemperature(diff) {
+            currentTemperature += diff;
+            if(currentTemperature > 100) currentTemperature = 100;
+            if(currentTemperature < 0) currentTemperature = 0;
+            document.getElementById('tempGauge').style.width = currentTemperature + '%';
+        }
+        function nextStep() {
+            document.getElementById('feedbackOverlay').style.display = 'none';
+            currentScenarioIdx++;
+            if(currentScenarioIdx < scenarios.length) {
+                document.getElementById('chatArea').innerHTML = '';
+                document.getElementById('bg').className = 'background';
+                startGame();
+            } else {
+                document.getElementById('friendMsg').innerText = "오늘 너랑 대화해서 정말 다행이야. 고마워!";
+                document.getElementById('avatarImg').className = 'avatar-img happy';
+                document.getElementById('choiceArea').innerHTML = '<button class="btn-next" style="width:100%" onclick="location.reload()">다시 연습하기</button>';
+                document.getElementById('chatArea').innerHTML = '<div style="text-align:center; padding: 20px; color: #475569; font-weight: 800;">모든 연습을 완료했습니다! 🎉</div>';
+            }
+        }
+        window.onload = () => {
+            // Intro sequence
+            setTimeout(() => document.getElementById('panel1').classList.add('show'), 300);
+            setTimeout(() => document.getElementById('panel2').classList.add('show'), 900);
+            setTimeout(() => document.getElementById('panel3').classList.add('show'), 1500);
+            setTimeout(() => document.getElementById('panel4').classList.add('show'), 2100);
+            setTimeout(() => document.getElementById('btnStart').classList.add('show'), 2700);
+        };
+
+        function closeIntro() {
+            document.getElementById('introOverlay').classList.add('hide');
+            setTimeout(startGame, 800);
+        }
+
+        function startGame() {
+            const scenario = scenarios[currentScenarioIdx];
+            document.getElementById('avatarImg').className = 'avatar-img ' + scenario.initialAvatar;
+            document.getElementById('friendMsg').innerText = scenario.initialMsg;
+            showChoices();
+        }
+    </script>
+</body>
+</html>

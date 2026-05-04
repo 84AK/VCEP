@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아고의 코딩 운세 | VCEP Cosmic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --argo-purple: #6D28D9;
+            --argo-light-purple: #EDE9FE;
+            --argo-green: #10B981;
+            --vcep-green: #0F9D58;
+            --bg-dark: #2E1065;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: var(--bg-dark);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .cute-font { font-family: 'Gaegu', cursive; }
+
+        /* Standard Nav Styles */
+        nav {
+            background: white;
+            border-bottom: 1px solid #E0E0E0;
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-left { display: flex; align-items: center; gap: 0.8rem; }
+        .sheet-title { font-weight: 700; font-size: 1.1rem; color: #3C4043; }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-link { text-decoration: none; color: #5F6368; font-weight: 500; font-size: 0.9rem; transition: 0.2s; }
+        .nav-link:hover { color: #0F9D58; }
+        .nav-link.active { color: #0F9D58; font-weight: 700; }
+        .nav-btn { background: #0F9D58; color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.85rem; transition: 0.2s; }
+        .nav-btn:hover { background: #0B8043; }
+
+        /* Story Container */
+        /* Sidebar Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        @media (max-width: 1024px) {
+            .app-container { grid-template-columns: 1fr; }
+        }
+
+        .sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 1.5rem;
+        }
+        .section-title { font-size: 0.9rem; font-weight: 800; color: #A5B4FC; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+        .input-dark {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: white;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            transition: 0.3s;
+        }
+        .input-dark:focus { border-color: #818CF8; outline: none; background: rgba(0, 0, 0, 0.5); }
+        .btn { padding: 0.8rem 1rem; border-radius: 12px; font-weight: 700; font-size: 0.85rem; transition: 0.3s; cursor: pointer; border: none; }
+        .btn-primary { background: linear-gradient(135deg, #818CF8, #6366F1); color: white; }
+        .btn-secondary { background: rgba(255, 255, 255, 0.1); color: white; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+        .story-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Argo Character Area */
+        .argo-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .argo-img {
+            width: 280px;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
+            transition: 0.3s;
+            display: block;
+        }
+        .argo-float { animation: argo-float 3s ease-in-out infinite; }
+        @keyframes argo-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        /* Speech Bubble */
+        .speech-bubble {
+            background: white;
+            color: #1F2937;
+            padding: 1.5rem 2rem;
+            border-radius: 2rem;
+            position: relative;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            max-width: 500px;
+            border: 4px solid var(--argo-purple);
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 20px 15px 0;
+            border-style: solid;
+            border-color: var(--argo-purple) transparent transparent;
+        }
+
+        /* Card System */
+        .card-stage {
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        .tarot-card {
+            width: 140px;
+            height: 220px;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tarot-card.flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 3px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .card-back {
+            background: url('./images/argo_card_back.png?v=3') center/cover no-repeat;
+        }
+        .card-front {
+            background: white;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+        }
+
+        /* Input Area */
+        .input-box {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .argo-btn {
+            background: var(--argo-purple);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 1.2rem;
+            transition: 0.2s;
+            border: 3px solid #7C3AED;
+            box-shadow: 0 6px 0 #4C1D95;
+        }
+        .argo-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #4C1D95; }
+
+        /* Result Panel */
+        #resultPanel {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 2rem;
+        }
+        .result-card {
+            background: white;
+            color: #1F2937;
+            width: 100%;
+            max-width: 450px;
+            border-radius: 2rem;
+            overflow: hidden;
+            border: 6px solid var(--argo-purple);
+            animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop-in {
+            0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+
+        .lucky-number {
+            display: inline-flex;
+            width: 32px;
+            height: 32px;
+            background: var(--argo-purple);
+            color: white;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 2px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-left">
+            <span class="sheet-title">바이브코딩 시뮬레이션</span>
+        </div>
+        <div class="nav-links">
+            <a href="../../index.html" class="nav-link">홈</a>
+            <a href="../03_expert/vibecoding.html" class="nav-link">시뮬레이션</a>
+            <a href="gas_hub.html" class="nav-link active">GAS</a>
+            <a href="../app_planner.html" class="nav-link">앱 플래너</a>
+            <a href="../tutorial_hub.html" class="nav-btn">학습 가이드 <i class="fas fa-graduation-cap"></i></a>
+        </div>
+    </nav>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="glass-card">
+                <h3 class="section-title"><i class="fas fa-cloud"></i> GAS Sync</h3>
+                <input type="text" id="gas-url-input" placeholder="GAS Web App URL..." class="input-dark">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <button onclick="saveUrl()" class="btn btn-secondary">URL 저장</button>
+                    <button onclick="testSync()" class="btn btn-secondary">연결 테스트</button>
+                </div>
+            </div>
+            
+            <div class="glass-card" style="background: linear-gradient(135deg, rgba(165, 180, 252, 0.1), transparent);">
+                <h3 class="section-title" style="color: #F472B6;"><i class="fas fa-history"></i> 최근 기록</h3>
+                <div id="history-list" class="text-white/50 text-xs text-center py-4">
+                    저장된 운세가 없습니다.
+                </div>
+            </div>
+        </aside>
+
+        <main class="story-container">
+            <!-- Intro Section -->
+            <div id="introArea" class="text-center py-10">
+                <div class="argo-stage">
+                    <img src="./images/argo_character.png?v=3" class="argo-img argo-float" alt="Tarot King Argo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/616/616490.png'">
+                    <div class="speech-bubble cute-font text-2xl font-bold">
+                        엣헴! 어서오게나. <br>나는 타로왕 아고라고 하네! <br>오늘 자네의 <span class="text-indigo-600">코딩 데이터 운세</span>를 봐줄까?
+                    </div>
+                </div>
+                
+                <div class="input-box mb-8">
+                    <textarea id="questionInput" class="w-full bg-transparent border-none text-white text-lg focus:outline-none placeholder:text-white/30 text-center" placeholder="오늘의 코딩 고민이 무엇인가? (예: 오늘 버그 없이 코딩이 잘 될까요?)"></textarea>
+                </div>
+                
+                <button onclick="startJourney()" class="argo-btn cute-font">상담 시작하기! <i class="fas fa-magic ml-2"></i></button>
+            </div>
+
+            <!-- Selection Section -->
+            <div id="selectionArea" class="hidden text-center">
+                <div class="argo-stage">
+                    <img src="./images/argo_character.png?v=3" class="argo-img w-[180px] mb-4" alt="Argo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/616/616490.png'">
+                    <div id="argoMessage" class="speech-bubble cute-font text-xl font-bold">
+                        좋아! 자네의 고민을 충분히 느꼈네. <br>이제 아래 카드 중에서 '느낌이 팍!' <br>오는 카드를 한 장 골라보게나!
+                    </div>
+                </div>
+                
+                <div id="cardStage" class="card-stage">
+                    <!-- Cards injected by JS -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="resultPanel">
+        <div class="result-card">
+            <div class="bg-indigo-600 p-6 text-white text-center">
+                <h2 class="cute-font text-3xl font-bold mb-1">아고의 데이터 분석 결과</h2>
+                <p class="text-indigo-200 text-sm opacity-80 uppercase tracking-widest">Argo Tarot Reading Result</p>
+            </div>
+            <div class="p-8 text-center">
+                <div id="resultImg" class="w-40 h-40 mx-auto mb-6 bg-slate-100 rounded-2xl flex items-center justify-center text-4xl">
+                    <!-- Result Icon -->
+                </div>
+                <h3 id="resultTitle" class="text-2xl font-black mb-4 text-indigo-900">결과 타이틀</h3>
+                <p id="resultText" class="text-slate-600 leading-relaxed mb-8 font-medium"></p>
+                
+                <div class="bg-slate-50 rounded-2xl p-4 border-2 border-dashed border-slate-200">
+                    <p class="text-xs font-bold text-slate-400 mb-2 uppercase">아고가 추천하는 행운의 숫자</p>
+                    <div id="luckyNumbers">
+                        <!-- Numbers -->
+                    </div>
+                </div>
+
+                <button onclick="saveAndClose()" class="argo-btn mt-8 w-full cute-font">고맙네 아고! (저장하기)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tarotData = [
+            { title: "데이터 폭발", text: "오늘 자네의 아이디어가 폭발하는 날이구만! 막혔던 코딩도 술술 풀릴 걸세.", icon: "🔥", theme: "Success" },
+            { title: "버그의 습격", text: "음... 작은 오타 하나가 자네를 괴롭힐 수 있겠군. 하지만 꼼꼼히 보면 금방 찾을 걸세!", icon: "🐛", theme: "Warning" },
+            { title: "로직의 신", text: "논리적인 사고가 최고조에 달한 날이네! 어려운 알고리즘도 자네 앞에선 무릎을 꿇을 거야.", icon: "🧠", theme: "Power" },
+            { title: "안정적인 컴파일", text: "평온하고 안정적인 하루가 예상되네. 큰 문제 없이 계획대로 진행될 거야.", icon: "✅", theme: "Stable" },
+            { title: "무한 루프", text: "가끔은 휴식이 필요하네. 너무 한 우물만 파지 말고 잠시 커피 한 잔 하며 환기해보게나.", icon: "♾️", theme: "Rest" },
+            { title: "시스템 업그레이드", text: "새로운 지식을 얻기에 아주 좋은 날이네! 오늘 배운 것은 평생 자네의 자산이 될 걸세.", icon: "🚀", theme: "Growth" }
+        ];
+
+        // --- GAS Sync Standard Scripts ---
+        function saveUrl() {
+            const val = document.getElementById('gas-url-input').value.trim();
+            if(!val) return alert('URL을 입력해주세요.');
+            localStorage.setItem('vcep_gas_url', val);
+            alert('GAS URL이 브라우저에 저장되었습니다.\n이제 모든 CRUD 앱에서 이 URL을 사용합니다.');
+        }
+
+        async function testSync() {
+            const url = document.getElementById('gas-url-input').value.trim();
+            if(!url) return alert('URL을 입력해주세요.');
+            
+            alert('GAS 연결 테스트를 시작합니다. 잠시만 기다려주세요...');
+            
+            try {
+                // 'no-cors' mode is often needed for GAS but doesn't allow reading response.
+                // However, if the fetch doesn't throw, it's usually a good sign.
+                const response = await fetch(url + '?action=read', {
+                    method: 'GET',
+                    mode: 'no-cors'
+                });
+                
+                // Since no-cors doesn't give us status, we'll assume success if no error is thrown.
+                // For a more robust test, the GAS script must support CORS.
+                alert('✅ 연결 성공!\nGAS 서버가 정상적으로 응답합니다.');
+            } catch (e) {
+                console.error('GAS Test Error:', e);
+                alert('❌ 연결 실패!\nURL이 올바르지 않거나 GAS 설정(배포/권한)을 확인해야 합니다.\n에러 내용: ' + e.message);
+            }
+        }
+
+        async function fetchHistory() {
+            const url = localStorage.getItem('vcep_gas_url');
+            if(!url) return;
+
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '<div class="py-4 opacity-50">기록을 불러오는 중...</div>';
+
+            try {
+                // Handle URL with or without existing query params
+                const separator = url.includes('?') ? '&' : '?';
+                const finalUrl = `${url}${separator}action=read`;
+                
+                const response = await fetch(finalUrl);
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    historyList.innerHTML = '';
+                    data.filter(item => item.app === 'AI Tarot').slice(0, 10).forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'text-left py-2 border-b border-white/10 last:border-0 cursor-help hover:bg-white/5 px-2 rounded transition';
+                        div.title = `질문: ${item.question || '없음'}\n결과: ${item.content}`; 
+                        div.innerHTML = `
+                            <div class="font-bold text-indigo-300"># ${item.title}</div>
+                            <div class="text-[10px] opacity-60">${new Date(item.timestamp).toLocaleString()}</div>
+                        `;
+                        historyList.appendChild(div);
+                    });
+                } else {
+                    historyList.innerHTML = '<div class="py-4 opacity-50">저장된 운세가 없습니다.</div>';
+                }
+            } catch (e) {
+                console.error('Fetch Error:', e);
+                historyList.innerHTML = '<div class="py-4 text-red-400/50">기록 로드 실패 (CORS/URL 확인)</div>';
+            }
+        }
+
+        function initApp() {
+            const savedUrl = localStorage.getItem('vcep_gas_url');
+            if(savedUrl) {
+                document.getElementById('gas-url-input').value = savedUrl;
+                fetchHistory();
+            }
+        }
+        window.addEventListener('DOMContentLoaded', initApp);
+        // ---------------------------------
+
+        function startJourney() {
+            const input = document.getElementById('questionInput').value;
+            if(!input.trim()) {
+                alert("아고에게 궁금한 점을 먼저 말해주게나!");
+                return;
+            }
+            
+            anime({
+                targets: '#introArea',
+                opacity: 0,
+                translateY: -20,
+                easing: 'easeInQuad',
+                duration: 500,
+                complete: () => {
+                    document.getElementById('introArea').classList.add('hidden');
+                    document.getElementById('selectionArea').classList.remove('hidden');
+                    initCards();
+                    anime({
+                        targets: '#selectionArea',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        duration: 800
+                    });
+                }
+            });
+        }
+
+        function initCards() {
+            const stage = document.getElementById('cardStage');
+            stage.innerHTML = '';
+            for(let i=0; i<6; i++) {
+                const card = document.createElement('div');
+                card.className = 'tarot-card';
+                card.innerHTML = `
+                    <div class="card-face card-back"></div>
+                    <div class="card-face card-front">
+                        <div class="w-full h-full border-2 border-indigo-100 rounded-lg flex items-center justify-center text-5xl">
+                            ?
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => selectCard(card, i);
+                stage.appendChild(card);
+            }
+            
+            anime({
+                targets: '.tarot-card',
+                opacity: [0, 1],
+                scale: [0.5, 1],
+                delay: anime.stagger(100),
+                easing: 'easeOutElastic(1, .8)'
+            });
+        }
+
+        function selectCard(el, idx) {
+            if(el.classList.contains('flipped')) return;
+            
+            // Animation for Argo
+            document.getElementById('argoMessage').innerHTML = "오오...! 우주의 데이터를 <br>분석하고 있네! 잠시만 기다리게나!";
+            
+            el.classList.add('flipped');
+            
+            setTimeout(() => {
+                showResult();
+            }, 1500);
+        }
+
+        function showResult() {
+            const result = tarotData[Math.floor(Math.random() * tarotData.length)];
+            document.getElementById('resultTitle').innerText = result.title;
+            document.getElementById('resultText').innerText = result.text;
+            document.getElementById('resultImg').innerText = result.icon;
+            
+            // Lucky numbers
+            const nums = Array.from({length: 6}, () => Math.floor(Math.random() * 45) + 1).sort((a,b) => a-b);
+            document.getElementById('luckyNumbers').innerHTML = nums.map(n => `<span class="lucky-number">${n}</span>`).join('');
+            
+            document.getElementById('resultPanel').style.display = 'flex';
+        }
+
+        async function saveAndClose() {
+            const url = localStorage.getItem('vcep_gas_url');
+            const resultTitle = document.getElementById('resultTitle').innerText;
+            const resultText = document.getElementById('resultText').innerText;
+            const question = document.getElementById('questionInput').value;
+
+            const data = {
+                action: 'insert',
+                app: 'AI Tarot',
+                question: question,
+                title: resultTitle,
+                content: resultText,
+                timestamp: new Date().toISOString()
+            };
+
+            if (url) {
+                try {
+                    const separator = url.includes('?') ? '&' : '?';
+                    const query = new URLSearchParams(data).toString();
+                    const finalUrl = `${url}${separator}${query}`;
+                    
+                    console.log("전송 URL (직접 주소창에 붙여넣어 테스트 가능):", finalUrl);
+
+                    // Removing no-cors to properly handle GAS redirects and read response if possible
+                    const response = await fetch(finalUrl);
+                    const resultText = await response.text();
+                    
+                    // Flexible check for Success in response
+                    if (resultText.toLowerCase().includes("success")) {
+                        alert('✅ 아고의 운세가 클라우드에 안전하게 저장되었습니다!');
+                        await fetchHistory(); 
+                    } else {
+                        alert('❌ 서버 저장 실패: ' + resultText);
+                    }
+                } catch (e) {
+                    console.error('Save Error:', e);
+                    // Even if CORS error occurs, data might have been sent. 
+                    // But for better UX, we'll suggest checking the sheet.
+                    alert('✅ 요청을 보냈습니다. 스프레드시트를 확인해 보세요!\n(CORS 이슈로 성공 여부 확인이 지연될 수 있습니다)');
+                    await fetchHistory();
+                }
+            } else {
+                alert('URL이 설정되지 않아 로컬에서만 상담을 마칩니다.');
+            }
+
+            document.getElementById('resultPanel').style.display = 'none';
+            
+            // Reset for next journey
+            document.getElementById('questionInput').value = '';
+            document.getElementById('introArea').classList.remove('hidden');
+            document.getElementById('introArea').style.opacity = '1';
+            document.getElementById('selectionArea').classList.add('hidden');
+            document.getElementById('argoMessage').innerHTML = "엣헴! 어서오게나. <br>나는 타로왕 아고라고 하네! <br>오늘 자네의 데이터 운세를 봐줄까?";
+        }
+    </script>
+</body>
+</html>

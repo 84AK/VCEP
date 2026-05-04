@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>폰 안 보기 타이머 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --bg: #fffbeb;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background: var(--card);
+            border-radius: 40px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(245, 158, 11, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        .timer-display {
+            font-family: 'Outfit', sans-serif;
+            font-size: 5rem;
+            font-weight: 900;
+            color: var(--text);
+            margin: 40px 0;
+            letter-spacing: -2px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border-radius: 20px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-start {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-stop {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-msg {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #64748b;
+            min-height: 1.2rem;
+        }
+
+        /* 시간 선택기 CSS 추가 */
+        .time-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .time-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+
+        .time-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #fef3c7;
+        }
+
+        .time-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .reward-badge {
+            margin-top: 20px;
+            padding: 10px;
+            background: #fef3c7;
+            border-radius: 12px;
+            color: #92400e;
+            font-weight: 600;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>⏳ 폰 안 보기 타이머</h1>
+
+        <!-- 시간 선택 UI 추가 -->
+        <div class="time-selector" id="timeSelector">
+            <button class="time-btn" onclick="setTime(10)">10분</button>
+            <button class="time-btn active" onclick="setTime(25)">25분</button>
+            <button class="time-btn" onclick="setTime(50)">50분</button>
+        </div>
+
+        <div class="timer-display" id="display">25:00</div>
+
+        <div class="controls">
+            <button class="btn btn-start" id="startBtn" onclick="toggleTimer()">시작하기</button>
+            <button class="btn btn-stop" style="display:none;" id="stopBtn" onclick="resetTimer()">포기하기</button>
+        </div>
+
+        <div class="status-msg" id="status">폰을 뒤집어 놓으면 더 집중할 수 있어요!</div>
+
+        <div class="reward-badge" id="reward">🎉 축하합니다! 50 포인트를 획득했어요!</div>
+    </div>
+
+    <script>
+        // --- VCEP 통합 싱크 시스템 (Iframe 전용) ---
+        (function() {
+            const originalSetItem = localStorage.setItem;
+            localStorage.setItem = function(key, value) {
+                originalSetItem.apply(this, arguments);
+                if(key.startsWith('vcep_')) {
+                    try {
+                        window.parent.postMessage({
+                            type: 'vcep_save',
+                            category: key.replace('vcep_', ''),
+                            data: JSON.parse(value)
+                        }, '*');
+                    } catch(e) { console.warn("Parent sync failed", e); }
+                }
+            };
+        })();
+
+        let timerInterval;
+        const localUserId = localStorage.getItem('vcep_userId') || "익명유저";
+
+        let timeLeft = 25 * 60;
+        let timerId = null;
+        let isRunning = false;
+        let selectedMinutes = 25; // 추가: 선택된 시간 저장
+
+        // 시간 선택 함수
+        function setTime(minutes) {
+            if (isRunning) return; // 실행 중엔 변경 불가
+            selectedMinutes = minutes;
+            timeLeft = selectedMinutes * 60;
+            updateDisplay();
+            
+            // UI 업데이트
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.innerText) === minutes) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function updateDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('display').innerText =
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function toggleTimer() {
+            if (!isRunning) {
+                startTimer();
+            } else {
+                // 일시정지 (필요 시 구현)
+            }
+        }
+
+        function startTimer() {
+            isRunning = true;
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'block';
+            document.getElementById('timeSelector').style.display = 'none'; // 타이머 실행 중 숨기기
+            document.getElementById('status').innerText = '집중 중... 화면을 끄고 기다려주세요.';
+            document.getElementById('reward').style.display = 'none';
+
+            timerId = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                if (timeLeft <= 0) {
+                    completeTimer();
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            if (confirm('정말 포기하시겠어요? 기록이 남지 않습니다.')) {
+                clearInterval(timerId);
+                isRunning = false;
+                timeLeft = selectedMinutes * 60;
+                updateDisplay();
+                document.getElementById('startBtn').style.display = 'block';
+                document.getElementById('stopBtn').style.display = 'none';
+                document.getElementById('timeSelector').style.display = 'flex'; // 시간 선택기 다시 표시
+                document.getElementById('status').innerText = '다시 도전해 보세요!';
+            }
+        }
+
+        async function completeTimer() {
+            clearInterval(timerId);
+            isRunning = false;
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('timeSelector').style.display = 'flex';
+            
+            // 시간에 비례하여 포인트 계산 (1분당 2포인트)
+            const earnedPoints = selectedMinutes * 2;
+            
+            document.getElementById('status').innerText = '목표 달성! 기록이 저장되었습니다.';
+            document.getElementById('reward').innerText = `🎉 축하합니다! ${earnedPoints} 포인트를 획득했어요!`;
+            document.getElementById('reward').style.display = 'block';
+
+            const data = { duration: selectedMinutes, status: 'completed', points: earnedPoints };
+
+            // 로컬 스토리지 백업
+            let localData = JSON.parse(localStorage.getItem('vcep_nophone_timer')) || [];
+            localData.push({ date: new Date().toISOString(), payload: data });
+            localStorage.setItem('vcep_nophone_timer', JSON.stringify(localData));
+        }
+
+        updateDisplay();
+    </script>
+
+</body>
+</html>

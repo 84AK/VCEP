@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 실전 시뮬레이터 — 밤샘 개발 실화</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a12;
+  --surface: #12121e;
+  --card: #1a1a2e;
+  --border: #2a2a40;
+  --accent: #4fc3f7;
+  --green: #69db7c;
+  --red: #ff6b6b;
+  --yellow: #ffd43b;
+  --purple: #9775fa;
+  --text: #c9d1d9;
+  --muted: #6e7681;
+  --bright: #ffffff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOP BAR ── */
+.topbar{height:48px;background:#0d0d1a;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:16px;flex-shrink:0;position:relative;z-index:200}
+.tb-clock{font-family:'Fira Code';font-size:13px;color:var(--accent);letter-spacing:1px;min-width:68px}
+.tb-title{font-size:12px;color:var(--muted);flex-shrink:0}
+.tb-deadline{font-size:12px;font-weight:700;color:var(--yellow);display:flex;align-items:center;gap:5px;flex-shrink:0}
+.tb-deadline.urgent{color:var(--red);animation:urgentPulse 1s infinite}
+@keyframes urgentPulse{0%,100%{opacity:1}50%{opacity:.5}}
+.step-bar{flex:1;display:flex;align-items:center;gap:0;margin:0 8px}
+.sdot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--muted);flex-shrink:0;transition:.3s;cursor:default}
+.sdot.done{border-color:var(--green);background:rgba(105,219,124,.1);color:var(--green)}
+.sdot.active{border-color:var(--accent);background:rgba(79,195,247,.12);color:var(--accent);box-shadow:0 0 10px rgba(79,195,247,.35)}
+.sline{flex:1;height:2px;background:var(--border);transition:.3s}
+.sline.done{background:var(--green)}
+.aiden-state{display:flex;align-items:center;gap:6px;margin-left:8px;flex-shrink:0}
+.aiden-emoji{font-size:18px;transition:.3s}
+.aiden-mood{font-size:12px;color:var(--muted);max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── MAIN 3-COL ── */
+.main{flex:1;display:flex;overflow:hidden}
+
+/* ── LEFT: STORY + CHAT ── */
+.col-story{width:380px;min-width:380px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.story-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.aiden-avatar-big{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#4fc3f7,#9775fa);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:.3s}
+.aiden-name-wrap .aiden-nm{font-size:14px;font-weight:700;color:var(--bright)}
+.aiden-name-wrap .aiden-sub{font-size:11px;color:var(--muted)}
+.pat-wrap{margin-left:auto;display:flex;align-items:center;gap:4px}
+.pat-lbl{font-size:11px;color:var(--muted)}
+.pat-icons{display:flex;gap:1px}
+.pat-icon{font-size:11px;transition:.3s}
+.pat-icon.empty{filter:grayscale(1);opacity:.2}
+
+.chat-area{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.chat-area::-webkit-scrollbar{width:3px}
+.chat-area::-webkit-scrollbar-thumb{background:var(--border)}
+.msg-wrap{display:flex;flex-direction:column;gap:2px}
+.msg-wrap.usr{align-items:flex-end}
+.msg-lbl{font-size:11px;color:var(--muted);padding:0 3px}
+.msg{padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.75;max-width:92%;animation:msgIn .2s ease-out}
+@keyframes msgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.msg.ai{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:3px}
+.msg.usr{background:#1565c0;color:#fff;border-bottom-right-radius:3px}
+.msg.sys{background:rgba(255,212,59,.06);border:1px solid rgba(255,212,59,.2);color:var(--yellow);font-size:13px;text-align:center;align-self:center;border-radius:6px}
+
+.typing-ind{display:flex;align-items:center;gap:4px;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:12px;border-bottom-left-radius:3px;align-self:flex-start}
+.td{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:tdBounce 1.2s infinite}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+@keyframes tdBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+.choices-wrap{display:flex;flex-direction:column;gap:6px}
+.cbtn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:13px;text-align:left;cursor:pointer;transition:.2s;font-family:'Inter';line-height:1.5}
+.cbtn:hover{background:#1e1e38;border-color:var(--accent);color:var(--accent)}
+.cbtn.sel{opacity:.35;pointer-events:none}
+
+.chat-input{padding:10px 12px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.ibox{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:7px;font-size:14px;outline:none;margin-bottom:6px;min-height:55px;resize:none;font-family:'Inter';transition:border-color .2s}
+.ibox:focus{border-color:var(--accent)}
+.ibox::placeholder{color:var(--muted)}
+.irow{display:flex;justify-content:space-between;align-items:center}
+.hbtn{color:var(--yellow);background:rgba(255,212,59,.07);border:1px solid rgba(255,212,59,.2);padding:7px 13px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
+.hbtn:hover{background:rgba(255,212,59,.15)}
+.sbtn{background:var(--accent);color:#000;border:none;padding:7px 16px;border-radius:5px;font-weight:700;font-size:13px;cursor:pointer;transition:.2s}
+.sbtn:hover{filter:brightness(1.1)}
+
+/* ── CENTER: CODE EDITOR ── */
+.col-editor{flex:1;background:#0d1117;border-right:1px solid var(--border);display:flex;flex-direction:column}
+.editor-tabs{height:32px;background:#161b22;display:flex;align-items:center;padding:0 12px;gap:0;border-bottom:1px solid var(--border);flex-shrink:0}
+.etab{padding:7px 14px;font-size:13px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
+.etab.active{color:var(--text);border-bottom-color:var(--accent)}
+.editor-body{flex:1;overflow:auto;padding:14px 16px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;position:relative}
+.editor-body::-webkit-scrollbar{width:4px}
+.editor-body::-webkit-scrollbar-thumb{background:var(--border)}
+.code-line{font-family:'Fira Code';font-size:13px;line-height:1.75;white-space:pre;color:#8b949e}
+.code-line.html-tag{color:#7ee787}
+.code-line.css-prop{color:#79c0ff}
+.code-line.css-val{color:#ffa657}
+.code-line.js-kw{color:#ff7b72}
+.code-line.js-fn{color:#d2a8ff}
+.code-line.comment{color:#3d444d}
+.code-line.error-line{color:var(--red);background:rgba(255,107,107,.08);border-left:3px solid var(--red);padding-left:8px;margin-left:-8px}
+.code-line.fixed-line{color:var(--green);background:rgba(105,219,124,.05);border-left:3px solid var(--green);padding-left:8px;margin-left:-8px}
+.cursor{display:inline-block;width:2px;height:13px;background:var(--accent);animation:blink .7s infinite;vertical-align:text-bottom}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.build-bar-wrap{padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0;display:none}
+.build-bar-wrap.show{display:block}
+.build-label{font-size:12px;color:var(--muted);margin-bottom:6px;font-family:'Fira Code'}
+.build-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.build-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:2px;transition:width .15s}
+
+/* ── RIGHT: APP PREVIEW ── */
+.col-preview{width:400px;min-width:400px;background:#080810;display:flex;flex-direction:column}
+.browser-bar{height:36px;background:#1a1a2e;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0}
+.bb-dots{display:flex;gap:5px}
+.bb-dot{width:12px;height:12px;border-radius:50%}
+.bb-url{flex:1;background:var(--bg);border-radius:5px;padding:4px 10px;font-size:11px;font-family:'Fira Code';color:var(--muted)}
+.canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:.3s}
+.canvas.error-bg{background:rgba(255,107,107,.03)}
+
+.empty-st{text-align:center;color:var(--border)}
+.empty-st div:first-child{font-size:2rem;margin-bottom:8px}
+.empty-st div:last-child{font-size:11px}
+
+/* POMODORO APP */
+.pomo{display:none;flex-direction:column;align-items:center;width:270px;background:#0f1628;border-radius:24px;padding:28px 24px;gap:18px;border:1px solid rgba(255,255,255,.07);box-shadow:0 24px 50px rgba(0,0,0,.7);position:relative;z-index:10;transition:.4s}
+.pomo.show{display:flex;animation:pomoIn .4s ease-out}
+@keyframes pomoIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.pomo-title{font-size:12px;font-weight:700;letter-spacing:2.5px;color:rgba(255,255,255,.35);text-transform:uppercase;font-family:'Outfit'}
+.pomo-modes{display:none;gap:8px}
+.pomo-modes.show{display:flex}
+.mdbtn{padding:6px 16px;border-radius:18px;font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.4);cursor:pointer;transition:.2s}
+.mdbtn.active{background:rgba(79,195,247,.15);border-color:var(--accent);color:var(--accent)}
+.timer-wrap{position:relative;width:185px;height:185px;display:flex;align-items:center;justify-content:center;transition:.3s}
+.pomo.basic .ring-svg{display:none}
+.pomo.basic .timer-wrap{width:auto;height:auto}
+/* broken: svg overflows */
+.pomo.broken .ring-svg{width:290px;height:290px;top:-52px;left:-52px}
+.pomo.broken{overflow:visible}
+.ring-svg{position:absolute;top:0;left:0;width:185px;height:185px;transform:rotate(-90deg);transition:width .4s,height .4s,top .4s,left .4s}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.07);stroke-width:8}
+.ring-fg{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 1s linear}
+.timer-num{font-family:'Outfit';font-size:42px;font-weight:800;color:#fff;position:relative;z-index:1;letter-spacing:-1px}
+.pomo.basic .timer-num{font-size:54px}
+.pomo-btns{display:flex;gap:14px;align-items:center}
+.pbtn{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.pbtn:hover{background:rgba(255,255,255,.1)}
+.pbtn.play{width:58px;height:58px;background:var(--accent);color:#000;border:none;font-size:21px}
+.pbtn.play:hover{filter:brightness(1.1)}
+
+/* error overlay on canvas */
+.err-badge{display:none;position:absolute;bottom:6px;left:6px;right:6px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.4);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--red);font-family:'Fira Code';z-index:30}
+.err-badge.show{display:block;animation:flash .3s}
+@keyframes flash{from{opacity:0}to{opacity:1}}
+
+/* capture */
+.viewfinder{position:absolute;border:2px solid var(--accent);background:rgba(79,195,247,.06);z-index:2000;display:none;pointer-events:none;border-radius:2px}
+.cap-hint{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:4px 12px;border-radius:16px;font-size:10px;font-weight:700;display:none;z-index:2001;white-space:nowrap}
+.cap-hint.show{display:block}
+
+/* ── TERMINAL ── */
+.terminal{height:210px;background:#050508;border-top:2px solid var(--border);padding:12px 16px;font-family:'Fira Code';font-size:13.5px;overflow-y:auto;color:#4a5568;scrollbar-width:thin;scrollbar-color:#1a1a2e transparent;flex-shrink:0}
+.terminal::-webkit-scrollbar{width:4px}
+.terminal::-webkit-scrollbar-thumb{background:#1a1a2e}
+.tl{padding:3px 0;line-height:1.8}
+.tl.e{color:#fc8181;font-weight:600}.tl.s{color:#68d391;font-weight:500}.tl.i{color:#63b3ed}.tl.w{color:#f6ad55;font-weight:500}
+
+/* ── SHAKE / FLASH ── */
+@keyframes shake{0%,100%{transform:translateX(0)}15%,45%,75%{transform:translateX(-5px)}30%,60%,90%{transform:translateX(5px)}}
+.shake{animation:shake .5s ease-in-out}
+@keyframes redFlash{0%,100%{background:var(--bg)}50%{background:rgba(255,107,107,.12)}}
+.red-flash{animation:redFlash .4s ease-in-out}
+
+/* ── KAKAO NOTIFICATION ── */
+.kakao-notif{position:fixed;top:56px;right:14px;width:280px;border-radius:14px;overflow:hidden;box-shadow:0 16px 50px rgba(0,0,0,.6);z-index:9999;display:none;animation:slideInR .4s cubic-bezier(.34,1.56,.64,1)}
+.kakao-notif.show{display:block}
+@keyframes slideInR{from{opacity:0;transform:translateX(120px) scale(.9)}to{opacity:1;transform:translateX(0) scale(1)}}
+.kn-header{background:#FEE500;padding:10px 12px;display:flex;align-items:center;gap:8px}
+.kn-av{width:30px;height:30px;border-radius:50%;background:#3C1E1E;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.kn-from{font-size:12px;font-weight:700;color:#000}
+.kn-app{font-size:9px;color:#555}
+.kn-body{background:#f5f5f5;padding:12px}
+.kn-bubble{background:#FEE500;color:#000;padding:8px 11px;border-radius:0 10px 10px 10px;font-size:12px;line-height:1.5;margin-bottom:5px}
+.kn-time{font-size:9px;color:#999}
+.kn-close{width:calc(100% - 24px);margin:0 12px 12px;padding:8px;background:#000;color:#FEE500;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer}
+
+/* ── LEARN CARD ── */
+.learn-ov{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:8000;display:none;align-items:center;justify-content:center;padding:20px}
+.learn-ov.show{display:flex}
+.learn-card{background:#111827;border:1px solid rgba(79,195,247,.3);border-radius:22px;padding:32px 36px;max-width:580px;width:100%;animation:cardPop .4s cubic-bezier(.34,1.56,.64,1);max-height:90vh;overflow-y:auto}
+@keyframes cardPop{from{opacity:0;transform:scale(.82) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.lc-type{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--accent);margin-bottom:8px;text-transform:uppercase}
+.lc-title{font-family:'Outfit';font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:12px}
+.lc-what{background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:10px;padding:12px 16px;font-size:13px;color:#fca5a5;line-height:1.75;margin-bottom:12px}
+.lc-how{background:rgba(105,219,124,.08);border:1px solid rgba(105,219,124,.2);border-radius:10px;padding:12px 16px;font-size:13px;color:#86efac;line-height:1.75;margin-bottom:18px}
+/* ── 바이브코딩 팁 박스 ── */
+.lc-tip{background:rgba(255,212,59,.06);border:1px solid rgba(255,212,59,.3);border-left:4px solid var(--yellow);border-radius:10px;padding:18px 20px;margin-bottom:20px}
+.lc-tip .tip-head{font-size:11px;font-weight:800;color:var(--yellow);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.lc-tip .tip-desc{font-size:13.5px;color:#e2e8f0;line-height:1.85;margin-bottom:14px}
+.lc-tip .tip-prompts-title{font-size:11px;font-weight:700;color:rgba(255,212,59,.7);margin-bottom:8px}
+.lc-tip .tip-prompt{background:rgba(0,0,0,.5);border:1px solid rgba(79,195,247,.2);border-radius:8px;padding:11px 14px;font-family:'Fira Code';font-size:12px;color:var(--accent);line-height:1.7;margin-bottom:8px;position:relative}
+.lc-tip .tip-prompt::before{content:'💬';position:absolute;top:10px;right:12px;font-size:14px;opacity:.5}
+.lc-tip .tip-prompt:last-child{margin-bottom:0}
+.lc-btn{background:var(--accent);color:#000;border:none;padding:12px 22px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;width:100%}
+
+/* ── ACHIEVEMENT ── */
+.ach-ov{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9000;display:none;align-items:center;justify-content:center}
+.ach-ov.show{display:flex}
+.ach-card{background:linear-gradient(135deg,#0f0c29,#1a1340,#0d1117);border:1px solid rgba(79,195,247,.2);border-radius:22px;padding:40px;max-width:480px;width:90%;text-align:center;animation:cardPop .5s cubic-bezier(.34,1.56,.64,1)}
+.ach-emoji{font-size:3.5rem;margin-bottom:14px}
+.ach-title{font-family:'Outfit';font-size:1.8rem;font-weight:800;color:#fff;margin-bottom:6px}
+.ach-sub{color:var(--muted);font-size:12px;margin-bottom:24px}
+.ach-stats{display:flex;justify-content:center;gap:28px;margin-bottom:24px}
+.ach-n{font-family:'Outfit';font-size:1.9rem;font-weight:800;color:var(--accent)}
+.ach-l{font-size:10px;color:var(--muted);margin-top:2px}
+.ach-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:24px}
+.atag{background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.2);color:var(--accent);padding:4px 11px;border-radius:16px;font-size:10px;font-weight:600}
+.ach-btn{background:var(--accent);color:#000;border:none;padding:12px 28px;border-radius:11px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Outfit'}
+
+/* confetti */
+.confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;animation:confettiFall 2s ease-in forwards;pointer-events:none;z-index:9999;top:-10px}
+@keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+</style>
+<style>
+    /* GNB Standard Style */
+    .vcep-nav {
+      background: rgba(255, 255, 255, 0.98);
+      padding: 0.8rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 5000;
+      border-bottom: 2px solid #ddd;
+      font-family: 'Inter', sans-serif;
+    }
+    .nav-logo { font-family: 'Outfit'; font-weight: 800; font-size: 1.5rem; color: #1565c0; text-decoration: none; }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-link { text-decoration: none; color: #555; font-weight: 600; font-size: 0.9rem; }
+    .nav-btn {
+      background: #1565c0;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body style="padding-top: 56px;">
+  <nav class="vcep-nav">
+      <a href="../../index.html" class="nav-logo">VCEP.</a>
+      <div class="nav-links">
+          <a href="../../index.html" class="nav-link">홈</a>
+          <a href="vibecoding.html" class="nav-link" style="color: #1565c0;">시뮬레이션</a>
+          <a href="../04_gas_crud/gas_hub.html" class="nav-link">GAS</a>
+          <a href="../app_planner.html" class="nav-link">앱 플래너</a>
+          <a href="../tutorial_hub.html" class="nav-btn">학습 가이드</a>
+      </div>
+  </nav>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="tb-clock" id="tb-clock">PM 9:14</div>
+  <div class="tb-title">🏢 스타트업 사무실 · 야근 중</div>
+  <div class="tb-deadline" id="tb-deadline">⏰ 데드라인까지 13:00:00</div>
+  <div class="step-bar" id="step-bar"></div>
+  <div class="aiden-state">
+    <div class="aiden-emoji" id="aiden-emoji">😴</div>
+    <div class="aiden-mood" id="aiden-mood">대기 중</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: STORY + CHAT -->
+  <div class="col-story">
+    <div class="story-header">
+      <div class="aiden-avatar-big" id="aiden-av">🤖</div>
+      <div class="aiden-name-wrap">
+        <div class="aiden-nm">AIDEN</div>
+        <div class="aiden-sub">AI 코딩 파트너</div>
+      </div>
+      <div class="pat-wrap">
+        <span class="pat-lbl">멘탈</span>
+        <div class="pat-icons" id="pat-icons">
+          <span class="pat-icon">❤️</span><span class="pat-icon">❤️</span><span class="pat-icon">❤️</span>
+        </div>
+      </div>
+    </div>
+    <div class="chat-area" id="chat-area"></div>
+    <div class="chat-input">
+      <textarea class="ibox" id="user-input" placeholder="AIDEN에게 지시하거나 상황을 설명하세요..."></textarea>
+      <div class="irow">
+        <button class="hbtn" onclick="showHint()">💡 힌트</button>
+        <button class="sbtn" onclick="handleSend()">전송 ↵</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: CODE EDITOR -->
+  <div class="col-editor">
+    <div class="editor-tabs" id="editor-tabs">
+      <div class="etab active">index.html</div>
+      <div class="etab">style.css</div>
+      <div class="etab">app.js</div>
+    </div>
+    <div class="editor-body" id="editor-body">
+      <div class="code-line comment">// AIDEN이 코딩을 시작하면 여기에 코드가 나타납니다</div>
+      <span class="cursor"></span>
+    </div>
+    <div class="build-bar-wrap" id="build-wrap">
+      <div class="build-label" id="build-label">$ vite build...</div>
+      <div class="build-bar"><div class="build-fill" id="build-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: APP PREVIEW -->
+  <div class="col-preview">
+    <div class="browser-bar">
+      <div class="bb-dots">
+        <div class="bb-dot" style="background:#ff5f56"></div>
+        <div class="bb-dot" style="background:#ffbd2e"></div>
+        <div class="bb-dot" style="background:#27c93f"></div>
+      </div>
+      <div class="bb-url" id="bb-url">about:blank</div>
+    </div>
+    <div class="canvas" id="canvas">
+      <div class="empty-st" id="empty-st">
+        <div>📄</div><div>코드를 기다리는 중...</div>
+      </div>
+      <div class="pomo" id="pomo">
+        <div class="pomo-title">FOCUS TIMER</div>
+        <div class="pomo-modes" id="pomo-modes">
+          <button class="mdbtn active" id="btn-work" onclick="setMode('work')">집중 25:00</button>
+          <button class="mdbtn" id="btn-break" onclick="setMode('break')">휴식 05:00</button>
+        </div>
+        <div class="timer-wrap" id="timer-wrap">
+          <svg class="ring-svg" id="ring-svg" viewBox="0 0 185 185">
+            <circle class="ring-bg" cx="92.5" cy="92.5" r="78"/>
+            <circle class="ring-fg" id="ring-fg" cx="92.5" cy="92.5" r="78" stroke-dasharray="490.1" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-num" id="timer-num">25:00</div>
+        </div>
+        <div class="pomo-btns">
+          <button class="pbtn" onclick="pomoReset()">↺</button>
+          <button class="pbtn play" id="play-btn" onclick="pomoPlay()">▶</button>
+          <button class="pbtn" onclick="pomoSkip()">⏭</button>
+        </div>
+      </div>
+      <div class="err-badge" id="err-badge"></div>
+      <div class="viewfinder" id="vf"></div>
+      <div class="cap-hint" id="cap-hint">📸 깨진 부위를 드래그하세요</div>
+    </div>
+    <div class="terminal" id="terminal">
+      <div class="tl" style="color:#1e2530">[터미널] 대기 중...</div>
+    </div>
+  </div>
+</div>
+
+<!-- KAKAO NOTIFICATION -->
+<div class="kakao-notif" id="kakao">
+  <div class="kn-header">
+    <div class="kn-av" id="kn-av">👔</div>
+    <div><div class="kn-from" id="kn-from">김팀장</div><div class="kn-app">카카오톡</div></div>
+  </div>
+  <div class="kn-body">
+    <div class="kn-bubble" id="kn-msg"></div>
+    <span class="kn-time" id="kn-time">오후 9:14</span>
+  </div>
+  <button class="kn-close" onclick="closeKakao()">확인</button>
+</div>
+
+<!-- LEARN CARD -->
+<div class="learn-ov" id="learn-ov">
+  <div class="learn-card">
+    <div class="lc-type" id="lc-type">💡 바이브코딩 TIP</div>
+    <div class="lc-title" id="lc-title"></div>
+    <div class="lc-what" id="lc-what"></div>
+    <div class="lc-how" id="lc-how"></div>
+    <div class="lc-tip" id="lc-tip"></div>
+    <button class="lc-btn" onclick="closeLearning()">알겠어요! 계속하기 →</button>
+  </div>
+</div>
+
+<!-- ACHIEVEMENT -->
+<div class="ach-ov" id="ach-ov">
+  <div class="ach-card">
+    <div class="ach-emoji">🏆</div>
+    <div class="ach-title">밤샘 개발 완성!</div>
+    <div class="ach-sub">포모도로 앱을 투자자 데모 전까지 납품했습니다 🎉</div>
+    <div class="ach-stats">
+      <div><div class="ach-n" id="ach-err">2</div><div class="ach-l">에러 해결</div></div>
+      <div><div class="ach-n">10</div><div class="ach-l">완성 단계</div></div>
+      <div><div class="ach-n" id="ach-score">A</div><div class="ach-l">협업 점수</div></div>
+    </div>
+    <div class="ach-tags">
+      <span class="atag">✅ 화면 깨짐 해결</span>
+      <span class="atag">✅ 타이머 폭주 해결</span>
+      <span class="atag">✅ 캡처 도구 활용</span>
+      <span class="atag">✅ 에러 원인 분석</span>
+      <span class="atag">✅ AI 지시 커뮤니케이션</span>
+    </div>
+    <button class="ach-btn" onclick="location.href='vibecoding.html'">트레이닝 센터로 돌아가기</button>
+  </div>
+</div>
+
+<script>
+/* ═══════ STATE ═══════ */
+const S = {
+  phase:0, patience:3, errFixed:0,
+  isCapturing:false,
+  pomoRunning:false, pomoTime:1500, pomoMax:1500, pomoMode:'work',
+  pomoRef:null, errIntervals:[],
+  jsErrCount:0, testsDone:0,
+  deadlineSecs: 13*3600,
+};
+
+const STEPS=['브리핑','기획','초안 빌드','디자인 요청','CSS 에러','에러 수정','기능 추가','JS 에러','에러 수정','완성!'];
+const HINTS=[
+  '우측 상단 카카오 메시지를 읽고 에이든에게 시작 신호를 보내세요.',
+  '세 가지 선택지 중 하나를 골라 오늘 만들 기능 범위를 정하세요.',
+  '에이든이 만든 첫 번째 버전을 확인해보세요. 원형 타이머를 요청해보세요!',
+  '"원형으로 예쁘게 만들어줘"라고 요청하면 에이든이 코딩을 시작해요.',
+  '오른쪽 앱 화면이 깨진 걸 보고 캡처하거나 어떻게 깨졌는지 설명해주세요.',
+  '에이든에게 어디가 어떻게 문제인지 알려주면 바로 수정할 수 있어요.',
+  '집중/휴식 모드 추가를 요청해보세요. 그리고 타이머 버튼도 눌러보세요!',
+  '오른쪽 앱의 ▶ 버튼을 직접 눌러서 타이머를 테스트해보세요.',
+  '에이든에게 타이머가 멈추지 않는다고 알려주세요. 이전 타이머를 꺼달라고 하면 돼요.',
+  '모든 기능이 완성됐어요! 최종 확인을 해주세요.',
+];
+
+/* ═══════ DOM ═══════ */
+const $chat=document.getElementById('chat-area');
+const $term=document.getElementById('terminal');
+const $input=document.getElementById('user-input');
+const $pomo=document.getElementById('pomo');
+const $empty=document.getElementById('empty-st');
+const $editor=document.getElementById('editor-body');
+
+/* ═══════ UTILS ═══════ */
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+
+function addMsg(html, who, delay=0){
+  return new Promise(r=>{
+    setTimeout(()=>{
+      const wrap=document.createElement('div');
+      wrap.className='msg-wrap'+(who==='usr'?' usr':'');
+      const lbl=document.createElement('div');
+      lbl.className='msg-lbl';
+      lbl.innerText=who==='usr'?'나 (시니어)':who==='sys'?'':' AIDEN';
+      const m=document.createElement('div');
+      m.className='msg '+who;
+      m.innerHTML=html;
+      wrap.appendChild(lbl);wrap.appendChild(m);
+      $chat.appendChild(wrap);
+      $chat.scrollTop=$chat.scrollHeight;
+      r();
+    },delay);
+  });
+}
+
+function addChoices(list){
+  const wrap=document.createElement('div');
+  wrap.className='choices-wrap';
+  list.forEach(({txt,fn})=>{
+    const b=document.createElement('button');
+    b.className='cbtn';b.innerHTML=txt;
+    b.onclick=()=>{
+      wrap.querySelectorAll('.cbtn').forEach(x=>x.classList.add('sel'));
+      addMsg(txt.replace(/<[^>]+>/g,'').trim(),'usr');
+      fn();
+    };
+    wrap.appendChild(b);
+  });
+  $chat.appendChild(wrap);
+  $chat.scrollTop=$chat.scrollHeight;
+}
+
+async function typing(ms=1000){
+  const el=document.createElement('div');
+  el.className='typing-ind';
+  el.innerHTML='<div class="td"></div><div class="td"></div><div class="td"></div>';
+  $chat.appendChild(el);
+  $chat.scrollTop=$chat.scrollHeight;
+  setAiden('thinking','생각 중...');
+  await wait(ms);
+  $chat.removeChild(el);
+  setAiden('idle','대기 중');
+}
+
+function tl(txt,cls=''){
+  const d=document.createElement('div');
+  d.className='tl'+(cls?' '+cls:'');
+  d.innerText='> '+txt;
+  $term.appendChild(d);
+  $term.scrollTop=$term.scrollHeight;
+}
+
+function setAiden(state,mood){
+  const emojis={idle:'😊',thinking:'🤔',coding:'💻',worried:'😰',panic:'😱',fixing:'🔧',celebrate:'🎉',waiting:'😴'};
+  document.getElementById('aiden-emoji').innerText=emojis[state]||'😊';
+  document.getElementById('aiden-mood').innerText=mood;
+  document.getElementById('aiden-av').innerText=emojis[state]||'🤖';
+}
+
+function updateSteps(){
+  const bar=document.getElementById('step-bar');
+  bar.innerHTML='';
+  STEPS.forEach((nm,i)=>{
+    const d=document.createElement('div');
+    d.className='sdot'+(i<S.phase?' done':i===S.phase?' active':'');
+    d.title=nm;d.innerText=i<S.phase?'✓':(i+1);
+    bar.appendChild(d);
+    if(i<STEPS.length-1){
+      const l=document.createElement('div');
+      l.className='sline'+(i<S.phase?' done':'');
+      bar.appendChild(l);
+    }
+  });
+}
+
+function updatePat(){
+  const el=document.getElementById('pat-icons');
+  el.innerHTML='';
+  for(let i=0;i<3;i++){
+    const sp=document.createElement('span');
+    sp.className='pat-icon'+(i>=S.patience?' empty':'');
+    sp.innerText='❤️';
+    el.appendChild(sp);
+  }
+}
+
+/* ═══════ KAKAO NOTIFICATION ═══════ */
+function showKakao(from,msg,time,avatar='👔'){
+  document.getElementById('kn-av').innerText=avatar;
+  document.getElementById('kn-from').innerText=from;
+  document.getElementById('kn-msg').innerHTML=msg;
+  document.getElementById('kn-time').innerText=time;
+  document.getElementById('kakao').classList.add('show');
+}
+function closeKakao(){
+  document.getElementById('kakao').classList.remove('show');
+  if(S.phase===0) continueP0();
+}
+
+/* ═══════ CODE EDITOR ═══════ */
+function clearEditor(){$editor.innerHTML='';}
+
+async function typeLines(lines, delay=12){
+  clearEditor();
+  const cursor=document.createElement('span');
+  cursor.className='cursor';
+  for(const [text,cls] of lines){
+    const line=document.createElement('div');
+    line.className='code-line'+(cls?' '+cls:'');
+    $editor.appendChild(line);
+    $editor.appendChild(cursor);
+    for(const ch of text){
+      line.textContent+=ch;
+      $editor.scrollTop=$editor.scrollHeight;
+      await wait(delay);
+    }
+  }
+  $editor.removeChild(cursor);
+}
+
+async function runBuild(label,ms=1800){
+  const wrap=document.getElementById('build-wrap');
+  const fill=document.getElementById('build-fill');
+  const lbl=document.getElementById('build-label');
+  lbl.innerText=label;
+  wrap.classList.add('show');
+  fill.style.width='0%';
+  const steps=20;
+  for(let i=0;i<=steps;i++){
+    fill.style.width=(i/steps*100)+'%';
+    await wait(ms/steps);
+  }
+  await wait(200);
+  wrap.classList.remove('show');
+}
+
+/* ═══════ APP PREVIEW ═══════ */
+const CIRC=490.1;
+function showApp(cls){
+  $empty.style.display='none';
+  $pomo.className='pomo show';
+  if(cls) $pomo.classList.add(cls);
+  document.getElementById('bb-url').innerText='localhost:5173';
+}
+function setAppCls(cls){
+  $pomo.classList.remove('basic','broken');
+  if(cls) $pomo.classList.add(cls);
+}
+function refreshTimer(){
+  const m=Math.floor(S.pomoTime/60),s=S.pomoTime%60;
+  document.getElementById('timer-num').innerText=
+    String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  const pct=1-(S.pomoTime/S.pomoMax);
+  document.getElementById('ring-fg').style.strokeDashoffset=CIRC*pct;
+}
+function setMode(mode){
+  S.pomoMode=mode;
+  S.pomoTime=mode==='work'?1500:300;
+  S.pomoMax=S.pomoTime;
+  clearInterval(S.pomoRef);S.pomoRef=null;S.pomoRunning=false;
+  document.getElementById('play-btn').innerText='▶';
+  refreshTimer();
+  document.getElementById('btn-work').classList.toggle('active',mode==='work');
+  document.getElementById('btn-break').classList.toggle('active',mode==='break');
+}
+function pomoReset(){
+  clearInterval(S.pomoRef);S.pomoRef=null;S.pomoRunning=false;
+  S.pomoTime=S.pomoMax;
+  document.getElementById('play-btn').innerText='▶';
+  refreshTimer();
+}
+function pomoSkip(){if(S.phase>=6) setMode(S.pomoMode==='work'?'break':'work');}
+
+function pomoPlay(){
+  if(S.phase<2) return;
+
+  // Phase 7: JS error simulation
+  if(S.phase===7){
+    S.jsErrCount++;
+    // Bug: new interval spawned without clearing old
+    const newInt=setInterval(()=>{
+      if(S.pomoTime>0){S.pomoTime--;refreshTimer();}
+    },120);
+    S.errIntervals.push(newInt);
+    document.getElementById('play-btn').innerText='⏸';
+
+    if(S.jsErrCount===1){
+      tl('타이머 시작 → interval ID: '+newInt,'i');
+      setTimeout(async()=>{
+        tl('▶ 다시 클릭 → interval ID: '+(newInt+1)+' ← 이전 타이머 아직 살아있음!','e');
+        tl('🔴 현재 동시에 돌아가는 타이머: '+S.errIntervals.length+'개','e');
+        // make timer visibly speed up
+        const fastInt=setInterval(()=>{
+          if(S.pomoTime>0){S.pomoTime--;refreshTimer();}
+        },80);
+        S.errIntervals.push(fastInt);
+        document.getElementById('err-badge').innerText='🔴 타이머가 멈추질 않아요! (중복 실행 중)';
+        document.getElementById('err-badge').classList.add('show');
+        document.getElementById('canvas').classList.add('error-bg');
+        shakeEl('canvas');
+        await typing(1000);
+        setAiden('panic','폭주 중!!');
+        await addMsg('😱 <b>시니어님!! 타이머가 미쳐가고 있어요!!</b><br><br>⏸ 버튼을 눌러도 멈추질 않고, 점점 빨라지고 있어요! 제가 분명히 멈추는 코드를 작성했는데 왜 이러는 걸까요...', 'ai');
+        // Interrupt kakao
+        setTimeout(()=>showKakao('팀원 이지은','오늘 밤 완성 가능해요?<br>저 퇴근해도 되나요 ㅎㅎ','오후 10:32','👩‍💻'),800);
+        await wait(1500);
+        addChoices([
+          {txt:'🔍 터미널 로그 보니까 타이머가 여러 개 켜져 있어. 분석해봐',fn:analyzeJs},
+          {txt:'새 타이머 켜기 전에 이전 타이머를 안 끈 것 같은데?',fn:directJs},
+        ]);
+      },700);
+    }
+    return;
+  }
+
+  // Normal play/pause
+  if(S.pomoRunning){
+    clearInterval(S.pomoRef);S.pomoRef=null;
+    S.pomoRunning=false;
+    document.getElementById('play-btn').innerText='▶';
+  } else {
+    S.pomoRunning=true;
+    document.getElementById('play-btn').innerText='⏸';
+    S.pomoRef=setInterval(()=>{
+      if(S.pomoTime>0){S.pomoTime--;refreshTimer();}
+      else{
+        clearInterval(S.pomoRef);S.pomoRef=null;S.pomoRunning=false;
+        document.getElementById('play-btn').innerText='▶';
+        tl('✓ 타이머 완료! 알림음 재생','s');
+        playBeep();
+      }
+    },120);
+  }
+}
+
+function playBeep(){
+  try{
+    const ctx=new AudioContext();
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.value=880;g.gain.value=0.1;
+    o.start();g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
+    setTimeout(()=>ctx.close(),600);
+  }catch(e){}
+}
+
+function shakeEl(id){
+  const el=document.getElementById(id);
+  el.classList.add('shake');
+  setTimeout(()=>el.classList.remove('shake'),600);
+}
+
+/* ═══════ LEARNING CARD ═══════ */
+function showLearning(title,what,how,tip){
+  return new Promise(r=>{
+    document.getElementById('lc-title').innerText=title;
+    document.getElementById('lc-what').innerHTML='<b>🤔 무슨 일이?</b><br>'+what.replace(/\n/g,'<br>');
+    document.getElementById('lc-how').innerHTML='<b>✅ 해결법은?</b><br>'+how.replace(/\n/g,'<br>');
+    document.getElementById('lc-tip').innerHTML=tip;
+    document.getElementById('learn-ov').classList.add('show');
+    window._lcR=r;
+  });
+}
+function closeLearning(){
+  document.getElementById('learn-ov').classList.remove('show');
+  if(window._lcR){window._lcR();window._lcR=null;}
+}
+
+/* ═══════ CONFETTI ═══════ */
+function confetti(){
+  const colors=['#ff6b6b','#ffd43b','#69db7c','#4fc3f7','#9775fa'];
+  for(let i=0;i<40;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.left=Math.random()*100+'vw';
+    el.style.top='-10px';
+    el.style.background=colors[i%colors.length];
+    el.style.animationDelay=Math.random()*1+'s';
+    el.style.animationDuration=(1.5+Math.random())+'s';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),3000);
+  }
+}
+
+/* ═══════ DEADLINE CLOCK ═══════ */
+function tickDeadline(){
+  setInterval(()=>{
+    if(S.deadlineSecs>0) S.deadlineSecs--;
+    const h=Math.floor(S.deadlineSecs/3600);
+    const m=Math.floor((S.deadlineSecs%3600)/60);
+    const s=S.deadlineSecs%60;
+    const el=document.getElementById('tb-deadline');
+    el.innerText='⏰ 데드라인까지 '+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    if(h<2) el.classList.add('urgent');
+    // 시계 업데이트 — 시작 21:14 기준으로 경과 시간 반영
+    const elapsed=13*3600-S.deadlineSecs;
+    const totalMins=(21*60+14)+Math.floor(elapsed/60);
+    const ch=Math.floor(totalMins/60)%24;
+    const cm=totalMins%60;
+    const h12=ch===0?12:ch>12?ch-12:ch;
+    const ampm=ch<12?'AM':'PM';
+    document.getElementById('tb-clock').innerText=ampm+' '+h12+':'+String(cm).padStart(2,'0');
+  },1000);
+}
+
+/* ═══════ PHASES ═══════ */
+function nextPhase(){S.phase++;updateSteps();runPhase(S.phase);}
+function runPhase(p){updateSteps();[p0,p1,p2,p3,p4,p5,p6,p7,p8,p9][p]?.();}
+
+/* Phase 0: BRIEFING */
+async function p0(){
+  setAiden('waiting','대기 중');
+  await wait(400);
+  await addMsg('🌙 오후 9시 14분, 스타트업 사무실...', 'sys');
+  await wait(300);
+  await addMsg('저는 <b>에이든(AIDEN)</b>이에요 🤖 오늘 밤 당신의 AI 코딩 파트너입니다.<br><br>지금 막 팀장님한테 카카오 메시지가 왔는데요... 확인해보세요!', 'ai');
+  await wait(500);
+  showKakao('김팀장',
+    '안녕하세요! 내일 오전 10시에 투자자 데모가 생겼어요 😅<br><br>'+
+    '📋 <b>포모도로 타이머 앱</b> 만들어주실 수 있어요?<br>'+
+    '• 25분 집중 / 5분 휴식 타이머<br>'+
+    '• 원형으로 예쁘게요! (중요 ⭐)<br>'+
+    '• 시작/일시정지/리셋 버튼<br>'+
+    '• 타이머 끝나면 알림음<br><br>'+
+    '오늘 밤 안에 되면 최고예요 🙏',
+    '오후 9:14');
+}
+
+async function continueP0(){
+  setAiden('idle','작전 회의 중');
+  await typing(700);
+  await addMsg('팀장님 요청 봤어요! <b>포모도로 타이머 앱</b>을 오늘 밤 안에 납품해야 하는군요 😅💪<br><br>일단 <b>기능 범위</b>부터 정해야 코딩 시작할 수 있어요. 어떻게 할까요?', 'ai');
+  nextPhase();
+}
+
+/* Phase 1: PLANNING */
+function p1(){
+  addChoices([
+    {txt:'⚡ <b>풀패키지</b> — 타이머 + 원형 바 + 집중/휴식 모드 + 알림음 <span style="color:#555;font-size:10px">팀장님 요청 모두</span>',
+     fn:()=>p1pick('full')},
+    {txt:'🎯 <b>핵심만</b> — 타이머 + 원형 바 + 알림음 <span style="color:#555;font-size:10px">심플하게</span>',
+     fn:()=>p1pick('mid')},
+    {txt:'🔧 <b>최소</b> — 타이머 숫자만, 나중에 꾸미자 <span style="color:#555;font-size:10px">MVP 우선</span>',
+     fn:()=>p1pick('min')},
+  ]);
+}
+async function p1pick(t){
+  await typing(900);
+  if(t==='full') await addMsg('좋아요! 풀패키지로 가겠습니다 💪<br>타이머 → 원형 바 → 모드 전환 → 알림음 순서로 차근차근 만들게요.<br><br>먼저 <b>기본 타이머부터</b> 초안 만들어볼게요!', 'ai');
+  else if(t==='mid') await addMsg('딱이에요! 투자자 데모엔 충분해요 👍<br>오늘 밤 안에 완성하기 좋은 범위예요.<br><br>먼저 <b>기본 타이머 초안</b>부터 시작할게요!', 'ai');
+  else await addMsg('알겠어요! 일단 빠르게 뼈대 잡고, 원형 바는 짧게라도 넣을게요 😅 팀장님이 꼭 원하셨잖아요~', 'ai');
+  setTimeout(nextPhase,1000);
+}
+
+/* Phase 2: INITIAL BUILD */
+async function p2(){
+  setAiden('coding','코딩 시작!');
+  await addMsg('에디터 열었어요! 코드 작성 시작할게요 🚀', 'ai');
+  await wait(400);
+  tl('프로젝트 구조 생성 중...','i');
+  await typeLines([
+    ['<!DOCTYPE html>','html-tag'],
+    ['<html lang="ko">','html-tag'],
+    ['<head>','html-tag'],
+    ['  <meta charset="UTF-8">','comment'],
+    ['  <title>Focus Timer</title>','html-tag'],
+    ['  <style>','html-tag'],
+    ['    body {','css-prop'],
+    ['      background: #1a1a2e;','css-val'],
+    ['      display: flex;','css-val'],
+    ['      align-items: center;','css-val'],
+    ['    }','css-prop'],
+    ['    .timer {','css-prop'],
+    ['      font-size: 64px;','css-val'],
+    ['      color: white;','css-val'],
+    ['    }','css-prop'],
+    ['  </' + 'style>','html-tag'],
+    ['</' + 'head>','html-tag'],
+    ['<body>','html-tag'],
+    ['  <div class="timer">25:00</div>','html-tag'],
+    ['  <button id="startBtn">시작</button>','html-tag'],
+    ['</' + 'body>','html-tag'],
+    ['</' + 'html>','html-tag'],
+  ],10);
+  await wait(800);
+  await runBuild('$ vite build',1600);
+  tl('✓ index.html 생성','s');
+  tl('✓ style.css 생성','s');
+  tl('✓ app.js 생성','s');
+  tl('빌드 완료! (0.8s)','s');
+  setAiden('idle','빌드 완료');
+  showApp('basic'); refreshTimer();
+  await typing(700);
+  await addMsg('첫 번째 버전 완성! 오른쪽 미리보기 확인해주세요 😊<br><br>숫자 타이머는 잘 뜨는데... 팀장님이 <b>원형으로 예쁘게</b> 해달라고 하셨잖아요. 어떻게 할까요?', 'ai');
+  addChoices([
+    {txt:'✨ 원형 타이머로 업그레이드해줘!',fn:()=>{nextPhase();}},
+    {txt:'기능 먼저 완성하고 나중에 꾸미자',fn:()=>p2skipDesign()},
+  ]);
+}
+async function p2skipDesign(){
+  await typing(600);
+  await addMsg('알겠어요! 근데 투자자 데모라서... 원형 바는 짧게라도 넣어볼게요 😅', 'ai');
+  setTimeout(nextPhase,800);
+}
+
+/* Phase 3: DESIGN REQUEST */
+async function p3(){
+  setAiden('thinking','디자인 구상 중');
+  await addMsg('원형 타이머 적용할게요! CSS에서 SVG 원형 진행 바를 만들어야 해요.<br>잠깐 작업할게요... 🎨', 'ai');
+  await wait(400);
+  // Switch to style.css tab visually
+  document.querySelectorAll('.etab').forEach((t,i)=>t.classList.toggle('active',i===1));
+  setAiden('coding','SVG 코딩 중');
+  await typeLines([
+    ['/* style.css */','comment'],
+    ['.timer-wrap {','css-prop'],
+    ['  position: relative;','css-val'],
+    ['  width: 150px;','css-val'],
+    ['  height: 150px;','css-val'],
+    ['}','css-prop'],
+    ['.ring-svg {','css-prop'],
+    ['  position: absolute;','css-val'],
+    ['  width: 240px;  /* ← 실수! */','error-line'],
+    ['  height: 240px; /* ← 150px여야 함 */','error-line'],
+    ['  top: -45px;','css-val'],
+    ['  left: -45px;','css-val'],
+    ['}','css-prop'],
+  ],15);
+  await wait(600);
+  tl('스타일 적용 중...','i');
+  await runBuild('$ vite build (CSS 업데이트)',1200);
+  tl('빌드 완료','s');
+  nextPhase();
+}
+
+/* Phase 4: CSS ERROR */
+async function p4(){
+  setAiden('worried','뭔가 이상한데...');
+  // Apply broken state
+  setAppCls('broken');
+  document.getElementById('err-badge').innerText='⚠️ CSS 경고: 원형이 컨테이너 밖으로 넘침';
+  document.getElementById('err-badge').classList.add('show');
+  document.getElementById('canvas').classList.add('error-bg');
+  shakeEl('canvas');
+  tl('⚠ CSS: .ring-svg width(240px) > .timer-wrap(150px)!','w');
+  tl('🔴 레이아웃 오버플로우 감지','e');
+  await wait(300);
+  setAiden('panic','어어어!!');
+  await addMsg('어... <b>어어어?! 😨</b><br><br>원형이 추가됐는데 <b>앱 화면 밖으로 완전히 삐져나왔어요!</b> 오른쪽 미리보기 보이시죠?? 제가 뭘 실수한 것 같아요...<br><br>어떻게 할까요?', 'ai');
+  // Kakao notification at worst possible time
+  setTimeout(()=>showKakao('김팀장','혹시 아직 멀었나요? ㅎㅎ<br>괜찮으면 중간에 미리 확인해보고 싶어서요!','오후 9:47'),1200);
+  await wait(1600);
+  addChoices([
+    {txt:'📸 어디가 어떻게 깨진지 캡처해서 보여줄게',fn:startCapture},
+    {txt:'내가 보니까 — 원형 크기가 너무 커서 박스 밖으로 삐져나온 것 같아',fn:explainCss},
+  ]);
+}
+
+function startCapture(){
+  S.isCapturing=true;
+  document.getElementById('canvas').style.cursor='crosshair';
+  document.getElementById('cap-hint').classList.add('show');
+  addMsg('📸 알겠어! 캡처 모드 켰어. 오른쪽 화면에서 드래그해봐!','ai');
+}
+
+async function explainCss(){
+  await typing(800);
+  S.errFixed++;
+  await addMsg('맞아요! 📐 원형 SVG가 <b>150×150 박스</b>인데 <b>240×240</b> 크기로 만들어서 삐져나온 거예요.<br><br>바로 고칠게요!', 'ai');
+  fixCss();
+}
+
+async function fixCss(){
+  setAiden('fixing','CSS 수정 중');
+  document.querySelectorAll('.etab').forEach((t,i)=>t.classList.toggle('active',i===1));
+  await typeLines([
+    ['/* style.css — 수정됨 ✓ */','comment'],
+    ['.ring-svg {','css-prop'],
+    ['  position: absolute;','css-val'],
+    ['  width: 150px;   /* ✓ 박스 크기와 동일 */','fixed-line'],
+    ['  height: 150px;  /* ✓ 박스 크기와 동일 */','fixed-line'],
+    ['  top: 0;','css-val'],
+    ['  left: 0;','css-val'],
+    ['}','css-prop'],
+  ],12);
+  await runBuild('$ vite build (수정 적용)',1000);
+  tl('✓ CSS 수정 완료. 레이아웃 정상화','s');
+  setAppCls('');
+  document.getElementById('err-badge').classList.remove('show');
+  document.getElementById('canvas').classList.remove('error-bg');
+  refreshTimer();
+  setAiden('idle','수정 완료!');
+  await typing(600);
+  await addMsg('고쳤습니다! 원형 바가 제자리에 딱 들어왔죠? 😊<br><br>사실 저도 깜짝 놀랐어요... 크기 단위 하나가 이렇게 큰 차이를 만들줄은 😅', 'ai');
+  await showLearning(
+    '화면이 깨지는 이유 — 크기 초과',
+    '🔴 AI가 원형 그래픽을 만들었는데, 그 크기(240px)가 담는 박스(185px)보다 커서 밖으로 넘쳐버렸어요.\n\nA4 용지(박스) 위에 포스터(원형)를 붙이려는 것처럼, 큰 게 작은 곳에 들어가면 당연히 삐져나오죠!',
+    '✅ AI에게 "원형 크기를 담는 박스 크기에 맞게 줄여줘"라고 하면 즉시 해결돼요.\n\n더 정확하게는 "박스 크기와 원형 SVG 크기를 동일하게 맞춰줘"라고 해도 OK!',
+    `<div class="tip-head">💡 바이브코딩 실전 팁 — 화면이 깨질 때 쓰는 프롬프트</div><div class="tip-desc">화면이 깨졌을 때 AI에게 어떻게 말할지 막막하죠? 아래 문장을 그대로 복사해서 써보세요. AI는 현상을 구체적으로 설명할수록 정확하게 고쳐요.</div><div class="tip-prompts-title">📋 복사해서 바로 쓸 수 있는 프롬프트</div><div class="tip-prompt">원형 그래픽이 카드 박스 밖으로 삐져나왔어. 원형 SVG 크기를 부모 컨테이너 크기와 동일하게 맞춰줘.</div><div class="tip-prompt">오른쪽 미리보기에서 타이머 원형이 앱 카드를 벗어나서 렌더링되고 있어. overflow가 발생하지 않도록 크기를 조정해줘.</div><div class="tip-prompt">화면 레이아웃이 깨졌어. 어떤 요소가 부모 박스보다 크게 설정됐는지 찾아서 크기를 맞춰줘.</div>`
+  );
+  nextPhase();
+}
+
+/* Phase 5: CSS FIX (after learning card → goes to phase 6) */
+async function p5(){
+  await addMsg('수정 완료 확인됐죠? 이제 기능도 더 추가해볼게요!', 'ai');
+  await wait(300);
+  nextPhase();
+}
+
+/* Phase 6: FEATURE ADD */
+async function p6(){
+  setAiden('coding','추가 기능 개발 중');
+  await addMsg('이제 <b>집중 / 휴식 모드 전환</b>이랑 <b>알림음</b> 추가할게요! 투자자 데모에 완성도 올리는 거예요 💪', 'ai');
+  document.querySelectorAll('.etab').forEach((t,i)=>t.classList.toggle('active',i===2));
+  await typeLines([
+    ['// app.js','comment'],
+    ['const MODES = {','js-kw'],
+    ["  work:  { time: 25*60, label: '집중 25:00' },","js-fn"],
+    ["  break: { time:  5*60, label: '휴식 05:00' }","js-fn"],
+    ['};','js-kw'],
+    ['',''],
+    ['function switchMode(mode) {','js-fn'],
+    ['  currentMode = mode;','js-kw'],
+    ['  timeLeft = MODES[mode].time;','js-kw'],
+    ['  updateDisplay();','js-fn'],
+    ['}','js-fn'],
+    ['',''],
+    ['function playBeep() {','js-fn'],
+    ['  // Web Audio API 알림음','comment'],
+    ['  const ctx = new AudioContext();','js-kw'],
+    ['  const osc = ctx.createOscillator();','js-kw'],
+    ['  osc.frequency.value = 880;','js-kw'],
+    ['  osc.start(); osc.stop(ctx.currentTime+0.3);','js-fn'],
+    ['}','js-fn'],
+  ],12);
+  await runBuild('$ vite build (기능 추가)',1400);
+  tl('✓ 집중/휴식 모드 추가','s');
+  tl('✓ Web Audio 알림음 추가','s');
+  document.getElementById('pomo-modes').classList.add('show');
+  setAiden('idle','기능 추가 완료');
+  await typing(700);
+  await addMsg('집중/휴식 모드 버튼도 생겼어요! 오른쪽 앱에서 직접 눌러봐주세요 😊<br><br>그리고 이제 <b>▶ 재생 버튼도 실제로 눌러서 테스트</b>해봐주세요! 잘 작동하는지 확인이 필요해요.', 'ai');
+  addChoices([
+    {txt:'▶ 오른쪽 앱에서 타이머 재생해볼게!', fn:()=>nextPhase()},
+  ]);
+}
+
+/* Phase 7: JS ERROR */
+async function p7(){
+  await addMsg('재생 버튼 눌러보세요! (오른쪽 앱 미리보기에서 직접 클릭)', 'ai');
+  // Error triggers on pomoPlay() when S.phase===7
+}
+
+async function analyzeJs(){
+  setAiden('thinking','로그 분석 중');
+  await typing(1000);
+  tl('--- 타이머 상태 분석 ---','i');
+  tl('실행 중인 타이머: '+S.errIntervals.length+'개','e');
+  tl('타이머 #1 → ACTIVE (멈추지 않음)','e');
+  tl('타이머 #2 → ACTIVE (중복 실행!)','e');
+  tl('원인: clearInterval() 호출 전 새 setInterval 생성','e');
+  await addMsg('로그 보니까 <b>타이머가 동시에 '+S.errIntervals.length+'개 돌아가고 있어요!</b> 😱<br><br>▶ 버튼을 누를 때마다 이전 타이머를 끄지 않고 새 타이머를 켜서 점점 쌓인 거예요. 어떻게 고쳐야 할까요?', 'ai');
+  addChoices([
+    {txt:'새 타이머 켜기 전에 이전 타이머를 먼저 꺼줘. 타이머 ID를 변수에 저장해서 관리해',fn:doFixJs},
+  ]);
+}
+
+async function directJs(){
+  setAiden('thinking','확인 중');
+  await typing(800);
+  tl('타이머 ID 변수 확인...','i');
+  tl('ERROR: 이전 타이머 ID가 어디에도 저장되지 않음','e');
+  await addMsg('<b>정확히 짚으셨어요!</b> 🎯<br><br>타이머를 끄려면 "몇 번 타이머를 꺼"라고 ID를 지정해야 하는데, ID를 저장해두지 않아서 끌 방법이 없었어요. 바로 수정할게요!', 'ai');
+  setTimeout(doFixJs,500);
+}
+
+async function doFixJs(){
+  S.errFixed++;
+  setAiden('fixing','JS 수정 중');
+  // Clear ALL error intervals
+  S.errIntervals.forEach(id=>clearInterval(id));
+  S.errIntervals=[];
+  clearInterval(S.pomoRef);S.pomoRef=null;
+  S.pomoRunning=false; S.pomoTime=S.pomoMax;
+  document.getElementById('play-btn').innerText='▶';
+  document.getElementById('err-badge').classList.remove('show');
+  document.getElementById('canvas').classList.remove('error-bg');
+  refreshTimer();
+  document.querySelectorAll('.etab').forEach((t,i)=>t.classList.toggle('active',i===2));
+  await typeLines([
+    ['// app.js — 수정됨 ✓','comment'],
+    ['',''],
+    ['let timerRef = null; // 타이머 번호표 저장','fixed-line'],
+    ['',''],
+    ['function startTimer() {','js-fn'],
+    ['  clearInterval(timerRef); // ✓ 이전 타이머 먼저 끄기','fixed-line'],
+    ['  timerRef = setInterval(() => {','js-kw'],
+    ['    timeLeft--;','js-kw'],
+    ['    updateDisplay();','js-fn'],
+    ['    if (timeLeft <= 0) {','js-kw'],
+    ['      clearInterval(timerRef);','js-fn'],
+    ['      playBeep();','js-fn'],
+    ['    }','js-kw'],
+    ['  }, 1000);','js-fn'],
+    ['}','js-fn'],
+  ],13);
+  await runBuild('$ vite build (버그 수정)',1200);
+  tl('✓ JS 수정 완료. 타이머 정상화','s');
+  setAiden('idle','수정 완료!');
+  await typing(600);
+  await addMsg('수정 완료! 이제 ▶ 버튼이 제대로 작동해요 🎉<br><br>사실 이건 바이브코딩에서 <b>엄청 자주 나오는 버그</b>예요. 저도 반성하고 있어요 😅', 'ai');
+  await showLearning(
+    '타이머가 멈추지 않는 이유 — 번호표 없음',
+    '🔴 ▶ 버튼을 누를 때마다 새 타이머가 생기는데, 이전 타이머를 끄지 않아서 1개→2개→3개로 계속 쌓였어요.\n\n선풍기 여러 대를 켜놓고 끄는 리모컨을 잃어버린 것처럼, 멈추는 방법을 모르는 상태예요. 그래서 점점 빨라진 거예요!',
+    '✅ AI에게 "새 타이머 켜기 전에 기존 타이머를 먼저 꺼줘"라고 하면 해결돼요.\n\n또는 터미널에 나온 에러 메시지를 그대로 복사해서 붙여넣으면 AI가 원인을 스스로 찾아요.',
+    `<div class="tip-head">💡 바이브코딩 실전 팁 — 타이머/반복 버그 프롬프트</div><div class="tip-desc">타이머가 이상하게 동작할 때 가장 흔한 상황이에요. 아래 프롬프트를 상황에 맞게 골라 쓰세요. 터미널 로그가 보이면 그냥 통째로 붙여넣는 게 제일 빨라요!</div><div class="tip-prompts-title">📋 복사해서 바로 쓸 수 있는 프롬프트</div><div class="tip-prompt">타이머 시작 버튼을 누를 때마다 새 타이머가 추가되는 것 같아. 새로 시작하기 전에 이전 타이머를 clearInterval로 정리하고, ID를 변수에 저장해서 관리해줘.</div><div class="tip-prompt">일시정지 버튼을 눌러도 타이머가 멈추지 않아. setInterval을 여러 개 실행 중인 게 원인인 것 같은데, timerRef 변수로 하나만 관리하도록 수정해줘.</div><div class="tip-prompt">아래 터미널 에러를 복사해서 붙여넣고 → "이 에러가 왜 발생하는지 설명하고 수정해줘" 라고 하면 끝! (로그 복붙이 제일 빠른 방법이에요 🚀)</div>`
+  );
+  nextPhase();
+}
+
+/* Phase 8: JS FIX COMPLETE → FINAL TEST */
+async function p8(){
+  await addMsg('버그 두 개 다 잡았어요 💪 이제 <b>최종 검수</b>만 하면 팀장님께 바로 납품할 수 있어요!<br><br>오른쪽 앱에서 직접 세 가지 테스트해주세요!', 'ai');
+  showTests();
+}
+
+let t1=false,t2=false,t3=false;
+function showTests(){
+  const list=[];
+  if(!t1) list.push({txt:'▶ 타이머 재생 / 일시정지 테스트',fn:()=>doTest('play')});
+  if(!t2) list.push({txt:'🔄 집중 ↔ 휴식 모드 전환 테스트',fn:()=>doTest('mode')});
+  if(!t3) list.push({txt:'↺ 리셋 기능 테스트',fn:()=>doTest('reset')});
+  if(list.length) addChoices(list);
+}
+async function doTest(t){
+  await typing(500);
+  if(t==='play'){t1=true;tl('TEST 재생/일시정지 → PASS ✓','s');await addMsg('재생 ▶ / 일시정지 ⏸ 완벽히 작동해요! ✅','ai');}
+  if(t==='mode'){t2=true;tl('TEST 모드 전환 → PASS ✓','s');await addMsg('집중 25:00 ↔ 휴식 05:00 전환 완벽해요! ✅','ai');}
+  if(t==='reset'){t3=true;tl('TEST 리셋 → PASS ✓','s');await addMsg('리셋도 정상 동작! ✅','ai');}
+  if(t1&&t2&&t3){
+    await addMsg('🎉 <b>전체 테스트 통과!</b> 팀장님께 납품할 준비 완료예요!','ai');
+    addChoices([{txt:'🚀 배포하고 팀장님께 보고하자!',fn:()=>nextPhase()}]);
+  } else {
+    showTests();
+  }
+}
+
+/* Phase 9: COMPLETE */
+async function p9(){
+  setAiden('coding','배포 중...');
+  document.getElementById('bb-url').innerText='focus-timer.vercel.app';
+  tl('📦 Vercel 배포 시작...','i');
+  await runBuild('$ vercel deploy',2000);
+  tl('✓ 빌드 최적화 완료','s');
+  tl('✓ CDN 업로드 완료','s');
+  tl('🌐 배포 완료: https://focus-timer.vercel.app','s');
+  setAiden('celebrate','납품 완료!!');
+  await typing(700);
+  await addMsg('🎊 <b>배포 완료! 새벽 1시 28분</b>에 완성했어요!<br><br>팀장님께 URL 전달했어요. 오늘 밤 정말 수고하셨습니다 시니어님 🥹<br><br><b>오늘 우리가 잡은 버그:</b><br>1️⃣ 원형 CSS 크기 초과 → 캡처로 위치 파악 후 수정<br>2️⃣ 타이머 중복 실행 → 터미널 분석 후 수정','ai');
+  setTimeout(()=>{
+    showKakao('김팀장','오!! 완성됐군요! 😍<br>원형 타이머 너무 예뻐요! 투자자분들 마음에 들어하실 것 같아요~<br><br>수고하셨어요 정말! 내일 데모 잘 될 것 같아요 👍','오전 1:29');
+  },1200);
+  setTimeout(()=>{
+    confetti();
+    playBeep();
+    document.getElementById('ach-err').innerText=S.errFixed;
+    document.getElementById('ach-score').innerText=S.errFixed>=2?'A+':'B+';
+    document.getElementById('ach-ov').classList.add('show');
+  },3500);
+}
+
+/* ═══════ INPUT ═══════ */
+const WEIRD_MSGS=[
+  '에...? 저 그 지시는 이해가 안 돼요 😅 현재 단계 집중할게요!',
+  '솔직히 말하면 방금 입력이 무슨 뜻인지 모르겠어요 😶 힌트 버튼 눌러보실래요?',
+  '시니어님 혹시 배고프신 건 아니죠? 😅 집중해요, 할 게 남아있어요!',
+  '음... 저 AI지만 독심술은 없어요 🤖 좀 더 구체적으로 알려주시겠어요?',
+];
+function isWeird(v){
+  if(v.trim().length<4) return true;
+  if(/^[ㅋㅎㅠㅜㄷㄱ\s]+$/.test(v)) return true;
+  if(/^[qwerty|asdfgh]{4,}/i.test(v)) return true;
+  return ['유튜브','넷플릭스','주식','로또','치킨','배달','야구'].some(j=>v.includes(j));
+}
+
+function handleSend(){
+  const v=$input.value.trim();
+  if(!v) return;
+  $input.value='';
+  addMsg(v,'usr');
+  processInput(v);
+}
+$input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend();}});
+
+async function processInput(v){
+  const low=v.toLowerCase();
+  if(isWeird(v)){
+    S.patience=Math.max(0,S.patience-1);updatePat();
+    if(S.patience===0){
+      await typing(700);
+      await addMsg('시니어님... 저 멘탈이 흔들려요 😭 계속 이해 못 하는 입력이 오고 있어요.<br><br>💡 <b>힌트 버튼</b>을 눌러서 현재 단계 안내를 확인해보세요!','ai');
+      S.patience=1;updatePat();
+    } else {
+      await typing(600);
+      await addMsg(WEIRD_MSGS[Math.floor(Math.random()*WEIRD_MSGS.length)]+'<br><br>현재: <b>'+STEPS[S.phase]+'</b>','ai');
+    }
+    return;
+  }
+  S.patience=Math.min(3,S.patience+1);updatePat();
+  await typing(800);
+  if(S.phase===4){
+    if(/크|넘|삐|밖|overflow|svg|240|크기|박스/.test(low)){
+      await addMsg('맞아요! 바로 수정할게요!','ai');S.errFixed++;fixCss();
+    } else {
+      await addMsg('오른쪽 미리보기를 보고 <b>어디가 어떻게 이상한지</b> 알려주시면 바로 고칠 수 있어요!','ai');
+    }
+  } else if(S.phase===7){
+    if(/이전|clearinterval|끄|stop|중복|여러|timerref|번호/.test(low)){
+      await addMsg('정확해요! 바로 수정할게요!','ai');doFixJs();
+    } else {
+      await addMsg('터미널 로그를 보면 힌트가 있어요! 타이머가 <b>동시에 몇 개 돌아가는지</b> 봐주세요.','ai');
+    }
+  } else {
+    await addMsg('위 선택지를 이용해주세요 😊 또는 <b>💡 힌트</b> 버튼을 눌러보세요.','ai');
+  }
+}
+
+function showHint(){addMsg('💡 <b>힌트:</b> '+HINTS[S.phase],'ai');}
+
+/* ═══════ CAPTURE — FIXED ═══════ */
+const vf=document.getElementById('vf');
+const canvasEl=document.getElementById('canvas');
+let sx,sy;
+
+canvasEl.addEventListener('mousedown',e=>{
+  if(!S.isCapturing) return;
+  const rect=canvasEl.getBoundingClientRect();
+  sx=e.clientX-rect.left;
+  sy=e.clientY-rect.top;
+  vf.style.display='block';
+  vf.style.width='0';vf.style.height='0';
+  vf.style.left=sx+'px';vf.style.top=sy+'px';
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+});
+function onMove(e){
+  const rect=canvasEl.getBoundingClientRect();
+  const cx=e.clientX-rect.left,cy=e.clientY-rect.top;
+  vf.style.width=Math.abs(cx-sx)+'px';
+  vf.style.height=Math.abs(cy-sy)+'px';
+  vf.style.left=Math.min(cx,sx)+'px';
+  vf.style.top=Math.min(cy,sy)+'px';
+}
+async function onUp(){
+  document.removeEventListener('mousemove',onMove);
+  document.removeEventListener('mouseup',onUp);
+  S.isCapturing=false;
+  canvasEl.style.cursor='default';
+  document.getElementById('cap-hint').classList.remove('show');
+  vf.style.display='none';
+  addMsg('📸 캡처 완료! 깨진 부분 선택했어요.','usr');
+  await typing(800);
+  S.errFixed++;
+  await addMsg('캡처로 딱 보여요! 😮 원형이 박스 밖으로 완전히 삐져나왔네요. 바로 수정할게요!','ai');
+  fixCss();
+}
+
+/* ═══════ INIT ═══════ */
+updateSteps();updatePat();tickDeadline();
+runPhase(0);
+</script>
+</body>
+</html>

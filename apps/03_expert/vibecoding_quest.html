@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>바이브코딩 훈련소: 빌런의 침공 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pixel-bg: #070712;
+            --pixel-primary: #4ecca3;
+            --pixel-accent: #ff4b2b;
+            --pixel-gold: #ffcc00;
+            --pixel-border: 4px solid #fff;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: var(--pixel-bg); font-family: 'Gaegu', cursive;
+            color: white; overflow: hidden;
+        }
+
+        .game-canvas {
+            width: 100%; height: 100%;
+            background: url('../../assets/pixel_lab_background.png') no-repeat center center;
+            background-size: cover; position: relative;
+            image-rendering: pixelated;
+        }
+
+        /* Hero & Enemy Area */
+        .stage-view {
+            height: 55%; position: relative;
+            display: flex; justify-content: space-around; align-items: flex-end;
+            padding-bottom: 30px;
+        }
+
+        .sprite { width: 320px; height: 320px; background-size: contain; background-repeat: no-repeat; transition: 0.3s; position: relative; z-index: 10; }
+        #hero-sprite { background-image: url('../../assets/pixel_dev_hero.png'); }
+        #enemy-sprite { background-image: url('../../assets/pixel_ai_robot.png'); filter: hue-rotate(150deg) brightness(0.8); }
+
+        .hp-gauge {
+            position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
+            width: 200px; height: 16px; background: #333; border: 3px solid #fff;
+        }
+        .hp-fill { width: 100%; height: 100%; background: var(--pixel-primary); transition: 0.3s; }
+        #enemy-hp { background: var(--pixel-accent); }
+
+        /* Mission Layer (The Core Learning Part) */
+        .mission-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; align-items: center; justify-content: center;
+            z-index: 500; 
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px); /* Glassmorphism 2.0 */
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .mission-layer.active { display: flex; animation: fadeIn 0.3s ease-out; }
+        
+        .mission-content {
+            background: rgba(255, 255, 255, 0.95); border: 6px solid #000; padding: 30px; color: #000;
+            max-width: 850px; width: 92%; display: flex; flex-direction: column; gap: 20px;
+            box-shadow: 15px 15px 0 var(--pixel-gold);
+            transform: scale(0.9); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .mission-layer.active .mission-content { transform: scale(1); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .mission-img { width: 100%; height: 350px; background-size: cover; border: 4px solid #000; position: relative; overflow: hidden; background-position: center; }
+        .viewfinder { position: absolute; border: 4px dashed var(--pixel-accent); background: rgba(255, 75, 43, 0.3); pointer-events: none; display: none; box-shadow: 0 0 20px rgba(255, 75, 43, 0.5); }
+        
+        .log-scroll { height: 250px; overflow-y: auto; background: #121212; color: #00ff00; padding: 15px; font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; border: 4px solid #000; line-height: 1.6; }
+        .log-entry { padding: 5px; cursor: pointer; border-bottom: 1px solid #333; }
+        .log-entry:hover { background: #333; }
+        .log-entry.error { color: #ff6b6b; font-weight: bold; }
+
+        .logic-puzzle { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
+        .puzzle-item { background: #fff; border: 3px solid #000; padding: 12px 20px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1.2rem; box-shadow: 5px 5px 0 #000; }
+        .puzzle-item:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--pixel-primary); background: #f0f0f0; }
+        .puzzle-item:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+        .puzzle-item.selected { opacity: 0.3; pointer-events: none; transform: none; box-shadow: none; }
+        .drop-zone { border: 4px dashed #aaa; padding: 20px; min-height: 80px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #f0f0f0; font-size: 1.5rem; font-weight: bold; color: #555; }
+
+        /* Story & Dialogue Area */
+        .dialogue-box {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 40%;
+            background: rgba(0, 0, 0, 0.95); border-top: 8px solid #fff;
+            display: flex; padding: 30px; box-sizing: border-box; gap: 30px;
+            z-index: 100;
+        }
+        .speaker-portrait { width: 220px; height: 220px; border: 5px solid var(--pixel-gold); background: #111; background-size: cover; flex-shrink: 0; }
+        .text-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .speaker-name { font-family: 'Press Start 2P'; font-size: 1rem; color: var(--pixel-gold); margin-bottom: 15px; }
+        .message-text { font-family: 'Gaegu', cursive; font-size: 2rem; line-height: 1.3; color: #fff; word-break: keep-all; }
+
+        /* Next Button Icon */
+        .next-indicator { position: absolute; bottom: 20px; right: 20px; font-family: 'Press Start 2P'; font-size: 0.8rem; color: var(--pixel-gold); animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Flash & Shake */
+        .flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #fff; opacity: 0; pointer-events: none; z-index: 300; }
+        .flash.active { animation: flashAnim 0.3s; }
+        @keyframes flashAnim { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+        .shake { animation: shakeAnim 0.4s; }
+        @keyframes shakeAnim { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-15px); } 40% { transform: translateX(15px); } 60% { transform: translateX(-15px); } 80% { transform: translateX(15px); } }
+
+        /* Intro Screen */
+        .intro-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .intro-screen.hidden { display: none; }
+        .start-btn { padding: 25px 50px; font-family: 'Press Start 2P'; font-size: 1.2rem; background: var(--pixel-primary); color: #000; border: none; cursor: pointer; box-shadow: 10px 10px 0 #fff; }
+    </style>
+    <style>
+        /* GNB Standard Style */
+        .vcep-nav {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 5000; /* Highest priority */
+            border-bottom: 4px solid #000;
+        }
+        .nav-logo { font-family: 'Press Start 2P', cursive; font-size: 1rem; color: #ff4b2b; text-decoration: none; }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-link { text-decoration: none; color: #333; font-weight: 800; font-size: 0.9rem; font-family: 'Gaegu', cursive; font-size: 1.5rem; }
+        .nav-btn {
+            background: #ff4b2b;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 900;
+            font-size: 1.2rem;
+            font-family: 'Gaegu', cursive;
+            border: 3px solid #000;
+            box-shadow: 4px 4px 0 #000;
+        }
+    </style>
+</head>
+<body>
+    <nav class="vcep-nav">
+        <a href="../../index.html" class="nav-logo">VCEP.</a>
+        <div class="nav-links">
+            <a href="../../index.html" class="nav-link">홈</a>
+            <a href="vibecoding.html" class="nav-link" style="color: #ff4b2b;">시뮬레이션</a>
+            <a href="../04_gas_crud/gas_hub.html" class="nav-link">GAS</a>
+            <a href="../app_planner.html" class="nav-link">앱 플래너</a>
+            <a href="../tutorial_hub.html" class="nav-btn">학습 가이드</a>
+        </div>
+    </nav>
+
+    <div class="intro-screen" id="intro-screen" style="padding-top: 100px;">
+        <h1 class="intro-title" style="font-family: 'Press Start 2P'; color: var(--pixel-primary); font-size: 2.5rem; margin-bottom: 20px;">VIBECODING QUEST<br>ATTACK OF BUGS</h1>
+        <p style="font-size: 2rem; margin-bottom: 50px; color: #fff;">"용사여, 빌런들의 코드 장난을 멈춰주세요!"</p>
+        <div style="display:flex; gap: 20px;">
+            <button class="start-btn" onclick="startGame()">QUEST START (모험 시작)</button>
+            <button class="start-btn" onclick="location.href='vibecoding_guide.html'" style="background: var(--pixel-gold); box-shadow: 10px 10px 0 #fff;">GUIDE BOOK (비법 전수)</button>
+            <button class="start-btn" onclick="location.href='vibecoding.html'" style="background: #555; color: #fff; box-shadow: 10px 10px 0 #333;">EXIT (나가기)</button>
+        </div>
+    </div>
+
+    <div class="game-canvas">
+        <div class="flash" id="flash"></div>
+        
+        <div class="stage-view">
+            <div class="sprite" id="hero-sprite"><div class="hp-gauge"><div class="hp-fill" id="hero-hp-bar"></div></div></div>
+            <div class="sprite" id="enemy-sprite"><div class="hp-gauge"><div class="hp-fill" id="enemy-hp-bar"></div></div></div>
+        </div>
+
+        <div class="mission-layer" id="mission-layer">
+            <div class="mission-content" id="mission-content">
+                <h2 id="mission-title" style="margin: 0; font-family: 'Gaegu'; font-size: 2rem;">실전 미션 발생!</h2>
+                <div id="mission-inner"></div>
+            </div>
+        </div>
+
+        <div class="dialogue-box" id="dialogue-box">
+            <div class="speaker-portrait" id="portrait"></div>
+            <div class="text-area">
+                <div class="speaker-name" id="speaker-name">SYSTEM</div>
+                <div class="message-text" id="message-text">...</div>
+            </div>
+            <div class="next-indicator" id="next-indicator">▼ PRESS CLICK</div>
+        </div>
+    </div>
+
+    <script>
+        const story = [
+            { name: "가이드 AI", text: "용사님! 드디어 신택스 빌런의 본거지에 도착했습니다!", portrait: "../../assets/pixel_ai_robot.png" },
+            { name: "신택스 빌런", text: "하하하! 성문 코드를 보이지 않게 꼬아버렸지! 들어올 수 있으면 들어와 봐!", portrait: "../../assets/pixel_ai_robot.png", isEnemy: true },
+            { name: "가이드 AI", text: "보이지 않는 에러가 입구를 막고 있군요. '진실의 렌즈'로 에러 지점을 캡처하세요!", portrait: "../../assets/pixel_ai_robot.png" },
+            { type: "capture", target: "../../assets/evidence_ui_bug.png", success: "에러 발견! 성문 코드가 복구되었습니다!" },
+            { name: "신택스 빌런", text: "윽! 괄호 에러를 찾아내다니... 하지만 '로직 고스트'가 네 앞길을 막을 것이다!", portrait: "../../assets/pixel_ai_robot.png", isEnemy: true, damage: 30 },
+            { name: "가이드 AI", text: "적의 흔적이 로그 데이터 속에 숨겨져 있습니다. 에러 로그를 직접 찾아내세요!", portrait: "../../assets/pixel_ai_robot.png" },
+            { type: "log", success: "로그 확보 성공! 빌런의 위치가 노출되었습니다!" },
+            { name: "로직 고스트", text: "흐흐흐... 내 무한 루프에서 빠져나올 수 있을까?!", portrait: "../../assets/pixel_ai_robot.png", isEnemy: true, damage: 30 },
+            { name: "가이드 AI", text: "마지막 일격입니다! AI 정령을 소환하기 위해 로직을 정확한 순서로 조립하세요!", portrait: "../../assets/pixel_ai_robot.png" },
+            { type: "logic", success: "퍼즐 완성! AI 정령의 최후 일격!!" },
+            { name: "신택스 빌런", text: "아아아악! 이 완벽한 바이브는 뭐지?! 내 코드가... 정화된다!!", portrait: "../../assets/pixel_ai_robot.png", isEnemy: true, damage: 100 },
+            { name: "가이드 AI", text: "축하합니다! 당신은 이제 진정한 바이브코딩 마스터입니다!", portrait: "../../assets/pixel_ai_robot.png", end: true }
+        ];
+
+        let step = 0;
+        let enemyHp = 100;
+        let isTyping = false;
+
+        function startGame() { document.getElementById('intro-screen').classList.add('hidden'); nextStep(); }
+
+        function nextStep() {
+            if (step >= story.length) return;
+            const current = story[step];
+            
+            if (current.type) {
+                showMission(current);
+                return;
+            }
+
+            document.getElementById('dialogue-box').style.display = 'flex';
+            document.getElementById('speaker-name').innerText = current.name;
+            document.getElementById('portrait').style.backgroundImage = `url(${current.portrait})`;
+            
+            if (current.isEnemy) {
+                document.getElementById('portrait').style.filter = "hue-rotate(150deg)";
+                document.getElementById('enemy-sprite').classList.add('shake');
+                setTimeout(() => document.getElementById('enemy-sprite').classList.remove('shake'), 400);
+            } else {
+                document.getElementById('portrait').style.filter = "none";
+            }
+
+            if (current.damage) {
+                enemyHp -= current.damage;
+                document.getElementById('enemy-hp-bar').style.width = Math.max(0, enemyHp) + '%';
+                document.getElementById('flash').classList.add('active');
+                setTimeout(() => document.getElementById('flash').classList.remove('active'), 300);
+            }
+
+            typeWriter(current.text, () => {
+                if (current.end) {
+                    setTimeout(() => { 
+                        if(confirm("축하합니다! 빌런을 물리쳤습니다.\n실전 에러 예시와 해결 비법이 담긴 '마스터 가이드 북'을 확인해 보시겠습니까?")) {
+                            location.href = "vibecoding_guide.html";
+                        } else {
+                            location.href = "../../index.html";
+                        }
+                    }, 2000);
+                } else {
+                    document.body.onclick = () => { document.body.onclick = null; step++; nextStep(); };
+                }
+            });
+        }
+
+        function showMission(m) {
+            document.getElementById('dialogue-box').style.display = 'none';
+            const layer = document.getElementById('mission-layer');
+            const inner = document.getElementById('mission-inner');
+            layer.classList.add('active');
+            inner.innerHTML = "";
+
+            if (m.type === 'capture') {
+                inner.innerHTML = `<p style="font-weight:bold; font-size: 1.5rem; margin-bottom: 10px;">[진실의 렌즈] 에러 캡처</p>
+                                   <p style="font-size: 1.2rem; margin-bottom: 20px; color: #555;">마우스로 드래그하여 화면 하단의 **에러 지점(잘린 버튼)**을 정확히 캡처하세요!</p>
+                                   <div class="mission-img" id="cap-zone" style="background-image:url(${m.target})">
+                                       <div class="viewfinder" id="vf"></div>
+                                   </div>`;
+                setupCapture();
+            } else if (m.type === 'log') {
+                inner.innerHTML = `<p style="font-weight:bold; font-size: 1.5rem; margin-bottom: 10px;">[기억의 두루마리] 로그 분석</p>
+                                   <p style="font-size: 1.2rem; margin-bottom: 20px; color: #555;">나열된 로그 중에서 붉게 빛나는 **[error]** 항목을 찾아 클릭하세요!</p>
+                                   <div class="log-scroll">
+                                       <div class="log-entry">[info] System Core Initializing...</div>
+                                       <div class="log-entry">[info] Database connection established.</div>
+                                       <div class="log-entry error" onclick="finishMission()">[error] Uncaught ReferenceError: doorLogic is not defined at entrance.js:42</div>
+                                       <div class="log-entry">[info] Heartbeat signal normal.</div>
+                                       <div class="log-entry">[info] Monitoring network traffic...</div>
+                                       <div class="log-entry">[info] User session validated.</div>
+                                   </div>`;
+            } else if (m.type === 'logic') {
+                inner.innerHTML = `<p style="font-weight:bold; font-size: 1.5rem; margin-bottom: 10px;">[AI 정령 소환] 논리 퍼즐</p>
+                                   <p style="font-size: 1.2rem; margin-bottom: 20px; color: #555;">아래 블록들을 **논리적인 순서**대로 클릭하여 공격을 완성하세요!</p>
+                                   <div class="drop-zone" id="dz">여기에 블록이 조립됩니다...</div>
+                                   <div class="logic-puzzle" id="lp" style="margin-top: 20px;">
+                                       <div class="puzzle-item" onclick="addPuzzle(this, '정령 소환')">정령 소환</div>
+                                       <div class="puzzle-item" onclick="addPuzzle(this, '데이터 요청')">데이터 요청</div>
+                                       <div class="puzzle-item" onclick="addPuzzle(this, '공격 개시')">공격 개시</div>
+                                   </div>`;
+                window.pSeq = [];
+            }
+        }
+
+        function setupCapture() {
+            const cz = document.getElementById('cap-zone'); const vf = document.getElementById('vf');
+            cz.onmousedown = (e) => {
+                const r = cz.getBoundingClientRect(); let sX = e.clientX - r.left, sY = e.clientY - r.top;
+                vf.style.display = 'block'; vf.style.left = sX + 'px'; vf.style.top = sY + 'px'; vf.style.width = '0px'; vf.style.height = '0px';
+                cz.onmousemove = (me) => { 
+                    const cX = me.clientX - r.left, cY = me.clientY - r.top; 
+                    vf.style.width = Math.abs(cX-sX)+'px'; vf.style.height = Math.abs(cY-sY)+'px'; 
+                    vf.style.left = (cX>sX?sX:cX)+'px'; vf.style.top = (cY>sY?sY:cY)+'px'; 
+                };
+                cz.onmouseup = () => { 
+                    cz.onmousemove = null; cz.onmouseup = null; 
+                    
+                    const vR = vf.getBoundingClientRect();
+                    const cR = cz.getBoundingClientRect();
+                    const relX = vR.left - cR.left;
+                    const relY = vR.top - cR.top;
+                    const relW = vR.width;
+                    const relH = vR.height;
+
+                    // Validation: Bottom area check (Clipped button is roughly at y > 220 in a 350px height image)
+                    // Also check if width/height are significant
+                    if (relH > 20 && relW > 20 && (relY + relH) > 240 && relX < cR.width * 0.8 && (relX + relW) > cR.width * 0.2) {
+                        finishMission();
+                    } else {
+                        alert("⚠️ 에러 지점을 정확히 캡처하지 못했습니다! 화면 하단의 잘린 버튼 부위를 드래그하세요.");
+                        vf.style.display = 'none';
+                        setupCapture(); // Re-bind
+                    }
+                };
+            };
+        }
+
+        function addPuzzle(el, text) {
+            el.classList.add('selected');
+            window.pSeq.push(text);
+            document.getElementById('dz').innerText = window.pSeq.join(' -> ');
+            if (window.pSeq.length === 3) setTimeout(finishMission, 500);
+        }
+
+        function finishMission() {
+            document.getElementById('mission-layer').classList.remove('active');
+            step++;
+            nextStep();
+        }
+
+        function typeWriter(text, cb) {
+            isTyping = true;
+            const el = document.getElementById('message-text');
+            el.innerText = "";
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    el.innerText = text.substring(0, i + 1);
+                    i++;
+                    setTimeout(type, 40);
+                } else { isTyping = false; if (cb) cb(); }
+            }
+            type();
+        }
+    </script>
+</body>
+</html>

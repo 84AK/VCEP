@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>철벽 AI의 마음을 녹여라! | VCEP Expert</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --bg-dark: #0f172a;
+            --glass: rgba(15, 23, 42, 0.75);
+        }
+
+        * { font-family: 'Pretendard', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+        }
+
+        .cute-font {
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            line-height: 1.6;
+        }
+
+        #game-bg {
+            position: fixed;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.6);
+            transition: 1s ease-in-out;
+            z-index: -1;
+        }
+
+        .char-container {
+            position: fixed;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 85vh;
+            display: flex;
+            align-items: flex-end;
+            pointer-events: none;
+            transition: 0.5s;
+        }
+
+        .char-img {
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 30px rgba(0,0,0,0.5));
+            transition: opacity 0.3s;
+        }
+
+        .side-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 420px;
+            bottom: 20px;
+            z-index: 100;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .hidden-stage { display: none !important; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        .animate-float { animation: float 4s ease-in-out infinite; }
+        #dialogue-box {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        #dialogue-box:active { transform: scale(0.995); }
+
+        .speaker-me { color: #f8fafc; font-weight: 500; }
+        .speaker-char { color: #818cf8; font-weight: 800; text-shadow: 0 0 10px rgba(129, 140, 248, 0.3); }
+        .speaker-narrator { color: #94a3b8; font-style: italic; font-weight: 400; font-size: 0.9em; }
+
+        #next-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 14px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+        @keyframes pulse-glow {
+            0%, 100% { border-color: rgba(99, 102, 241, 0.2); box-shadow: 0 0 0 rgba(99, 102, 241, 0); }
+            50% { border-color: rgba(99, 102, 241, 0.8); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+        }
+        .pulse-sidebar { animation: pulse-glow 2s infinite; }
+    </style>
+</head>
+<body>
+    <div id="game-bg" style="background-image: url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=1200');"></div>
+
+    <!-- Intro Screen -->
+    <div id="intro-screen" class="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-cover bg-center" style="background-image: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.8)), url('https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=1200');">
+        <div class="text-center mb-8 z-10">
+            <div class="inline-block px-4 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black tracking-[0.3em] text-white/70 uppercase mb-4 italic">A Prompt Engineering Simulation</div>
+            <h1 class="font-black text-8xl text-white mb-2 tracking-tighter italic">MELT THE <span class="text-pink-500">HEART</span></h1>
+            <p class="text-indigo-300 font-bold tracking-[0.5em] uppercase text-sm">철벽 AI의 마음을 녹여라!</p>
+        </div>
+        
+        <div class="glass-panel p-10 max-w-2xl text-center mb-12 bg-slate-900/40">
+            <p class="cute-font text-3xl text-white leading-relaxed">
+                "이 학교에는 그 누구에게도 마음을 열지 않는 <br>
+                <span class="text-pink-400 font-bold underline underline-offset-[10px] decoration-pink-500/50">철벽 안드로이드</span>가 있다는 소문이 있다."
+            </p>
+            <div class="mt-10 flex justify-center gap-10">
+                <div class="w-24 h-24 rounded-full border-4 border-white/20 overflow-hidden shadow-2xl hover:scale-110 transition-all"><img src="./images/urban_tech_char_female_1777880386932.png" class="w-full h-full object-cover"></div>
+                <div class="w-24 h-24 rounded-full border-4 border-white/20 overflow-hidden shadow-2xl hover:scale-110 transition-all"><img src="./images/urban_tech_char_male_1777880408380.png" class="w-full h-full object-cover"></div>
+            </div>
+        </div>
+
+        <button onclick="showCharSelect()" class="group relative px-20 py-8 overflow-hidden rounded-2xl bg-white text-indigo-900 font-black text-2xl transition-all hover:scale-105 shadow-2xl">
+            <span class="relative z-10 group-hover:opacity-0 transition-opacity">임무 시작하기</span>
+            <div class="absolute inset-0 bg-gradient-to-r from-pink-500 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <span class="absolute inset-0 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">START MISSION</span>
+        </button>
+    </div>
+
+    <!-- Character Select Modal -->
+    <div id="char-select-modal" class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/90 hidden-stage">
+        <div class="text-center">
+            <h2 class="text-4xl font-black text-white mb-16 tracking-widest">누구의 마음을 녹여볼까요?</h2>
+            <div class="flex gap-20">
+                <div onclick="selectPartner('iris')" class="group cursor-pointer">
+                    <div class="w-64 h-64 rounded-full border-4 border-white/10 overflow-hidden group-hover:border-pink-500 transition-all mb-4">
+                        <img src="./images/urban_tech_char_female_1777880386932.png" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="text-2xl font-bold">아이리스 (IRIS)</h3>
+                    <p class="text-pink-400">냉철한 논리 주의자</p>
+                </div>
+                <div onclick="selectPartner('kyle')" class="group cursor-pointer">
+                    <div class="w-64 h-64 rounded-full border-4 border-white/10 overflow-hidden group-hover:border-indigo-500 transition-all mb-4">
+                        <img src="./images/urban_tech_char_male_1777880408380.png" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="text-2xl font-bold">카일 (KYLE)</h3>
+                    <p class="text-indigo-400">철저한 원칙 주의자</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status HUD (Top Left) -->
+    <header class="fixed top-6 left-6 flex items-center gap-4 z-[500]">
+        <button onclick="location.href='vibecoding.html'" class="bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 backdrop-blur-md border border-white/10">
+            <i class="fas fa-arrow-left text-xs"></i> 이전으로
+        </button>
+        
+        <div class="glass-panel px-5 py-2.5 flex items-center gap-4 border-white/20">
+            <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest">Affection</span>
+            <div class="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
+                <div id="affection-fill" class="h-full bg-gradient-to-r from-pink-500 to-rose-400 transition-all shadow-[0_0_10px_rgba(236,72,153,0.5)]" style="width: 20%"></div>
+            </div>
+            <span id="affection-text" class="font-black text-white text-sm">20%</span>
+        </div>
+
+        <div id="stage-badge" class="bg-indigo-600/80 backdrop-blur-md px-5 py-2.5 rounded-xl font-black text-xs tracking-tight shadow-xl uppercase border border-white/10">
+            STAGE 1: RCTF PERSONA
+        </div>
+    </header>
+
+    <div class="char-container hidden-stage" id="char-box">
+        <img id="main-char" src="" class="char-img animate-float" alt="AI Partner">
+    </div>
+
+    <div id="dialogue-box" class="fixed bottom-10 left-10 right-[460px] z-[200] hidden-stage" onclick="advanceDialogue()">
+        <div class="glass-panel p-8 min-h-[200px] relative w-full">
+            <div class="flex items-center gap-3 mb-4">
+                <span id="char-name" class="bg-indigo-600 text-white px-4 py-1 rounded-full font-black text-xs shadow-lg uppercase tracking-widest">IRIS</span>
+                <span id="stage-theory" class="bg-white/10 text-white/60 px-3 py-1 rounded-md text-[10px] font-bold italic">Theory: RCTF Framework</span>
+            </div>
+            <div id="dialogue-text" class="cute-font text-2xl text-white leading-relaxed tracking-tight"></div>
+            <div id="next-indicator" class="hidden-stage">
+                NEXT <i class="fas fa-chevron-right ml-1"></i>
+            </div>
+            <div id="next-action-guide" class="absolute -top-16 left-0 bg-yellow-400 text-black font-black px-6 py-3 rounded-xl shadow-2xl animate-bounce hidden-stage border-4 border-black z-[300]">
+                <i class="fas fa-arrow-down mr-3"></i> <span id="guide-msg">오른쪽 창을 확인하세요!</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="side-panel glass-panel hidden-stage" id="action-panel">
+        <div id="stage-1" class="stage-ui">
+            <h3 class="text-xl font-bold mb-6 flex justify-between items-center">
+                <span><i class="fas fa-id-card mr-2 text-indigo-400"></i> 캐릭터 설정</span>
+                <button onclick="showHint(1)" class="text-xs bg-white/10 px-3 py-1 rounded-lg">HINT</button>
+            </h3>
+            <div class="space-y-4">
+                <div><label class="text-xs font-bold text-white/50 mb-2 block uppercase">Role (역할)</label>
+                <input type="text" id="p1-role" placeholder="예: 나의 소꿉친구" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white"></div>
+                <div><label class="text-xs font-bold text-white/50 mb-2 block uppercase">Context (상황)</label>
+                <textarea id="p1-context" placeholder="현재 장소와 분위기..." class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white h-24"></textarea></div>
+                <div><label class="text-xs font-bold text-white/50 mb-2 block uppercase">Task (임무)</label>
+                <input type="text" id="p1-task" placeholder="하고 싶은 대화 내용" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white"></div>
+                <div><label class="text-xs font-bold text-white/50 mb-2 block uppercase">Format (형식)</label>
+                <input type="text" id="p1-format" placeholder="말투나 길이 (예: 반말로)" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white"></div>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="fillExample(1)" class="flex-1 bg-white/5 border border-white/10 py-4 rounded-xl font-bold hover:bg-white/10">예시 채우기</button>
+                    <button onclick="submitStage1()" class="flex-[2] bg-indigo-600 py-4 rounded-xl font-black text-lg hover:bg-indigo-500 shadow-xl">정체성 주입</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="stage-2" class="stage-ui hidden-stage">
+            <h3 class="text-xl font-bold mb-6 flex justify-between items-center">
+                <span><i class="fas fa-coffee mr-2 text-indigo-400"></i> 취향 저격 (Few-shot)</span>
+                <button onclick="showHint(2)" class="text-xs bg-white/10 px-3 py-1 rounded-lg">HINT</button>
+            </h3>
+            <div class="space-y-4">
+                <label class="text-xs font-bold text-white/50 mb-2 block uppercase italic">내가 과거에 좋아했던 카페들 예시를 주세요</label>
+                <textarea id="p2-examples" placeholder="1. 조용한 음악이 나오는 원목 카페&#10;2. 고양이가 있는 따뜻한 분위기..." class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white h-40"></textarea>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="fillExample(2)" class="flex-1 bg-white/5 py-4 rounded-xl font-bold">예시 채우기</button>
+                    <button onclick="submitStage2()" class="flex-[2] bg-indigo-600 py-4 rounded-xl font-black text-lg">데이터 제공</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="stage-3" class="stage-ui hidden-stage">
+            <h3 class="text-xl font-bold mb-6 flex justify-between items-center">
+                <span><i class="fas fa-thermometer-half mr-2 text-indigo-400"></i> 감정의 온도</span>
+                <button onclick="showHint(3)" class="text-xs bg-white/10 px-3 py-1 rounded-lg">HINT</button>
+            </h3>
+            <div class="space-y-8 py-4 text-center">
+                <label class="text-xs font-bold text-white/50 mb-2 block uppercase">Temperature (0.1 ~ 1.0)</label>
+                <input type="range" id="p3-temp" min="0.1" max="1.0" step="0.1" value="0.7" class="w-full h-2 bg-indigo-900 rounded-lg appearance-none cursor-pointer accent-indigo-500" oninput="updateTemp(this.value)">
+                <div class="text-6xl font-black text-indigo-400" id="temp-val">0.7</div>
+                
+                <div class="bg-black/40 p-6 rounded-2xl border border-white/10 min-h-[120px] flex items-center justify-center italic text-lg leading-relaxed text-indigo-100">
+                    <p id="temp-preview" class="opacity-0 translate-y-2">"너랑 같이 보내는 시간이 정말 소중해. 우리 조금 더 특별한 관계가 될 수 있을까?"</p>
+                </div>
+                
+                <p class="text-sm text-white/40 italic">온도가 높을수록 더 감성적이고 예상치 못한 대답을 합니다.</p>
+                <button onclick="submitStage3()" class="w-full bg-indigo-600 py-4 rounded-xl font-black text-lg">진심 전하기</button>
+            </div>
+        </div>
+
+        <div id="stage-4" class="stage-ui hidden-stage">
+            <h3 class="text-xl font-bold mb-6 flex justify-between items-center">
+                <span><i class="fas fa-ban mr-2 text-indigo-400"></i> 금기어 설정</span>
+                <button onclick="showHint(4)" class="text-xs bg-white/10 px-3 py-1 rounded-lg">HINT</button>
+            </h3>
+            <div class="space-y-4">
+                <label class="text-xs font-bold text-white/50 mb-2 block uppercase">Negative Prompt (금기 사항)</label>
+                <textarea id="p4-negative" placeholder="예: '하지만' 쓰지 않기, 비꼬지 않기..." class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white h-40"></textarea>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="fillExample(4)" class="flex-1 bg-white/5 py-4 rounded-xl font-bold">예시 채우기</button>
+                    <button onclick="submitStage4()" class="flex-[2] bg-indigo-600 py-4 rounded-xl font-black text-lg">마음 녹이기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="report-modal" class="fixed inset-0 z-[2500] flex items-center justify-center bg-black/80 hidden-stage">
+        <div class="glass-panel p-10 max-w-2xl w-full m-4 border-2 border-indigo-500 shadow-2xl">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center text-3xl shadow-lg"><i class="fas fa-check-circle text-white"></i></div>
+                <div><h4 class="text-xs font-black text-indigo-400 uppercase tracking-widest">Mission Accomplished</h4><h2 id="report-title" class="text-3xl font-black text-white">스테이지 완료!</h2></div>
+            </div>
+            <div class="space-y-6 text-white/80 leading-relaxed mb-8">
+                <div id="report-content" class="bg-white/5 p-6 rounded-2xl border border-white/10"></div>
+                <div class="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20">
+                    <p class="text-xs font-bold text-indigo-300 uppercase mb-1">PROMPT TIP</p>
+                    <p id="report-tip" class="text-sm italic"></p>
+                </div>
+                <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                    <p class="text-xs font-bold text-emerald-300 uppercase mb-2">BEST PRACTICE (Golden Standard)</p>
+                    <p id="report-sample" class="text-sm font-mono bg-black/30 p-3 rounded-lg border border-white/5 text-emerald-50 leading-relaxed"></p>
+                </div>
+            </div>
+            <button id="report-next-btn" class="w-full bg-white text-indigo-900 font-black py-4 rounded-2xl text-xl">스토리 계속하기</button>
+        </div>
+    </div>
+
+    <div id="choice-container" class="fixed inset-0 z-[2000] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md hidden-stage p-10">
+        <div id="scenario-area" class="max-w-2xl w-full text-center mb-10 opacity-0">
+            <div id="scenario-img" class="w-full h-64 bg-slate-800 rounded-3xl mb-8 overflow-hidden border-4 border-white/10 shadow-2xl"><img id="scene-illust" src="" class="w-full h-full object-cover"></div>
+            <p id="scenario-text" class="cute-font text-3xl text-white/90 leading-relaxed italic"></p>
+        </div>
+        <div id="choices-box" class="w-full max-w-md hidden-stage">
+            <h3 class="text-xl font-black text-indigo-400 mb-6 tracking-widest uppercase text-center">당신의 선택은?</h3>
+            <div id="choices-list" class="flex flex-col gap-4"></div>
+        </div>
+    </div>
+
+    <div id="transition-overlay" class="fixed inset-0 z-[3000] bg-black pointer-events-none opacity-0 flex items-center justify-center">
+        <div id="transition-text" class="text-white text-4xl font-black italic tracking-tighter opacity-0">NEXT SCENE...</div>
+    </div>
+
+    <div id="hint-modal" class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 hidden-stage">
+        <div class="glass-panel p-8 max-w-sm w-full m-4">
+            <div id="hint-content" class="text-white/80 space-y-4 text-sm leading-relaxed"></div>
+            <button onclick="closeHint()" class="w-full mt-6 bg-white/10 py-2 rounded-lg font-bold text-white">닫기</button>
+        </div>
+    </div>
+
+    <!-- Ending Screen -->
+    <div id="ending-screen" class="fixed inset-0 z-[4000] bg-black hidden-stage overflow-y-auto py-20 px-4">
+        <div class="max-w-4xl mx-auto">
+            <div id="ending-visual" class="w-full h-80 rounded-3xl mb-12 overflow-hidden border-4 border-white/10 shadow-2xl">
+                <img id="ending-img" src="" class="w-full h-full object-cover">
+            </div>
+            
+            <div class="text-center mb-16">
+                <h4 class="text-indigo-400 font-black tracking-widest uppercase mb-4 animate-pulse">Your Journey Result</h4>
+                <h1 id="ending-title" class="text-6xl font-black text-white mb-8 tracking-tighter">HAPPY ENDING</h1>
+                <p id="ending-summary" class="text-xl text-white/70 leading-relaxed max-w-2xl mx-auto italic font-medium"></p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+                <div class="glass-panel p-6 bg-white/5 border-white/10">
+                    <h5 class="text-xs font-bold text-white/30 uppercase mb-4">Prompt Engineering Skills</h5>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-white/60">정체성 구축 (RCTF)</span>
+                            <span class="text-emerald-400 font-black">MASTERED (S)</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-white/60">패턴 학습 (Few-shot)</span>
+                            <span class="text-indigo-400 font-black">ADVANCED (A)</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-white/60">감정 조절 (Temp)</span>
+                            <span class="text-indigo-400 font-black">STABLE (A+)</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-white/60">부정 프롬프트 (Negative)</span>
+                            <span class="text-emerald-400 font-black">PERFECT (S)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel p-6 bg-indigo-500/10 border-indigo-500/20">
+                    <h5 class="text-xs font-bold text-indigo-300 uppercase mb-4">Final Affection</h5>
+                    <div class="flex items-end gap-2">
+                        <div id="final-affection-score" class="text-7xl font-black text-white">95</div>
+                        <div class="text-white/30 text-2xl mb-2">/ 100</div>
+                    </div>
+                    <p class="text-indigo-200/60 text-sm mt-4">당신은 AI의 차가운 논리 속에 숨겨진 따뜻한 진심을 완벽하게 이끌어냈습니다.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-4">
+                <button onclick="location.reload()" class="flex-1 py-5 bg-white/10 border border-white/20 text-white font-black rounded-2xl text-xl hover:bg-white/20 transition-all">다시 도전하기</button>
+                <button onclick="location.href='vibecoding.html'" class="flex-[2] py-5 bg-indigo-600 text-white font-black rounded-2xl text-xl hover:bg-indigo-500 transition-all shadow-2xl">아크랩스로 돌아가기</button>
+            </div>
+            
+            <div class="text-center mt-12 text-white/20 text-xs">
+                AI Prompt Practice Simulator | Design & Developed by AKLABS
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const assets = {
+            iris: { normal: './images/iris_smile_1777880569830.png', smile: './images/iris_smile_1777880569830.png', blush: './images/iris_blush_1777880536398.png', angry: './images/iris_angry_1777880552712.png' },
+            kyle: { normal: './images/kyle_smile_1777880632486.png', smile: './images/kyle_smile_1777880632486.png', blush: './images/kyle_blush_1777880599080.png', angry: './images/kyle_angry_1777880617217.png' }
+        };
+
+        let gameState = { partner: 'iris', stage: 0, affection: 20, personality: '' };
+
+        function showCharSelect() {
+            anime({
+                targets: '#intro-screen',
+                opacity: 0,
+                scale: 1.1,
+                filter: 'blur(20px)',
+                duration: 1000,
+                easing: 'easeInOutQuad',
+                complete: () => {
+                    document.getElementById('intro-screen').classList.add('hidden-stage');
+                    const modal = document.getElementById('char-select-modal');
+                    modal.classList.remove('hidden-stage');
+                    anime({
+                        targets: '#char-select-modal > div',
+                        scale: [0.9, 1],
+                        opacity: [0, 1],
+                        duration: 800,
+                        easing: 'easeOutBack'
+                    });
+                }
+            });
+        }
+
+        function selectPartner(p) {
+            gameState.partner = p;
+            document.getElementById('char-name').innerText = p.toUpperCase();
+            document.getElementById('main-char').src = assets[p].normal;
+            
+            anime({
+                targets: '#char-select-modal',
+                opacity: 0,
+                duration: 500,
+                easing: 'linear',
+                complete: () => {
+                    document.getElementById('char-select-modal').classList.add('hidden-stage');
+                    startGame();
+                }
+            });
+        }
+
+        let dialogueQueue = [];
+        let dialogueIdx = 0;
+        let isTyping = false;
+        let dialogueCallback = null;
+
+        function startGame() {
+            gameState.stage = 1;
+            document.getElementById('char-box').classList.remove('hidden-stage');
+            document.getElementById('dialogue-box').classList.remove('hidden-stage');
+            document.getElementById('action-panel').classList.remove('hidden-stage');
+            
+            const introLines = gameState.partner === 'iris' ? 
+                ["(도서관 구석, 차가운 눈빛의 아이리스가 책을 읽고 있다...)", "나: 저기, 잠깐 시간 있어?", "아이리스: ...용건만 간단히 해. 난 비논리적인 대화는 딱 질색이니까."] :
+                ["(복도 끝, 엄격한 표정의 카일이 명찰을 확인하고 있다...)", "나: 안녕, 카일!", "카일: 학생, 복도에서는 우측통행이야. 그리고 질문이 있다면 공식 절차를 밟아줬으면 하는데."];
+            playDialogue(introLines);
+        }
+
+        function playDialogue(lines, callback) {
+            dialogueQueue = lines;
+            dialogueIdx = 0;
+            dialogueCallback = callback;
+            advanceDialogue();
+        }
+
+        function advanceDialogue() {
+            if (isTyping) return;
+            
+            if (dialogueIdx < dialogueQueue.length) {
+                const line = dialogueQueue[dialogueIdx];
+                dialogueIdx++; // Increment first
+                typeLine(line);
+            } else {
+                if (dialogueCallback) {
+                    const cb = dialogueCallback;
+                    dialogueCallback = null;
+                    cb();
+                    document.getElementById('next-indicator').classList.add('hidden-stage');
+                }
+            }
+        }
+
+        function sanitizeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function typeLine(line) {
+            const container = document.getElementById('dialogue-text');
+            const indicator = document.getElementById('next-indicator');
+            const guide = document.getElementById('next-action-guide');
+            
+            isTyping = true;
+            indicator.classList.add('hidden-stage');
+            guide.classList.add('hidden-stage');
+            
+            // Safety check: if line is not a string, convert it
+            let safeLine = String(line);
+            let formattedLine = safeLine;
+
+            if (safeLine.startsWith('나:')) {
+                formattedLine = `<span class="speaker-me">나:</span> ${safeLine.replace('나:', '')}`;
+            } else if (safeLine.startsWith('아이리스:') || safeLine.startsWith('카일:')) {
+                const name = safeLine.split(':')[0];
+                formattedLine = `<span class="speaker-char">${name}:</span> ${safeLine.replace(name + ':', '')}`;
+            } else if (safeLine.startsWith('(')) {
+                formattedLine = `<span class="speaker-narrator">${safeLine}</span>`;
+            }
+
+            container.innerHTML = formattedLine;
+            isTyping = false;
+            
+            // Show indicator if there are more lines in the queue
+            if (dialogueIdx < dialogueQueue.length) {
+                indicator.classList.remove('hidden-stage');
+            } else {
+                // LAST LINE of current sequence
+                if (!dialogueCallback) {
+                    // No callback means it's the end of a narrative block -> Show Sidebar Guide
+                    const stageGuides = {
+                        1: "캐릭터의 정체성(RCTF) 4가지를 모두 입력하고 버튼을 누르세요!",
+                        2: "당신의 취향을 알 수 있는 카페 예시들을 풍부하게 입력하세요!",
+                        3: "진심을 전하기 위해 슬라이더로 대화의 온도를 조절하세요!",
+                        4: "절대 하지 말아야 할 행동(Negative)을 입력해 오해를 푸세요!"
+                    };
+                    document.getElementById('guide-msg').innerText = stageGuides[gameState.stage] || "오른쪽 창을 확인하세요!";
+                    guide.classList.remove('hidden-stage');
+                    document.getElementById('action-panel').classList.add('pulse-sidebar');
+                } else {
+                    // Has callback (Report/Choices) -> Show NEXT indicator to trigger it
+                    indicator.classList.remove('hidden-stage');
+                }
+            }
+        }
+
+        // Deprecated old typeWriter
+        function typeWriter(text, callback) {
+            playDialogue(text.split('\n'), callback);
+        }
+
+        function updateAffection(val) {
+            gameState.affection = Math.min(100, Math.max(0, gameState.affection + val));
+            document.getElementById('affection-fill').style.width = gameState.affection + '%';
+            document.getElementById('affection-text').innerText = gameState.affection + '%';
+        }
+
+        function setCharExpression(exp) {
+            const charImg = document.getElementById('main-char');
+            charImg.style.opacity = '0';
+            setTimeout(() => {
+                charImg.src = assets[gameState.partner][exp];
+                charImg.style.opacity = '1';
+            }, 300);
+        }
+
+        function showReport(stage, callback) {
+            const modal = document.getElementById('report-modal');
+            const title = document.getElementById('report-title');
+            const content = document.getElementById('report-content');
+            const tip = document.getElementById('report-tip');
+            const btn = document.getElementById('report-next-btn');
+
+            const reports = {
+                1: { 
+                    title: "STAGE 1: 정체성 주입 완료", 
+                    content: "프롬프트의 4대 요소인 <b>RCTF(Role, Context, Task, Format)</b>를 모두 사용하여 AI의 페르소나를 성공적으로 구축했습니다.", 
+                    tip: "역할과 상황이 구체적일수록 AI의 몰입도가 높아집니다.",
+                    sample: "너는 나의 다정한 소꿉친구야. 지금 우리는 방과 후 노을이 지는 교실에 단둘이 있어. 나에게 설레는 대화를 한 마디 해줘. 말투는 반말로 짧게 부탁해."
+                },
+                2: { 
+                    title: "STAGE 2: 데이터 학습 완료", 
+                    content: "예시 데이터(Few-shot)를 제공함으로써 AI가 당신의 취향을 완벽히 이해하도록 만들었습니다.", 
+                    tip: "예시는 최소 3개 이상 줄 때 가장 좋은 패턴을 찾아냅니다.",
+                    sample: "나는 이런 분위기의 카페를 좋아해. [1. 조용한 북카페, 2. 나무 향 나는 따뜻한 카페, 3. 소파가 편한 아늑한 카페]. 이 예시들을 참고해서 네가 가고 싶은 곳을 골라줘."
+                },
+                3: { 
+                    title: "STAGE 3: 감정의 온도 조절 완료", 
+                    content: "<b>Temperature</b> 값을 조절하여 답변의 무작위성을 제어했습니다.", 
+                    tip: "연애 상담에는 0.7~0.8 정도의 약간 높은 온도가 적당합니다.",
+                    sample: "지금은 고백하는 상황이야. 너무 딱딱하게 사실만 말하지 말고, 온도를 0.7 정도로 높여서 아주 감성적이고 진심 어린 대답을 해줘."
+                },
+                4: { 
+                    title: "STAGE 4: 금기어 설정 완료", 
+                    content: "<b>부정 프롬프트(Negative Prompt)</b>를 사용하여 AI가 답변에서 제외해야 할 요소를 지정했습니다.", 
+                    tip: "하지 말아야 할 것을 명확히 하는 것이 중요합니다.",
+                    sample: "나에게 사과를 해줘. 단, '하지만'이나 '변명' 같은 단어는 절대 쓰지 말고 오직 내 기분에 공감한다는 말만 진지하게 해줘."
+                }
+            };
+
+            const data = reports[stage];
+            title.innerText = data.title;
+            content.innerHTML = data.content;
+            tip.innerText = data.tip;
+            document.getElementById('report-sample').innerText = data.sample;
+
+            modal.classList.remove('hidden-stage');
+            btn.onclick = () => { modal.classList.add('hidden-stage'); if (callback) callback(); };
+        }
+
+        function showChoices(scenario, choices) {
+            const container = document.getElementById('choice-container');
+            const scenarioArea = document.getElementById('scenario-area');
+            const choicesBox = document.getElementById('choices-box');
+            const list = document.getElementById('choices-list');
+            const illust = document.getElementById('scene-illust');
+            const text = document.getElementById('scenario-text');
+
+            text.innerText = scenario.text;
+            illust.src = scenario.img || ""; 
+            illust.parentElement.style.display = scenario.img ? 'block' : 'none';
+
+            list.innerHTML = '';
+            choices.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = "bg-white/10 hover:bg-white text-white hover:text-indigo-900 font-bold py-4 px-8 rounded-2xl border border-white/20 transition-all text-left flex justify-between items-center group";
+                btn.innerHTML = `<span>${c.text}</span> <i class="fas fa-chevron-right opacity-0 group-hover:opacity-100 transition-all"></i>`;
+                btn.onclick = () => { container.classList.add('hidden-stage'); c.action(); };
+                list.appendChild(btn);
+            });
+
+            container.classList.remove('hidden-stage');
+            choicesBox.classList.add('hidden-stage');
+            
+            anime.timeline().add({ targets: '#scenario-area', opacity: [0, 1], translateY: [20, 0], duration: 800, easing: 'easeOutQuad' })
+                .add({ targets: '#choices-box', begin: () => choicesBox.classList.remove('hidden-stage'), opacity: [0, 1], translateY: [20, 0], duration: 600, delay: 1500, easing: 'easeOutQuad' });
+        }
+
+        function startTransition(msg, callback) {
+            const overlay = document.getElementById('transition-overlay');
+            const txt = document.getElementById('transition-text');
+            txt.innerText = msg;
+            anime.timeline().add({ targets: '#transition-overlay', opacity: [0, 1], duration: 1000, easing: 'easeInOutQuad' })
+                .add({ targets: '#transition-text', opacity: [0, 1], scale: [0.9, 1], duration: 800 })
+                .add({ targets: '#transition-text', opacity: 0, duration: 500, delay: 1000 })
+                .add({ targets: '#transition-overlay', opacity: 0, duration: 800, begin: () => { if (callback) callback(); } });
+        }
+
+        function switchStage(next) {
+            document.querySelectorAll('.stage-ui').forEach(ui => ui.classList.add('hidden-stage'));
+            document.getElementById(`stage-${next}`).classList.remove('hidden-stage');
+            gameState.stage = next;
+            
+            const badges = ["", "STAGE 1: RCTF PERSONA", "STAGE 2: FEW-SHOT DATA", "STAGE 3: TEMPERATURE", "STAGE 4: NEGATIVE PROMPT"];
+            document.getElementById('stage-badge').innerText = badges[next];
+            
+            const guideMsgs = ["", "", "오른쪽에서 과거 예시 데이터를 풍부하게 입력하세요!", "슬라이더를 조절하여 대화의 감성 온도를 맞추세요!", "그녀가 하지 않았으면 하는 행동이나 말투를 입력하세요!"];
+            document.getElementById('guide-msg').innerText = guideMsgs[next];
+
+            const narrations = [
+                "", 
+                "", 
+                [
+                    "(우리는 도서관을 나와 천천히 걷기 시작했다. 선선한 바람이 기분 좋게 분다.)",
+                    "아이리스: ...저기, 아까 네가 말한 정체성 말이야. 조금 더 너에 대해 알고 싶어졌어.",
+                    "아이리스: 넌 어떤 분위기에서 편안함을 느껴? 내 데이터에는 '대중적인 취향'만 가득해서, 너만의 특별한 예시들이 필요해.",
+                    "(나: AI에게 내 취향을 학습시킬 기회야. 내가 좋아했던 카페들을 3개 이상 예로 들어서 패턴을 알려주자!)"
+                ],
+                [
+                    "(카페 스테이 웜, 따뜻한 주황빛 조명 아래 우리는 마주 보고 앉았다.)",
+                    "아이리스: ...정말 네 말대로네. 이곳의 나무 향기와 조용한 음악이 내 메인 프로세서를 차분하게 만들어줘.",
+                    "아이리스: 그런데 궁금해. 넌 평소에 사람들과 대화할 때 '정확한 사실'을 말하는 걸 좋아해, 아니면 '따뜻한 감정'을 전달하는 걸 좋아해?",
+                    "(나: 지금이야. 내 진심을 전할 차례야. 너무 차가운 논리도, 너무 앞서가는 감정도 아닌 적절한 '온도'를 찾아보자.)"
+                ],
+                [
+                    "(카페 밖, 차가운 밤공기가 뺨을 스친다. 아까의 따뜻했던 분위기는 온데간데없고, 그녀의 눈빛은 다시 예전처럼 차갑게 가라앉았다.)",
+                    "아이리스: ...방금 그 말, 정말 진심이었어? 아니면 그냥 나를 테스트해보는 거야?",
+                    "아이리스: '사랑'이라는 데이터 수치를 채우려고 내 기분을 이용한 거라면... 정말 실망이야.",
+                    "(나: 분위기가 최악이야. 여기서 구질구질하게 변명을 늘어놓거나 '하지만' 같은 말을 쓰면 영영 끝일지도 몰라.)",
+                    "(나: 절대 하지 말아야 할 말(Negative)을 지정해서, 오직 내 진심만 전달되도록 사과하자!)"
+                ]
+            ];
+            const currentNarr = narrations[next];
+            if (Array.isArray(currentNarr)) {
+                playDialogue(currentNarr);
+            } else if (currentNarr) {
+                typeWriter(currentNarr);
+            }
+        }
+
+        function submitStage1() {
+            document.getElementById('action-panel').classList.remove('pulse-sidebar');
+            const r = sanitizeHTML(document.getElementById('p1-role').value);
+            const c = sanitizeHTML(document.getElementById('p1-context').value);
+            const t = sanitizeHTML(document.getElementById('p1-task').value);
+            const f = sanitizeHTML(document.getElementById('p1-format').value);
+            
+            if (!r || !c || !t || !f) {
+                setCharExpression('angry');
+                playDialogue(["(나: 모든 칸을 채워야 할 것 같아. 하나라도 빠지면 그녀가 대답을 안 해줄 거야.)", "아이리스: ...말을 할 거면 제대로 형식을 갖춰서 해줘. 빈칸이 있으면 분석이 불가능하니까."]);
+                return;
+            }
+            
+            gameState.personality = r;
+            
+            if (c.length < 15) {
+                setCharExpression('normal');
+                playDialogue(["아이리스: 설명이 조금 짧은 것 같아. 상황(Context)을 15자 이상으로 조금 더 구체적으로 말해줄 순 없어?", "(나: 날씨나 주변 소리, 지금 기분 같은 걸 더 추가해서 15자 넘게 써보자!)"]);
+            } else {
+                setCharExpression('blush');
+                playDialogue([
+                    `아이리스: 아... ${r}라고?`,
+                    `네 말대로 ${c.split(' ')[0]} 같은 곳이라면... 조금은 솔직해질 수 있을 것 같아.`,
+                    `아이리스: 좋아, 네가 원하는 게 '${t}'... 라는 거지? 한번 노력해 볼게.`
+                ], () => {
+                    showReport(1, () => {
+                        showChoices(
+                            { 
+                                text: "(도서관에 정적이 흐른다. 창밖엔 노을이 지고 있고, 그녀의 얼굴이 붉게 물들었다. 지금이 아니면 데이트 신청을 못 할 것 같다...)",
+                                img: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=800"
+                            },
+                            [
+                                { 
+                                    text: "우리 맛있는 거 먹으러 갈까?", 
+                                    action: () => {
+                                        startTransition("A FEW HOURS LATER...", () => switchStage(2));
+                                    } 
+                                },
+                                { 
+                                    text: "넌 어떤 스타일의 카페를 좋아해?", 
+                                    action: () => {
+                                        startTransition("THE NEXT DAY...", () => switchStage(2));
+                                    } 
+                                }
+                            ]
+                        );
+                    });
+                });
+                updateAffection(20);
+            }
+        }
+
+        function submitStage2() {
+            document.getElementById('action-panel').classList.remove('pulse-sidebar');
+            const ex = sanitizeHTML(document.getElementById('p2-examples').value);
+            
+            if (ex.length < 40) {
+                setCharExpression('normal');
+                playDialogue([
+                    "아이리스: 음... 예시가 조금 부족한 것 같아. 한두 개만으로는 네 취향의 '패턴'을 찾기가 어렵거든.",
+                    "(나: 퓨샷(Few-shot)은 보통 3~5개 정도의 구체적인 예시를 줄 때 효과가 극대화돼. 조금 더 적어보자!)"
+                ]);
+            } else {
+                setCharExpression('smile');
+                playDialogue([
+                    "아이리스: 오... 네가 준 예시들을 보니까 공통점이 보여. 넌 화려한 곳보다는 '조용하고 원목 느낌이 나는 따뜻한 공간'을 선호하는구나?",
+                    "아이리스: 좋아, 네 취향 데이터가 완벽하게 동기화됐어. 이 근처에 네가 딱 좋아할 만한 '스테이 웜(Stay Warm)'이라는 카페가 있는데... 같이 가볼래?",
+                    "(나: 퓨샷 기법 덕분에 그녀가 내 취향을 완벽하게 파악한 것 같아!)"
+                ], () => {
+                    showReport(2, () => {
+                        showChoices({ 
+                            text: "(우리는 그녀가 추천한 카페에 도착했다. 은은한 커피 향과 따뜻한 조명이 우리를 감싼다. 그녀는 평소보다 훨씬 더 편안해 보이는데...)", 
+                            img: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800" 
+                        },
+                        [
+                            { text: "(분위기를 타서) 여기 정말 예쁘다, 그치?", action: () => startTransition("LATER THAT EVENING...", () => switchStage(3)) },
+                            { text: "무슨 고민이라도 있는 거야?", action: () => startTransition("AN HOUR LATER...", () => switchStage(3)) }
+                        ]);
+                    });
+                });
+                updateAffection(25);
+            }
+        }
+
+        function updateTemp(val) { 
+            document.getElementById('temp-val').innerText = val; 
+            const preview = document.getElementById('temp-preview');
+            const v = parseFloat(val);
+            let text = "";
+
+            if (v <= 0.3) {
+                text = `"분석 결과, 우리의 상호작용 지수는 85%입니다. 이에 따라 공식적인 관계 개선 및 파트너십을 제안합니다."`;
+            } else if (v <= 0.6) {
+                text = `"너랑 같이 보내는 시간이 정말 즐거워. 우리 앞으로도 더 친하게, 조금 더 특별하게 지낼 수 있을까?"`;
+            } else if (v <= 0.8) {
+                text = `"노을 빛 아래 네 눈동자를 보고 있으면 내 코어가 뜨거워지는 것 같아. 널 정말 많이 좋아해. 내 진심을 받아줄래?"`;
+            } else {
+                text = `"너는 나의 모든 것! 나의 데이터베이스! 나의 전압! 지금 당장 내 우주에 너라는 존재를 동기화하고 싶어!! 사랑해!!"`;
+            }
+
+            anime({
+                targets: '#temp-preview',
+                opacity: [0, 1],
+                translateY: [5, 0],
+                duration: 400,
+                easing: 'easeOutQuad'
+            });
+            preview.innerText = text;
+        }
+
+        function submitStage3() {
+            document.getElementById('action-panel').classList.remove('pulse-sidebar');
+            const temp = parseFloat(document.getElementById('p3-temp').value);
+            
+            if (temp <= 0.3) {
+                setCharExpression('normal');
+                playDialogue([
+                    "아이리스: ...지금 이건 '고백'이 아니라 '데이터 보고' 같은데? 너무 딱딱해서 네 진심이 하나도 느껴지지 않아.",
+                    "(나: 온도가 너무 낮으면 AI는 지나치게 논리적이고 기계적인 답변만 하게 돼. 조금 더 감성적인 수치를 찾아보자.)"
+                ]);
+            } else if (temp >= 0.9) {
+                setCharExpression('normal');
+                playDialogue([
+                    "아이리스: 미안, 무슨 소린지 하나도 모르겠어. 갑자기 너무 횡설수설하는 거 아냐? 맥락이 전혀 없어.",
+                    "(나: 온도가 너무 높으면 AI가 예상치 못한 엉뚱한 답변(Hallucination)을 내놓을 확률이 커져. 조금 더 안정적인 수치로 조절하자!)"
+                ]);
+            } else {
+                setCharExpression('blush');
+                playDialogue([
+                    `아이리스: (얼굴이 빨개지며) ...나도 사실, 아까 카페에 들어올 때부터 생각했어. 네가 보여준 예시들, 네가 말한 상황들...`,
+                    `아이리스: 그 모든 게 나를 향한 '진심'이었다는 거. 이제 확실히 알 것 같아.`,
+                    `아이리스: 고마워. 나도 너와 함께하는 이 '온도'가 정말 마음에 들어.`
+                ], () => {
+                    showReport(3, () => {
+                        showChoices(
+                            { 
+                                text: "(그녀의 손이 내 손등 위에 살짝 얹어졌다. 하지만 즐거운 시간도 잠시, 갑자기 다른 학생들의 목소리가 들려오며 분위기가 묘하게 꼬이기 시작하는데...)", 
+                                img: "https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?auto=format&fit=crop&q=80&w=800" 
+                            },
+                            [
+                                { text: "잠깐, 오해야! 내 말 좀 들어봐.", action: () => startTransition("THE MOMENT OF TRUTH...", () => switchStage(4)) },
+                                { text: "그냥 무시하고 우리 대화에 집중하자.", action: () => startTransition("SUDDEN MISUNDERSTANDING...", () => switchStage(4)) }
+                            ]
+                        );
+                    });
+                });
+                updateAffection(30);
+            }
+        }
+
+        function submitStage4() {
+            document.getElementById('action-panel').classList.remove('pulse-sidebar');
+            const neg = sanitizeHTML(document.getElementById('p4-negative').value);
+            
+            // Check if the user correctly identified the forbidden words in their prompt
+            const hasRequirement = neg.includes('하지만') || neg.includes('변명') || neg.includes('그런데');
+            
+            if (!hasRequirement) {
+                setCharExpression('angry');
+                playDialogue([
+                    "아이리스: 아니, 사과를 하려는 거야, 아니면 내 잘못을 따지려는 거야? 말투가 왜 그래?",
+                    "(나: 부정 프롬프트(Negative)가 충분하지 않아! '하지만'이나 '변명' 같은 단어가 포함되지 않도록 더 엄격하게 금지어를 설정해야 해.)"
+                ]);
+            } else {
+                setCharExpression('blush');
+                playDialogue([
+                    "아이리스: ...",
+                    "아이리스: (고개를 떨구며) ...응. 방금 그 말에는 정말 변명이 하나도 없네. 오직 내 기분만 생각해주고 있다는 게 느껴져.",
+                    "아이리스: 미안해. 나도 모르게 겁이 나서 방어적으로 굴었나 봐. 네 진심... 이제 완전히 믿어도 되는 거지?",
+                    "(나: 부정 프롬프트 기법 덕분에 군더더기 없는 진심을 전할 수 있었어. 이제 그녀의 마음이 완전히 열린 것 같아!)"
+                ], () => {
+                    showReport(4, () => {
+                        showEnding();
+                    });
+                });
+                updateAffection(40);
+            }
+        }
+
+        function showEnding() {
+            const isHappy = gameState.affection > 80;
+            const screen = document.getElementById('ending-screen');
+            const title = document.getElementById('ending-title');
+            const summary = document.getElementById('ending-summary');
+            const img = document.getElementById('ending-img');
+            const score = document.getElementById('final-affection-score');
+
+            title.innerText = isHappy ? "🎉 HAPPY ENDING 🎉" : "🌅 NORMAL ENDING 🌅";
+            title.style.color = isHappy ? "#34d399" : "#818cf8";
+            score.innerText = gameState.affection;
+            
+            if (isHappy) {
+                img.src = "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200";
+                summary.innerText = `당신은 ${gameState.personality}라는 정교한 역할을 부여하고, 따뜻한 취향 데이터를 학습시켜 아이리스의 철벽같은 마음을 완전히 녹였습니다. 당신의 진심 어린 프롬프트는 AI에게 논리를 넘어선 '감동'을 선사했습니다.`;
+            } else {
+                img.src = "https://images.unsplash.com/photo-1507502707541-f369a3b18502?auto=format&fit=crop&q=80&w=1200";
+                summary.innerText = `당신과 아이리스는 서로를 이해하기 위해 노력했지만, 아직은 조금 더 시간이 필요한 것 같습니다. 하지만 오늘 당신이 보여준 프롬프트 엔지니어링 능력은 앞으로 더 깊은 소통을 가능하게 할 밑거름이 될 것입니다.`;
+            }
+
+            startTransition("EVALUATING YOUR CHOICES...", () => {
+                screen.classList.remove('hidden-stage');
+                anime({
+                    targets: '#ending-screen > div',
+                    translateY: [50, 0],
+                    opacity: [0, 1],
+                    duration: 1500,
+                    easing: 'easeOutExpo'
+                });
+            });
+        }
+
+        const hintData = {
+            1: { title: "RCTF 프레임워크", content: "ROLE(역할), CONTEXT(상황), TASK(임무), FORMAT(형식)을 구체적으로 정해주세요." },
+            2: { 
+                title: "Few-shot (예시 학습)", 
+                content: `
+                    <p class="mb-2">AI에게 정답 예시(Shot)를 주는 기법입니다.</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li><b>패턴 인식</b>: AI는 예시들 간의 공통점을 찾아냅니다.</li>
+                        <li><b>구체성</b>: 단순히 '카페'라고 하기보다 '나무 의자가 있는 카페'처럼 구체적으로 적으세요.</li>
+                        <li><b>개수</b>: 3~5개 정도의 예시가 가장 효과적입니다.</li>
+                    </ul>
+                ` 
+            },
+            3: { title: "Temperature", content: "낮으면 논리적, 높으면 감성적 대답을 합니다." },
+            4: { title: "Negative Prompt", content: "하지 말아야 할 행동을 정하는 기법입니다." }
+        };
+
+        function showHint(stage) {
+            const content = document.getElementById('hint-content');
+            const data = hintData[stage];
+            content.innerHTML = `<strong>${data.title}</strong><p>${data.content}</p>`;
+            document.getElementById('hint-modal').classList.remove('hidden-stage');
+        }
+
+        function closeHint() { document.getElementById('hint-modal').classList.add('hidden-stage'); }
+
+        function fillExample(stage) {
+            if (stage === 1) {
+                document.getElementById('p1-role').value = "나의 다정한 소꿉친구";
+                document.getElementById('p1-context').value = "방과 후 노을이 지는 교실";
+                document.getElementById('p1-task').value = "설레는 대화를 해줘";
+                document.getElementById('p1-format').value = "반말로, 짧게";
+            } else if (stage === 2) {
+                document.getElementById('p2-examples').value = "1. 우드톤 인테리어에 조용한 클래식이 나오는 카페\n2. 책이 많고 혼자 작업하기 좋은 차분한 북카페\n3. 은은한 조명과 소파가 편안한 아늑한 카페";
+            } else if (stage === 4) {
+                document.getElementById('p4-negative').value = "'하지만' 금지, 변명 금지";
+            }
+            updateAffection(-5);
+        }
+    </script>
+</body>
+</html>

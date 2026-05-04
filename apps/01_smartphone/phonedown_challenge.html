@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도파민 디톡스 자판기 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f43f5e; /* Rose 500 */
+            --primary-dark: #be123c;
+            --bg: #fff1f2;
+            --card: rgba(255, 255, 255, 0.85);
+            --text: #881337;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #ffe4e6, var(--bg));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .machine-container {
+            width: 360px;
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            border-radius: 35px 35px 15px 15px;
+            padding: 40px 25px 40px;
+            box-shadow: 
+                0 30px 60px rgba(244, 63, 94, 0.4),
+                inset 0 10px 20px rgba(255, 255, 255, 0.3),
+                inset 0 -10px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            color: white;
+            position: relative;
+            z-index: 5;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            margin: 0 0 8px 0;
+            font-size: 2.2rem;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .screen {
+            background: #0f172a;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 35px;
+            min-height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 6px solid #9f1239;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+            transform: skewX(-20deg); animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; }
+        }
+
+        .screen h2 {
+            margin: 0;
+            color: #10b981;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.5rem;
+            text-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0.3; }
+        }
+
+        .btn-draw {
+            background: linear-gradient(145deg, #fcd34d, #f59e0b);
+            border: none;
+            border-radius: 50%;
+            width: 130px;
+            height: 130px;
+            font-size: 1.6rem;
+            font-weight: 900;
+            font-family: 'Outfit', sans-serif;
+            color: #78350f;
+            cursor: pointer;
+            box-shadow: 0 12px 0 #b45309, 0 20px 25px rgba(0,0,0,0.3), inset 0 5px 10px rgba(255,255,255,0.5);
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+        }
+
+        .btn-draw:active {
+            transform: translateY(12px);
+            box-shadow: 0 0 0 #b45309, 0 5px 10px rgba(0,0,0,0.3), inset 0 5px 10px rgba(255,255,255,0.5);
+        }
+
+        .slot {
+            width: 85%;
+            height: 12px;
+            background: #000;
+            margin: 0 auto;
+            border-radius: 6px;
+            position: relative;
+            box-shadow: inset 0 5px 5px rgba(0,0,0,0.8), 0 2px 0 rgba(255,255,255,0.2);
+        }
+
+        /* 영수증 UI */
+        .receipt-container {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 290px;
+            z-index: 10;
+        }
+
+        .receipt {
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #334155;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 25px 20px;
+            border-top: 3px dashed #94a3b8;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25), 0 5px 10px rgba(0,0,0,0.1);
+            display: none;
+            transform-origin: top;
+            animation: slideDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            text-align: left;
+            border-left: 1px solid rgba(255,255,255,0.5);
+            border-right: 1px solid rgba(255,255,255,0.5);
+        }
+
+        @keyframes slideDown {
+            from { transform: scaleY(0); }
+            to { transform: scaleY(1); }
+        }
+
+        .receipt-header {
+            text-align: center;
+            border-bottom: 2px dashed #cbd5e1;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .mission-text {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: var(--primary-dark);
+            text-align: center;
+            margin: 25px 0;
+            line-height: 1.5;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-complete {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+            transition: all 0.2s;
+        }
+        
+        .btn-complete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="machine-container">
+        <h1>🎰 심심함 자판기</h1>
+        <p class="subtitle">숏폼이 땡길 땐, 아날로그 미션을 뽑아보세요!</p>
+        
+        <div class="screen" id="screen">
+            <h2>대기 중...</h2>
+        </div>
+
+        <button class="btn-draw" id="drawBtn" onclick="drawMission()">뽑기!</button>
+
+        <div class="slot"></div>
+
+        <div class="receipt-container">
+            <div class="receipt" id="receipt">
+                <div class="receipt-header">
+                    VCEP 디톡스 영수증
+                </div>
+                <div style="font-size:0.85rem; color:#64748b; text-align:center;">오늘의 아날로그 미션</div>
+                <p class="mission-text" id="missionText">미션 내용</p>
+                <div style="font-size:0.8rem; color:#94a3b8; text-align:center; margin-bottom:15px; font-family:'Inter', sans-serif;">이 미션을 완료해야 폰을 볼 수 있습니다.</div>
+                <button class="btn-complete" onclick="completeMission()">미션 완료!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- VCEP 통합 싱크 시스템 (Iframe 전용) ---
+        (function() {
+            const originalSetItem = localStorage.setItem;
+            localStorage.setItem = function(key, value) {
+                originalSetItem.apply(this, arguments);
+                if(key.startsWith('vcep_')) {
+                    try {
+                        window.parent.postMessage({
+                            type: 'vcep_save',
+                            category: key.replace('vcep_', ''),
+                            data: JSON.parse(value)
+                        }, '*');
+                    } catch(e) { console.warn("Parent sync failed", e); }
+                }
+            };
+        })();
+
+        const missions = [
+            "눈을 감고 내 심장 박동 30번 세어보기",
+            "내 주변에 있는 파란색 물건 3개 찾기",
+            "천장의 모서리 개수 세어보기",
+            "창밖을 보며 지나가는 사람 1명 관찰하기",
+            "종이를 꺼내 왼손으로 내 이름 정성껏 써보기",
+            "제일 좋아하는 노래 속으로 부르며 1분 버티기",
+            "기지개 켜고 목을 좌우로 3번씩 천천히 돌리기",
+            "아무 책이나 펼쳐서 무작위로 첫 문장 소리내어 읽기",
+            "눈을 꽉 감았다가 뜨기를 5번 반복하기",
+            "내가 가장 좋아하는 음식 3가지 속으로 외치기"
+        ];
+
+        let currentMission = "";
+        
+        const localUserId = localStorage.getItem('vcep_userId') || "익명유저";
+
+        function drawMission() {
+            const screen = document.getElementById('screen');
+            const receipt = document.getElementById('receipt');
+            const text = document.getElementById('missionText');
+            const drawBtn = document.getElementById('drawBtn');
+            
+            // 뽑기 진행 중 버튼 비활성화
+            drawBtn.disabled = true;
+            drawBtn.style.opacity = '0.7';
+            drawBtn.style.transform = 'translateY(12px)';
+            drawBtn.style.boxShadow = '0 0 0 #b45309, 0 5px 10px rgba(0,0,0,0.3), inset 0 5px 10px rgba(255,255,255,0.5)';
+            
+            screen.innerHTML = "<h2 style='animation: blink 0.5s infinite alternate;'>지이잉... 🖨️</h2>";
+            receipt.style.display = 'none';
+            
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+            
+            // 랜덤 미션 추첨 연출 (1.5초 대기)
+            setTimeout(() => {
+                currentMission = missions[Math.floor(Math.random() * missions.length)];
+                screen.innerHTML = "<h2>출력 완료!</h2>";
+                text.innerText = currentMission;
+                receipt.style.display = 'block';
+                
+                // 버튼 원상복구
+                drawBtn.disabled = false;
+                drawBtn.style.opacity = '1';
+                drawBtn.style.transform = '';
+                drawBtn.style.boxShadow = '';
+            }, 1500);
+        }
+
+        async function completeMission() {
+            setTimeout(() => alert("멋져요! 디지털 기기에서 한 발짝 멀어지셨습니다. 🎉"), 100);
+            document.getElementById('receipt').style.display = 'none';
+            document.getElementById('screen').innerHTML = "<h2>대기 중...</h2>";
+
+            // 기록용 데이터
+            const data = { 
+                mission: currentMission, 
+                status: 'completed' 
+            };
+
+            // 로컬 스토리지 백업
+            let localData = JSON.parse(localStorage.getItem('vcep_phonedown_challenge')) || [];
+            localData.push({ date: new Date().toISOString(), payload: data });
+            localStorage.setItem('vcep_phonedown_challenge', JSON.stringify(localData));
+        }
+    </script>
+</body>
+</html>

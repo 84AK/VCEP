@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VCEP 학습 가이드 - 튜토리얼 허브</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%); z-index: -1; }
+        .glow-orb { position: fixed; width: 400px; height: 400px; background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; z-index: -1; filter: blur(50px); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 4rem 2rem; }
+
+        header { text-align: center; margin-bottom: 5rem; }
+        header h1 { 
+            font-family: 'Outfit', sans-serif; 
+            font-size: 3.5rem; 
+            font-weight: 900; 
+            margin-bottom: 1rem; 
+            background: linear-gradient(to right, #818cf8, #34d399); 
+            -webkit-background-clip: text; 
+            background-clip: text;
+            -webkit-text-fill-color: transparent; 
+        }
+        header p { color: var(--text-muted); font-size: 1.2rem; }
+
+        /* Standard Nav Styles */
+        nav {
+            background: white !important;
+            border-bottom: 1px solid #E0E0E0 !important;
+            padding: 0.8rem 2rem !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1000 !important;
+        }
+        .nav-left { display: flex !important; align-items: center !important; gap: 0.8rem !important; }
+        .sheet-title { font-weight: 700 !important; font-size: 1.1rem !important; color: #3C4043 !important; font-family: sans-serif !important; }
+        .nav-links { display: flex !important; gap: 2rem !important; align-items: center !important; }
+        .nav-link { text-decoration: none !important; color: #5F6368 !important; font-weight: 500 !important; font-size: 0.9rem !important; transition: 0.2s !important; font-family: sans-serif !important; }
+        .nav-link:hover { color: #0F9D58 !important; }
+        .nav-link.active { color: #0F9D58 !important; font-weight: 700 !important; }
+        .nav-btn { background: #0F9D58 !important; color: white !important; padding: 0.6rem 1.2rem !important; border-radius: 8px !important; text-decoration: none !important; font-weight: 700 !important; font-size: 0.85rem !important; transition: 0.2s !important; font-family: sans-serif !important; display: flex !important; align-items: center !important; gap: 0.5rem !important; }
+        .nav-btn:hover { background: #0B8043 !important; }
+
+        .tutorial-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem; }
+
+        .tutorial-card {
+            background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px; padding: 2rem; transition: all 0.4s; cursor: pointer; position: relative;
+        }
+        .tutorial-card:hover { transform: translateY(-10px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+
+        .card-icon {
+            width: 60px; height: 60px; border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; margin-bottom: 1.5rem;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        .tutorial-card:hover .card-icon { transform: rotate(-10deg) scale(1.1); }
+        
+        .icon-thieves { background: linear-gradient(135deg, #475569, #1e293b); }
+        .icon-petrock { background: linear-gradient(135deg, #10b981, #059669); }
+        .icon-sheep { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .icon-vending { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .icon-timer { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .icon-bomb { background: linear-gradient(135deg, #fbbf24, #d97706); }
+        .icon-persona { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+        .icon-diary { background: linear-gradient(135deg, #f472b6, #db2777); }
+
+        .tutorial-card h3 { font-family: 'Outfit', sans-serif; font-size: 1.4rem; margin-bottom: 0.5rem; color: #f8fafc; }
+        .tutorial-card p { color: var(--text-muted); font-size: 0.9rem; }
+
+        /* Modal */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 2rem; }
+        .modal-content { background: #1e293b; width: 100%; max-width: 1000px; max-height: 90vh; border-radius: 32px; overflow-y: auto; position: relative; padding: 3.5rem; border: 1px solid rgba(255,255,255,0.1); }
+        .close-btn { position: absolute; top: 1.5rem; right: 2rem; font-size: 2rem; cursor: pointer; color: var(--text-muted); }
+
+        /* Learning Steps UI */
+        .phase-section { margin-bottom: 4rem; }
+        .phase-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; }
+        .phase-num { width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+        .phase-title { font-family: 'Outfit'; font-size: 1.8rem; }
+
+        .planning-guide { display: flex; flex-direction: column; gap: 2rem; }
+        .step-block { background: rgba(255,255,255,0.03); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255,255,255,0.05); }
+        .step-block h5 { color: var(--primary); font-size: 1.1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
+        
+        .field-row { display: grid; grid-template-columns: 200px 1fr; gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 12px; }
+        .field-label { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+        .field-value { font-size: 0.95rem; color: var(--text); }
+        .field-value mark { background: var(--secondary); color: white; padding: 2px 6px; border-radius: 4px; }
+
+        .prompt-box { background: #0f172a; padding: 2rem; border-radius: 20px; border: 1.5px solid var(--primary); position: relative; }
+        .prompt-text { font-family: 'monospace'; font-size: 0.95rem; color: #a5b4fc; white-space: pre-wrap; line-height: 1.7; }
+        .btn-copy { position: absolute; top: 1.5rem; right: 1.5rem; background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 700; }
+
+        .extra-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+        .extra-box { padding: 1.5rem; border-radius: 20px; height: 100%; }
+        .box-fix { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .box-idea { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .extra-box h6 { font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+
+        .btn-action { display: inline-flex; align-items: center; gap: 8px; padding: 1rem 2rem; background: var(--secondary); color: white; border-radius: 14px; text-decoration: none; font-weight: 800; transition: all 0.3s; border: none; cursor: pointer; }
+        .btn-action:hover { transform: scale(1.05); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-content { animation: fadeIn 0.5s ease-out; }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="glow-orb" style="top: 10%; right: 10%;"></div>
+
+    <nav>
+        <div class="nav-left">
+            <span class="sheet-title">바이브코딩 시뮬레이션</span>
+        </div>
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link">홈</a>
+            <a href="03_expert/vibecoding.html" class="nav-link">시뮬레이션</a>
+            <a href="04_gas_crud/gas_hub.html" class="nav-link">GAS</a>
+            <a href="app_planner.html" class="nav-link">앱 플래너</a>
+            <a href="tutorial_hub.html" class="nav-btn">학습 가이드 <i class="fas fa-graduation-cap"></i></a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>나만의 웰니스 앱 만들기</h1>
+            <p>기획부터 개발까지 한 번에! 앱 플래너의 모든 빈칸을 채우는 가이드를 확인하세요.</p>
+        </header>
+
+        <div class="tutorial-grid">
+            <div class="tutorial-card" onclick="openTutorial('thieves')">
+                <div class="card-icon icon-thieves">🕵️</div>
+                <h3>시간 도둑 현상수배</h3>
+                <p>무의식적으로 버린 시간을 전단지로 시각화하여 기록합니다.</p>
+            </div>
+            <div class="tutorial-card" onclick="openTutorial('petrock')">
+                <div class="card-icon icon-petrock">🪨</div>
+                <h3>반려돌 키우기</h3>
+                <p>폰을 내려놓아야만 성장하는 돌과 함께 집중을 배웁니다.</p>
+            </div>
+            <div class="tutorial-card" onclick="openTutorial('sheep')">
+                <div class="card-icon icon-sheep">🐑</div>
+                <h3>양 떼 목장</h3>
+                <p>수면 전 스마트폰 사용을 줄이고 편안한 잠을 돕습니다.</p>
+            </div>
+            <div class="tutorial-card" onclick="openTutorial('vending')">
+                <div class="card-icon icon-vending">🥤</div>
+                <h3>도파민 자판기</h3>
+                <p>자극적인 영상 대신 건강한 오프라인 활동을 추천합니다.</p>
+            </div>
+            <div class="tutorial-card" onclick="openTutorial('timer')">
+                <div class="card-icon icon-timer">⌛</div>
+                <h3>노폰 타이머</h3>
+                <p>목표 시간 동안 폰을 뒤집어 놓아야 성공하는 타이머입니다.</p>
+            </div>
+            <div class="tutorial-card" onclick="openTutorial('bomb')">
+                <div class="card-icon icon-bomb">💣</div>
+                <h3>시한폭탄 토크</h3>
+                <p>대화 중 폰을 만지는 사람에게 폭탄이 터지는 게임.</p>
+            </div>
+            <div class="tutorial-card" onclick="openTutorial('persona')">
+                <div class="card-icon icon-persona">🧠</div>
+                <h3>사용 패턴 분석기</h3>
+                <p>나의 습관을 분석하여 디지털 페르소나를 진단합니다.</p>
+            </div>
+            <div class="tutorial-card" onclick="openTutorial('diary')">
+                <div class="card-icon icon-diary">🧚</div>
+                <h3>오늘의 시간 일기</h3>
+                <p>시간 요정과 함께 하루를 기록하고 감정을 나눕니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="tutorialModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div id="tutorialBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const tutorials = {
+            'petrock': {
+                title: '🪨 반려돌 키우기',
+                planning: [
+                    { step: 'Step 1: 문제 정의', fields: [
+                        { label: '해결하려는 문제', val: '집중이 필요할 때 습관적으로 스마트폰을 만지게 된다.' },
+                        { label: '카테고리', val: '<mark>📱 스마트폰 과사용</mark>' },
+                        { label: '한 문장 정의', val: '나는 집중이 필요한 학생들을 위해 폰을 내려놓을수록 성장하는 반려돌 앱을 만들겠다.' }
+                    ]},
+                    { step: 'Step 2: 사용자 정의', fields: [
+                        { label: '이름 / 학년', val: '민준 / 고등학교 1학년' },
+                        { label: '이 사람이 겪는 상황', val: '공부를 하다가도 알림이 오면 무의식적으로 폰을 들어 30분 넘게 쇼츠를 본다.' },
+                        { label: '가장 힘든 순간', val: '공부를 시작한 지 5분 만에 폰에 손이 가는 자신을 발견할 때.' },
+                        { label: '원하는 변화', val: '<mark>⏰ 시간 효율</mark>, <mark>🔄 행동 변화</mark>' }
+                    ]},
+                    { step: 'Step 3: 기능 설계', fields: [
+                        { label: 'Must (핵심)', val: '가속도 센서를 활용한 폰 움직임 감지 및 돌의 실시간 반응 기능' },
+                        { label: 'Should (중요)', val: '폰을 내려놓은 시간에 따른 돌의 성장 단계 시각화' },
+                        { label: 'Nice (부가)', val: '집중 성공 시 획득하는 포인트로 돌의 악세사리 구매' },
+                        { label: '넣지 않을 기능', val: '로그인 기능, 친구 랭킹 시스템' }
+                    ]},
+                    { step: 'Step 4: 화면 구성', fields: [
+                        { label: '화면 1: 홈', val: '중앙에 반려돌 배치, 현재 집중 시간 표시, "시작" 버튼' },
+                        { label: '화면 2: 보상', val: '성장한 돌의 모습과 획득한 이끼 포인트 확인 화면' },
+                        { label: '화면 3: 상점', val: '획득한 포인트로 돌의 모자나 안경을 골라 씌워주는 화면' },
+                        { label: '화면 이동 흐름', val: '홈 화면 -> 시작 클릭 -> 집중 중(센서 작동) -> 완료 -> 보상 화면 -> 상점' }
+                    ]},
+                    { step: 'Step 5: 앱 정보', fields: [
+                        { label: '앱 이름 후보', val: '포커스 스톤, 폰 멈춰 돌, 반려돌 포커스' },
+                        { label: '앱 소개 한 줄', val: '폰을 내려놓는 시간이 돌의 생명이 되는 특별한 집중 도우미' },
+                        { label: '예상 어려운 점', val: '브라우저에서 가속도 센서 권한을 요청하고 처리하는 로직 구현' }
+                    ]}
+                ],
+                prompt: `너는 VCEP 시니어 개발자야. 기획서 바탕으로 '반려돌 키우기' 앱을 완성해줘.
+[기술 요구사항]
+1. DeviceMotionEvent를 사용하여 폰의 움직임을 감지해줘.
+2. 폰을 가만히 두면 10초마다 '이끼'가 자라며 돌의 디자인이 바뀌어야 해.
+3. 모든 데이터는 localStorage에 저장하고 window.parent.postMessage를 포함해줘.`,
+                troubles: [{ issue: '센서가 작동 안해요', fix: 'iOS는 HTTPS 환경과 사용자 승인이 필요합니다.' }],
+                ideas: [{ title: '진동 효과', desc: '폰을 만졌을 때 진동을 주어 경각심을 높여보세요.' }]
+            },
+            'thieves': {
+                title: '🕵️ 시간 도둑 현상수배',
+                planning: [
+                    { step: 'Step 1: 문제 정의', fields: [
+                        { label: '해결하려는 문제', val: '내가 어떤 앱에 시간을 얼마나 썼는지 데이터로만 보면 와닿지 않는다.' },
+                        { label: '카테고리', val: '<mark>📱 스마트폰 과사용</mark>' },
+                        { label: '한 문장 정의', val: '나는 시간을 뺏는 앱을 범인으로 지목하여 현상수배 전단지로 만드는 앱을 만들겠다.' }
+                    ]},
+                    { step: 'Step 2: 사용자 정의', fields: [
+                        { label: '이름 / 학년', val: '지아 / 중학교 2학년' },
+                        { label: '이 사람이 겪는 상황', val: '시험 기간에도 유튜브 알고리즘에 빠져 3시간을 허비하고 후회한다.' },
+                        { label: '가장 힘든 순간', val: '잠들기 전 5분만 보려던 폰을 2시간째 붙잡고 있을 때.' },
+                        { label: '원하는 변화', val: '<mark>😌 감정 안정</mark>, <mark>🔄 행동 변화</mark>' }
+                    ]},
+                    { step: 'Step 3: 기능 설계', fields: [
+                        { label: 'Must (핵심)', val: '앱 이름과 시간을 입력하면 즉시 현상수배 전단지 생성 기능' },
+                        { label: 'Should (중요)', val: '시간에 따라 도둑 몬스터의 흉측함이 변하는 3단계 랭킹' },
+                        { label: 'Nice (부가)', val: '전단지를 갤러리에 이미지로 저장하는 기능' },
+                        { label: '넣지 않을 기능', val: '실시간 앱 사용량 추적 기능 (기술적 한계)' }
+                    ]},
+                    { step: 'Step 4: 화면 구성', fields: [
+                        { label: '화면 1: 수배서 작성', val: '앱 이름 입력창, 시간 슬라이더, "범인 지목" 버튼' },
+                        { label: '화면 2: 수배서 결과', val: 'Canvas로 생성된 빈티지한 현상수배 전단지 이미지' },
+                        { label: '화면 3: 명예의 전당', val: '지금까지 수배된 최악의 시간 도둑 앱들의 목록' },
+                        { label: '화면 이동 흐름', val: '입력 화면 -> 버튼 클릭 -> 전단지 생성 -> 게시판 등록' }
+                    ]},
+                    { step: 'Step 5: 앱 정보', fields: [
+                        { label: '앱 이름 후보', val: '시간 도둑 수배소, 타임 원티드, 폰 도둑 잡기' },
+                        { label: '앱 소개 한 줄', val: '내 소중한 시간을 훔쳐간 앱들을 현상수배하세요!' },
+                        { label: '예상 어려운 점', val: 'Canvas 위에서 텍스트와 이미지를 합성하여 전단지 느낌을 내는 작업' }
+                    ]}
+                ],
+                prompt: `너는 VCEP 시니어 개발자야. 기획서 바탕으로 '시간 도둑 현상수배' 앱을 완성해줘.
+[기술 요구사항]
+1. Canvas API를 사용하여 현상수배 전단지를 생성해줘.
+2. 시간에 따라 도둑 이미지가 달라지게 해줘.
+3. localStorage와 window.parent.postMessage 연동을 잊지마.`,
+                troubles: [{ issue: '이미지가 안보여요', fix: '이미지가 완전히 로드(onload)된 후 Canvas에 그려야 합니다.' }],
+                ideas: [{ title: '도둑의 변명', desc: '전단지 클릭 시 도둑이 변명을 말하게 해보세요.' }]
+            },
+            'sheep': {
+                title: '🐑 양 떼 목장',
+                planning: [
+                    { step: 'Step 1: 문제 정의', fields: [
+                        { label: '해결하려는 문제', val: '자기 전 스마트폰 사용으로 인해 잠들지 못하고 수면 질이 떨어진다.' },
+                        { label: '카테고리', val: '<mark>📱 스마트폰 과사용</mark>' },
+                        { label: '한 문장 정의', val: '나는 수면 전 폰 사용을 줄이기 위해 양을 세며 잠드는 앱을 만들겠다.' }
+                    ]},
+                    { step: 'Step 2: 사용자 정의', fields: [
+                        { label: '이름 / 학년', val: '소연 / 고등학교 2학년' },
+                        { label: '이 사람이 겪는 상황', val: '침대에 누워 습관적으로 웹툰을 보느라 새벽까지 잠들지 못한다.' },
+                        { label: '가장 힘든 순간', val: '다음 날 피곤할 걸 알면서도 손에서 폰을 놓지 못하는 밤.' },
+                        { label: '원하는 변화', val: '<mark>😌 감정 안정</mark>, <mark>⏰ 시간 효율</mark>' }
+                    ]},
+                    { step: 'Step 3: 기능 설계', fields: [
+                        { label: 'Must (핵심)', val: '화면 터치 시 양이 울타리를 넘는 애니메이션 및 카운트 기능' },
+                        { label: 'Should (중요)', val: '수면 유도 ASMR (빗소리 등) 재생 기능' },
+                        { label: 'Nice (부가)', val: '양이 울타리를 넘을 때마다 목장이 점점 풍성해지는 효과' },
+                        { label: '넣지 않을 기능', val: '복잡한 게임 요소나 경쟁 랭킹' }
+                    ]},
+                    { step: 'Step 4: 화면 구성', fields: [
+                        { label: '화면 1: 밤하늘 목장', val: '어두운 배경, 울타리와 대기 중인 양들' },
+                        { label: '화면 2: 수면 통계', val: '오늘 센 양의 마리 수와 수면 노력 점수' },
+                        { label: '화면 3: 사운드 설정', val: '원하는 수면 소음을 고르는 선택 화면' },
+                        { label: '화면 이동 흐름', val: '홈 -> 사운드 선택 -> 양 세기 시작 -> 종료 -> 통계 확인' }
+                    ]},
+                    { step: 'Step 5: 앱 정보', fields: [
+                        { label: '앱 이름 후보', val: '드림 십, 잘자요 양떼, 슬립 팜' },
+                        { label: '앱 소개 한 줄', val: '양 한 마리, 양 두 마리... 당신의 편안한 밤을 위한 목장' },
+                        { label: '예상 어려운 점', val: '애니메이션과 사운드를 자연스럽게 연결하는 작업' }
+                    ]}
+                ],
+                prompt: `너는 VCEP 시니어 개발자야. 기획서 바탕으로 '양 떼 목장' 앱을 완성해줘.
+[기술 요구사항]
+1. CSS Keyframe 애니메이션으로 양의 점프를 구현해줘.
+2. Web Audio API로 배경 ASMR을 무한 루프로 재생해줘.
+3. localStorage와 window.parent.postMessage 연동을 포함해줘.`,
+                troubles: [{ issue: '소리가 안나요', fix: '브라우저 정책상 첫 터치 이후에 오디오 재생이 가능합니다.' }],
+                ideas: [{ title: '호흡 가이드', desc: '양의 움직임에 맞춰 숨을 쉬는 가이드를 추가해 보세요.' }]
+            },
+            'vending': {
+                title: '🥤 도파민 자판기',
+                planning: [
+                    { step: 'Step 1: 문제 정의', fields: [
+                        { label: '해결하려는 문제', val: '심심할 때마다 자극을 찾아 폰을 켜고 의미 없는 스크롤을 반복한다.' },
+                        { label: '카테고리', val: '<mark>📱 스마트폰 과사용</mark>' },
+                        { label: '한 문장 정의', val: '나는 건강한 즐거움을 주는 오프라인 미션을 제안하는 자판기 앱을 만들겠다.' }
+                    ]},
+                    { step: 'Step 2: 사용자 정의', fields: [
+                        { label: '이름 / 학년', val: '현우 / 중학교 3학년' },
+                        { label: '이 사람이 겪는 상황', val: '쇼츠를 하나만 본다는 게 어느새 1시간이 지나있다.' },
+                        { label: '가장 힘든 순간', val: '공부가 손에 잡히지 않고 자극적인 영상만 계속 찾게 될 때.' },
+                        { label: '원하는 변화', val: '<mark>🔄 행동 변화</mark>, <mark>📚 정보 습득</mark>' }
+                    ]},
+                    { step: 'Step 3: 기능 설계', fields: [
+                        { label: 'Must (핵심)', val: '버튼 클릭 시 랜덤 미션 티켓 배출 애니메이션' },
+                        { label: 'Should (중요)', val: '미션 티켓 보관함 기능' },
+                        { label: 'Nice (부가)', val: '미션 완료 후 인증 사진을 티켓에 붙이는 기능' },
+                        { label: '넣지 않을 기능', val: '포인트 결제 시스템' }
+                    ]},
+                    { step: 'Step 4: 화면 구성', fields: [
+                        { label: '화면 1: 자판기', val: '레트로 자판기 디자인과 "미션 뽑기" 버튼' },
+                        { label: '화면 2: 미션 카드', val: '오늘의 미션 내용(예: 산책 10분) 표시' },
+                        { label: '화면 3: 나의 보관함', val: '성공한 미션 티켓들이 나열된 화면' },
+                        { label: '화면 이동 흐름', val: '자판기 -> 뽑기 -> 티켓 등장 -> 저장 -> 보관함' }
+                    ]},
+                    { step: 'Step 5: 앱 정보', fields: [
+                        { label: '앱 이름 후보', val: '도파민 자판기, 갓생 메이커, 미션 뽑기' },
+                        { label: '앱 소개 한 줄', val: '지루함을 건강한 미션으로 바꿔주는 신기한 자판기' },
+                        { label: '예상 어려운 점', val: '티켓이 물리적으로 떨어지는 듯한 애니메이션 구현' }
+                    ]}
+                ],
+                prompt: `너는 VCEP 시니어 개발자야. 기획서 바탕으로 '도파민 자판기' 앱을 완성해줘.
+[기술 요구사항]
+1. 자판기에서 물건이 떨어지는 애니메이션을 구현해줘.
+2. 미션 목록은 20개 이상 다양하게 준비해줘.
+3. localStorage와 window.parent.postMessage 연동을 잊지마.`,
+                troubles: [{ issue: '애니메이션이 끊겨요', fix: 'CSS transform을 사용하여 하드웨어 가속을 유도하세요.' }],
+                ideas: [{ title: '희귀 티켓', desc: '낮은 확률로 반짝이는 황금 티켓을 추가해 보세요.' }]
+            },
+            'timer': {
+                title: '⌛ 노폰 타이머',
+                planning: [
+                    { step: 'Step 1: 문제 정의', fields: [
+                        { label: '해결하려는 문제', val: '공부 중에 습관적으로 폰을 확인하여 흐름이 깨진다.' },
+                        { label: '카테고리', val: '<mark>📱 스마트폰 과사용</mark>' },
+                        { label: '한 문장 정의', val: '나는 설정한 시간 동안 폰을 전혀 보지 않게 돕는 강력한 타이머를 만들겠다.' }
+                    ]},
+                    { step: 'Step 2: 사용자 정의', fields: [
+                        { label: '이름 / 학년', val: '유진 / 고등학교 3학년' },
+                        { label: '이 사람이 겪는 상황', val: '시험을 앞두고도 카톡 알림 하나에 집중력이 무너진다.' },
+                        { label: '가장 힘든 순간', val: '공부 중에 궁금한 게 생겨 폰을 들었다가 그대로 SNS로 빠지는 순간' },
+                        { label: '원하는 변화', val: '<mark>⏰ 시간 효율</mark>, <mark>🔄 행동 변화</mark>' }
+                    ]},
+                    { step: 'Step 3: 기능 설계', fields: [
+                        { label: 'Must (핵심)', val: '목표 시간 설정 및 역카운트다운 타이머' },
+                        { label: 'Should (중요)', val: '앱 이탈(탭 나감) 감지 시 타이머 실패 처리' },
+                        { label: 'Nice (부가)', val: '집중 시간에 따라 디지털 정원이 자라나는 보상' },
+                        { label: '넣지 않을 기능', val: '강제 잠금 기능 (보안 제약)' }
+                    ]},
+                    { step: 'Step 4: 화면 구성', fields: [
+                        { label: '화면 1: 설정', val: '시간 선택 휠과 "도전 시작" 버튼' },
+                        { label: '화면 2: 타이머', val: '남은 시간 표시 및 "절대 금지" 문구' },
+                        { label: '화면 3: 결과', val: '성공/실패 여부와 리포트 화면' },
+                        { label: '화면 이동 흐름', val: '설정 -> 시작 -> 작동 중 -> 결과' }
+                    ]},
+                    { step: 'Step 5: 앱 정보', fields: [
+                        { label: '앱 이름 후보', val: '노폰 존, 블랙홀 타이머, 포커스 감옥' },
+                        { label: '앱 소개 한 줄', val: '폰을 뒤집는 순간, 진정한 성장이 시작됩니다.' },
+                        { label: '예상 어려운 점', val: '백그라운드에서 타이머 정확도를 유지하는 로직' }
+                    ]}
+                ],
+                prompt: `너는 VCEP 시니어 개발자야. 기획서 바탕으로 '노폰 타이머' 앱을 완성해줘.
+[기술 요구사항]
+1. Page Visibility API로 사용자의 이탈을 감지해줘.
+2. 성공 시 화려한 폭죽(Confetti) 효과를 넣어줘.
+3. localStorage와 window.parent.postMessage 연동을 포함해줘.`,
+                troubles: [{ issue: '타이머가 멈춰요', fix: '백그라운드 제약을 피하기 위해 실제 시간차를 계산해 처리하세요.' }],
+                ideas: [{ title: '성장하는 나무', desc: '집중 성공 시 나무가 자라게 해보세요.' }]
+            },
+            'bomb': {
+                title: '💣 시한폭탄 토크',
+                planning: [
+                    { step: 'Step 1: 문제 정의', fields: [
+                        { label: '해결하려는 문제', val: '친구들과의 대화 중 폰을 만지기 시작하면 분위기가 식는다.' },
+                        { label: '카테고리', val: '<mark>🛡️ 학교폭력·디지털 폭력</mark>' },
+                        { label: '한 문장 정의', val: '나는 소통의 즐거움을 지키기 위해 폰을 만지면 터지는 폭탄 게임을 만들겠다.' }
+                    ]},
+                    { step: 'Step 2: 사용자 정의', fields: [
+                        { label: '이름 / 학년', val: '정식 / 고등학교 1학년' },
+                        { label: '이 사람이 겪는 상황', val: '동아리 모임에서 다들 폰만 보고 있어 단절을 느낀다.' },
+                        { label: '가장 힘든 순간', val: '열심히 얘기 중인데 친구가 폰을 보며 건성으로 답할 때.' },
+                        { label: '원하는 변화', val: '<mark>😌 감정 안정</mark>, <mark>📚 정보 습득</mark>' }
+                    ]},
+                    { step: 'Step 3: 기능 설계', fields: [
+                        { label: 'Must (핵심)', val: '터치 홀드 시 폭탄 가동 및 랜덤 시간 후 폭발' },
+                        { label: 'Should (중요)', val: '폭발 직전 긴장감 있는 사운드와 진동' },
+                        { label: 'Nice (부가)', val: '폭탄이 터진 사람을 위한 랜덤 벌칙 추천' },
+                        { label: '넣지 않을 기능', val: '온라인 멀티플레이' }
+                    ]},
+                    { step: 'Step 4: 화면 구성', fields: [
+                        { label: '화면 1: 대기실', val: '긴장감 있는 음악과 "폭탄 활성화" 버튼' },
+                        { label: '화면 2: 폭탄', val: '중앙의 시한폭탄 이미지와 진동 효과' },
+                        { label: '화면 3: 결과', val: '폭발 애니메이션과 벌칙 안내' },
+                        { label: '화면 이동 흐름', val: '홈 -> 활성화 -> 홀드 -> 폭발 -> 결과' }
+                    ]},
+                    { step: 'Step 5: 앱 정보', fields: [
+                        { label: '앱 이름 후보', val: '톡톡 폭탄, 대화 지킴이, 데드라인 토크' },
+                        { label: '앱 소개 한 줄', val: '폰을 만지는 순간, 쾅! 대화의 주인공이 되어보세요.' },
+                        { label: '예상 어려운 점', val: '기기별 진동 권한 및 패턴 호환성 유지' }
+                    ]}
+                ],
+                prompt: `너는 VCEP 시니어 개발자야. 기획서 바탕으로 '시한폭탄 토크' 앱을 완성해줘.
+[기술 요구사항]
+1. Vibration API로 심장 박동 진동을 구현해줘.
+2. 폭발 시 화려한 파편 애니메이션을 넣어줘.
+3. localStorage와 window.parent.postMessage 연동을 포함해줘.`,
+                troubles: [{ issue: '진동이 안와요', fix: '진동은 안드로이드 기기에서만 지원되며 무음 시 안될 수 있습니다.' }],
+                ideas: [{ title: '벌칙 생성기', desc: '재미있는 벌칙들을 다양하게 추천해 보세요.' }]
+            },
+            'persona': {
+                title: '🧠 사용 패턴 분석기',
+                planning: [
+                    { step: 'Step 1: 문제 정의', fields: [
+                        { label: '해결하려는 문제', val: '나의 사용 방식이 타인과 비교해 어떤 위험이 있는지 모른다.' },
+                        { label: '카테고리', val: '<mark>📱 스마트폰 과사용</mark>' },
+                        { label: '한 문장 정의', val: '나는 사용자의 습관을 분석하여 캐릭터로 결과를 보여주는 앱을 만들겠다.' }
+                    ]},
+                    { step: 'Step 2: 사용자 정의', fields: [
+                        { label: '이름 / 학년', val: '민호 / 중학교 3학년' },
+                        { label: '이 사람이 겪는 상황', val: '내가 중독인지 궁금하지만 복잡한 수치는 보고 싶지 않다.' },
+                        { label: '가장 힘든 순간', val: '남들은 폰으로 공부도 한다는데 나는 게임만 하는 것 같아 불안할 때.' },
+                        { label: '원하는 변화', val: '<mark>🔄 행동 변화</mark>, <mark>😌 감정 안정</mark>' }
+                    ]},
+                    { step: 'Step 3: 기능 설계', fields: [
+                        { label: 'Must (핵심)', val: '5~10개 문항의 사용 습관 심리 테스트' },
+                        { label: 'Should (중요)', val: '유형(페르소나) 진단 및 캐릭터 카드 생성' },
+                        { label: 'Nice (부가)', val: '레이더 차트로 성향 시각화' },
+                        { label: '넣지 않을 기능', val: '전문적 의료 진단' }
+                    ]},
+                    { step: 'Step 4: 화면 구성', fields: [
+                        { label: '화면 1: 시작', val: '분석 뇌 이미지와 "나의 페르소나 찾기" 버튼' },
+                        { label: '화면 2: 설문', val: '한 번에 한 문항씩 깔끔하게 표시' },
+                        { label: '화면 3: 결과', val: '캐릭터 이미지와 개선 조언 카드' },
+                        { label: '화면 이동 흐름', val: '홈 -> 시작 -> 설문 -> 결과 리포트' }
+                    ]},
+                    { step: 'Step 5: 앱 정보', fields: [
+                        { label: '앱 이름 후보', val: '디지털 페르소나, 폰 MBTI, 도파민 분석기' },
+                        { label: '앱 소개 한 줄', val: '과연 어떤 사용자일까? 확인하는 나의 디지털 정체성' },
+                        { label: '예상 어려운 점', val: '응답 가중치를 계산해 유형을 매칭하는 로직' }
+                    ]}
+                ],
+                prompt: `너는 VCEP 시니어 개발자야. 기획서 바탕으로 '사용 패턴 분석기' 앱을 완성해줘.
+[기술 요구사항]
+1. 레이더 차트로 결과를 시각화해줘.
+2. 재미있는 유형 명칭과 설명을 추가해줘.
+3. localStorage와 window.parent.postMessage 연동을 포함해줘.`,
+                troubles: [{ issue: '결과가 똑같아요', fix: '문항별 점수 가중치가 제대로 합산되는지 확인하세요.' }],
+                ideas: [{ title: '공유 카드', desc: '결과를 이미지로 저장하는 기능을 추가해 보세요.' }]
+            },
+            'diary': {
+                title: '🧚 오늘의 시간 일기',
+                planning: [
+                    { step: 'Step 1: 문제 정의', fields: [
+                        { label: '해결하려는 문제', val: '기록이 귀찮아서 하루가 어떻게 지났는지 잊고 실수를 반복한다.' },
+                        { label: '카테고리', val: '<mark>💬 감정·정신건강</mark>' },
+                        { label: '한 문장 정의', val: '나는 요정과 소통하며 하루를 기록하고 보람을 느끼는 앱을 만들겠다.' }
+                    ]},
+                    { step: 'Step 2: 사용자 정의', fields: [
+                        { label: '이름 / 학년', val: '지은 / 고등학교 2학년' },
+                        { label: '이 사람이 겪는 상황', val: '매일 폰만 하느라 오늘 무얼 했는지 기억나지 않아 허무하다.' },
+                        { label: '가장 힘든 순간', val: '자기 전 일기를 쓰려 하지만 쓸 내용이 없어 빈 페이지를 볼 때.' },
+                        { label: '원하는 변화', val: '<mark>😌 감정 안정</mark>, <mark>📚 정보 습득</mark>' }
+                    ]},
+                    { step: 'Step 3: 기능 설계', fields: [
+                        { label: 'Must (핵심)', val: '텍스트 기반 일기 작성 및 감정 태그 선택' },
+                        { label: 'Should (중요)', val: '작성 횟수에 따라 요정이 진화하는 시스템' },
+                        { label: 'Nice (부가)', val: '일기 내용을 분석한 요정의 위로 대사' },
+                        { label: '넣지 않을 기능', val: '외부 SNS 연동' }
+                    ]},
+                    { step: 'Step 4: 화면 구성', fields: [
+                        { label: '화면 1: 요정의 숲', val: '평화로운 배경과 "오늘 기록하기" 버튼' },
+                        { label: '화면 2: 일기장', val: '편지 형태 입력창과 감정 선택 바' },
+                        { label: '화면 3: 보관함', val: '달력 형태로 지난 기록 모아보기' },
+                        { label: '화면 이동 흐름', val: '홈 -> 일기 쓰기 -> 저장 -> 요정 인사' }
+                    ]},
+                    { step: 'Step 5: 앱 정보', fields: [
+                        { label: '앱 이름 후보', val: '시간 요정 가든, 웰니스 다이어리, 요정의 시간' },
+                        { label: '앱 소개 한 줄', val: '당신의 시간을 먹고 자라는 요정의 숲으로 초대합니다.' },
+                        { label: '예상 어려운 점', val: '데이터 용량 관리 및 최적화' }
+                    ]}
+                ],
+                prompt: `너는 VCEP 시니어 개발자야. 기획서 바탕으로 '오늘의 시간 일기' 앱을 완성해줘.
+[기술 요구사항]
+1. 감성적인 배경 음악과 요정 애니메이션을 구현해줘.
+2. 텍스트 분석으로 요정 대사를 바꿔줘.
+3. localStorage와 window.parent.postMessage 연동을 포함해줘.`,
+                troubles: [{ issue: '저장이 안돼요', fix: '입력 내용이 있는지, 저장 용량이 꽉 차진 않았는지 확인하세요.' }],
+                ideas: [{ title: '과거 회상', desc: '요정이 일주일 전의 일기를 보여주는 기능을 추가해 보세요.' }]
+            }
+        };
+
+        function openTutorial(key) {
+            const data = tutorials[key];
+            if(!data) { alert('해당 앱의 상세 가이드가 곧 업데이트될 예정입니다.'); return; }
+
+            let html = `
+                <div style="text-align:center; margin-bottom: 3rem;">
+                    <h2 style="font-size: 2.5rem; font-family: 'Outfit'; margin-bottom: 0.5rem;">${data.title}</h2>
+                    <p style="color:var(--text-muted);">아래 정답지를 보고 앱 플래너의 모든 빈칸을 채워주세요.</p>
+                </div>
+
+                <div class="phase-section">
+                    <div class="phase-header">
+                        <div class="phase-num">1</div>
+                        <div class="phase-title">기획서 정답지 (Step-by-Step Guide)</div>
+                    </div>
+                    <div class="planning-guide">
+                        ${data.planning.map(s => `
+                            <div class="step-block">
+                                <h5><i class="fas fa-edit"></i> ${s.step}</h5>
+                                ${s.fields.map(f => `
+                                    <div class="field-row">
+                                        <div class="field-label">${f.label}</div>
+                                        <div class="field-value">${f.val}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="phase-section">
+                    <div class="phase-header">
+                        <div class="phase-num">2</div>
+                        <div class="phase-title">마스터 프롬프트 (The Magic Prompt)</div>
+                    </div>
+                    <p style="margin-bottom:1rem; color:var(--text-muted);">기획서가 완성되었다면, 아래 프롬프트를 복사하여 Gemini에게 전달하세요.</p>
+                    <div class="prompt-box">
+                        <button class="btn-copy" onclick="copyText('promptContent')">복사하기</button>
+                        <div id="promptContent" class="prompt-text">${data.prompt}</div>
+                    </div>
+                </div>
+
+                <div class="phase-section">
+                    <div class="phase-header">
+                        <div class="phase-num">3</div>
+                        <div class="phase-title">문제 해결 & 레벨업 (Debug & Ideas)</div>
+                    </div>
+                    <div class="extra-grid">
+                        <div class="extra-box box-fix">
+                            <h6><i class="fas fa-tools"></i> 예상 문제 대처법</h6>
+                            ${data.troubles.map(t => `<p style="font-size:0.9rem; margin-bottom:0.8rem;"><strong>Q. ${t.issue}</strong><br>A. ${t.fix}</p>`).join('')}
+                        </div>
+                        <div class="extra-box box-idea">
+                            <h6><i class="fas fa-lightbulb"></i> 발전 아이디어</h6>
+                            ${data.ideas.map(i => `<p style="font-size:0.9rem; margin-bottom:0.8rem;"><strong>- ${i.title}</strong>: ${i.desc}</p>`).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin-top:2rem;">
+                    <button class="btn-action" onclick="window.location.href='app_planner.html'">기획 도구 바로가기 <i class="fas fa-rocket"></i></button>
+                </div>
+            `;
+
+            document.getElementById('tutorialBody').innerHTML = html;
+            document.getElementById('tutorialModal').style.display = 'flex';
+        }
+
+        function copyText(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text).then(() => alert('프롬프트가 복사되었습니다! Gemini에게 전달하세요.'));
+        }
+
+        function closeModal() { document.getElementById('tutorialModal').style.display = 'none'; }
+        window.onclick = function(event) { if (event.target == document.getElementById('tutorialModal')) closeModal(); }
+    </script>
+</body>
+</html>

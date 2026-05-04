@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수면 유도 양 떼 목장 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --text-light: #fef3c7;
+            --glass-bg: rgba(15, 23, 42, 0.6);
+            --danger: #ef4444;
+        }
+        body { 
+            margin: 0; padding: 0; 
+            background: var(--bg-dark); color: var(--text-light); 
+            font-family: 'Inter', sans-serif; 
+            overflow: hidden; 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; flex-direction: column; 
+        }
+        
+        /* 다크 디밍 오버레이 (시간이 지날수록 어두워짐) */
+        #dimmer {
+            position: fixed; top:0; left:0; right:0; bottom:0;
+            background-color: rgba(0,0,0,0);
+            pointer-events: none; z-index: 90;
+            transition: background-color 2s ease;
+        }
+
+        /* 블루라이트 차단 따뜻한 색감 오버레이 */
+        .night-shift { 
+            position: fixed; top:0; left:0; right:0; bottom:0; 
+            background: rgba(255, 120, 0, 0.15); 
+            pointer-events: none; z-index: 100; mix-blend-mode: multiply; 
+        }
+        
+        /* 달 & 호흡 가이드 */
+        .moon-container {
+            position: absolute; top: 15%; right: 15%;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .moon { 
+            width: 80px; height: 80px; background: #fef08a; 
+            border-radius: 50%; box-shadow: 0 0 50px rgba(254, 240, 138, 0.6), inset -15px -15px 0 rgba(0,0,0,0.1); 
+            transform-origin: center;
+        }
+        .breathe-text {
+            margin-top: 20px; font-size: 1.1rem; color: #fde047; font-weight: 600;
+            text-shadow: 0 0 10px rgba(253, 224, 71, 0.5);
+            opacity: 0.8; letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .stars {
+            position: absolute; width: 100%; height: 100%; top:0; left:0;
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 60px 70px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 90px 40px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 150px 100px, rgba(255,255,255,0.8), rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 250px 250px;
+            opacity: 0.4;
+            animation: twinkle 4s infinite alternate;
+        }
+        @keyframes twinkle { 0% { opacity: 0.3; } 100% { opacity: 0.6; } }
+
+        .fence { 
+            position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); 
+            width: 140px; height: 80px; border: 6px solid #78350f; border-bottom: none; 
+            border-radius: 12px 12px 0 0;
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .fence::before { 
+            content:''; position:absolute; top:35px; left:-40px; right:-40px; 
+            height:6px; background:#78350f; border-radius: 3px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+        }
+        
+        .sheep { 
+            position: absolute; bottom: 20%; left: -150px; 
+            user-select: none;
+            animation-name: runSheep;
+            animation-timing-function: linear;
+            animation-fill-mode: forwards;
+            z-index: 10;
+        }
+
+        /* 캐릭터 시트 (스프라이트) 설정 */
+        .sheep-sprite {
+            width: 80px; height: 80px;
+            /* Canvas에서 투명화 처리된 이미지를 우선 사용하고, 로딩 전엔 원본 사용 */
+            background-image: var(--sheep-bg, url('assets/sheep_sprite.png'));
+            background-size: 400% 400%; /* 이미지가 정사각형이고 가로로 4프레임 배치된 형태 보정 */
+            background-position-y: center;
+            background-repeat: no-repeat;
+            animation: walkSprite 0.6s steps(4) infinite;
+            /* 네모 박스를 보이게 했던 mix-blend-mode 제거 */
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.6));
+        }
+
+        /* 폰 만졌을 때 놀라서 도망가는 빠른 애니메이션 */
+        .sheep-sprite.panic {
+            animation: walkSprite 0.2s steps(4) infinite;
+            filter: drop-shadow(0 0 15px rgba(239,68,68,0.8));
+        }
+
+        @keyframes walkSprite {
+            from { background-position-x: 0%; }
+            /* 4프레임을 정확히 나누기 위해 133.333% 적용 */
+            to { background-position-x: 133.333%; } 
+        }
+
+        @keyframes runSheep {
+            0% { transform: translateX(-10vw) translateY(0); }
+            45% { transform: translateX(45vw) translateY(0); }
+            50% { transform: translateX(50vw) translateY(-140px) rotate(-10deg); } /* 점프 */
+            55% { transform: translateX(55vw) translateY(0) rotate(0deg); }
+            100% { transform: translateX(110vw) translateY(0); }
+        }
+
+        /* 양 세기 텍스트 최면 효과 */
+        .count-text {
+            position: absolute; color: #e2e8f0; font-size: 1.5rem; font-family: 'Outfit', sans-serif;
+            opacity: 0; animation: floatUp 4s ease-out forwards;
+            text-shadow: 0 0 15px rgba(255,255,255,0.4);
+            pointer-events: none;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            30% { transform: translateY(0px); opacity: 0.6; }
+            80% { transform: translateY(-20px); opacity: 0.6; }
+            100% { transform: translateY(-40px); opacity: 0; }
+        }
+
+        /* 경고창 (Glassmorphism) */
+        .warning { 
+            position: absolute; top: 40%; text-align: center; 
+            color: var(--danger); font-weight: bold; font-size: 1.5rem; 
+            opacity: 0; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: var(--glass-bg); padding: 30px 40px; border-radius: 20px; 
+            z-index: 50; border: 1px solid rgba(239, 68, 68, 0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(239, 68, 68, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            pointer-events: none;
+        }
+
+        /* 시작 인트로 모달 */
+        .intro-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 200;
+        }
+        .btn-start {
+            background: linear-gradient(135deg, #6366f1, #4338ca);
+            color: white; border: none; padding: 20px 40px; border-radius: 50px;
+            font-size: 1.3rem; font-weight: 700; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5), inset 0 2px 0 rgba(255,255,255,0.2);
+            transition: all 0.3s;
+        }
+        .btn-start:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(99, 102, 241, 0.7); }
+
+        /* 플래시 페널티 효과 */
+        .flash {
+            position: fixed; top:0; left:0; right:0; bottom:0;
+            background: white; z-index: 150; pointer-events: none;
+            animation: flashAnim 0.5s ease-out forwards;
+        }
+        @keyframes flashAnim {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="night-shift"></div>
+    <div id="dimmer"></div>
+    <div class="stars"></div>
+    
+    <div class="moon-container">
+        <div class="moon" id="moon"></div>
+        <div class="breathe-text" id="breatheText">숨을 고르세요...</div>
+    </div>
+
+    <div class="fence"></div>
+    <!-- Sheep will be spawned dynamically here -->
+    
+    <div class="warning" id="warning">
+        앗! 폰을 만져서 양들이 놀라 도망갔어요!<br>
+        <span style="font-size:1rem; color:#94a3b8; font-weight:normal; margin-top:10px; display:block;">(편안하게 눈으로만 쫓으세요)</span>
+    </div>
+
+    <div class="intro-overlay" id="intro">
+        <h2 style="margin-bottom: 10px; font-size: 2rem;">수면 유도 양 떼 목장 🌙</h2>
+        <p style="color: #94a3b8; margin-bottom: 40px; text-align: center; line-height: 1.6;">
+            달의 호흡 가이드(4-7-8)에 맞춰 숨을 쉬어보세요.<br>
+            잔잔한 백색 소음과 함께 양들이 잠을 불러옵니다.<br>
+            <b>주의: 시작 후 폰을 만지면 양들이 달아납니다!</b>
+        </p>
+        <button class="btn-start" onclick="startSleepMode()">수면 모드 시작하기 🎧</button>
+    </div>
+
+    <script>
+        // --- VCEP 통합 싱크 시스템 (Iframe 전용) ---
+        (function() {
+            const originalSetItem = localStorage.setItem;
+            localStorage.setItem = function(key, value) {
+                originalSetItem.apply(this, arguments);
+                if(key.startsWith('vcep_')) {
+                    try {
+                        window.parent.postMessage({
+                            type: 'vcep_save',
+                            category: key.replace('vcep_', ''),
+                            data: JSON.parse(value)
+                        }, '*');
+                    } catch(e) { console.warn("Parent sync failed", e); }
+                }
+            };
+        })();
+
+        let isAwake = false;
+        let isStarted = false;
+        let warningTimer = null;
+        let sheepCount = 0;
+        let dimLevel = 0;
+        let audioCtx;
+        let breatheTimer1, breatheTimer2, breatheTimer3; // 호흡 타이머
+
+        const localUserId = localStorage.getItem('vcep_userId') || "익명유저";
+
+        // 배경 투명화(누끼) 처리 로직 (Canvas API 활용)
+        window.addEventListener('DOMContentLoaded', () => {
+            const img = new Image();
+            img.src = 'assets/sheep_sprite.png';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                for(let i = 0; i < data.length; i += 4) {
+                    let r = data[i], g = data[i+1], b = data[i+2];
+                    let diff = b - Math.max(r, g);
+                    
+                    // 파란색 배경을 감지하여 투명도(Alpha)를 0으로 만듦
+                    if (diff >= 8 || (diff > 0 && b < 100) || (r < 40 && g < 50 && b < 70)) {
+                        data[i+3] = 0; // 완전 투명
+                    } else if (diff > 0 && diff < 8) {
+                        // 경계선 안티앨리어싱 (반투명 처리)
+                        data[i+3] = Math.max(0, 255 - (diff * 30));
+                    }
+                }
+                ctx.putImageData(imageData, 0, 0);
+                // 처리 완료된 투명 이미지를 CSS 변수로 전달
+                document.documentElement.style.setProperty('--sheep-bg', `url(${canvas.toDataURL()})`);
+            };
+        });
+
+        function startSleepMode() {
+            document.getElementById('intro').style.display = 'none';
+            isStarted = true;
+            initAudio();
+            startBreathingGuide();
+            spawnSheep();
+            
+            // 점진적 다크 디밍 (1분마다 5%씩 어두워짐, 최대 85%)
+            setInterval(() => {
+                if(!isAwake && dimLevel < 0.85) {
+                    dimLevel += 0.05;
+                    document.getElementById('dimmer').style.backgroundColor = `rgba(0,0,0,${dimLevel})`;
+                }
+            }, 60000);
+        }
+
+        function initAudio() {
+            if(audioCtx) { audioCtx.resume(); return; }
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const bufferSize = audioCtx.sampleRate * 2; 
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1; // 핑크/브라운 노이즈 근사치
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                noise.loop = true;
+
+                // 필터를 거쳐 파도/바람 소리처럼 부드럽게
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 400; 
+
+                const gainNode = audioCtx.createGain();
+                gainNode.gain.value = 0.05; // 잔잔한 볼륨
+
+                noise.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                noise.start();
+                
+                // 바람 소리 파도 애니메이션
+                setInterval(() => {
+                    if(!isAwake) {
+                        const targetFreq = 200 + Math.random() * 300;
+                        filter.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 3);
+                    }
+                }, 5000);
+            } catch(e) { console.warn("오디오 지원 안됨"); }
+        }
+
+        function startBreathingGuide() {
+            const text = document.getElementById('breatheText');
+            const moon = document.getElementById('moon');
+            
+            function cycle() {
+                if(isAwake || !isStarted) return;
+                
+                // 1. 들이마시기 (4초)
+                text.innerText = "들이마시세요 (4초)";
+                moon.style.transform = "scale(1.4)";
+                moon.style.transition = "transform 4s linear";
+                
+                breatheTimer1 = setTimeout(() => {
+                    if(isAwake) return;
+                    // 2. 참기 (7초)
+                    text.innerText = "숨을 참으세요 (7초)";
+                    breatheTimer2 = setTimeout(() => {
+                        if(isAwake) return;
+                        // 3. 내쉬기 (8초)
+                        text.innerText = "천천히 내쉬세요 (8초)";
+                        moon.style.transform = "scale(1)";
+                        moon.style.transition = "transform 8s linear";
+                        
+                        breatheTimer3 = setTimeout(() => {
+                            if(!isAwake) cycle();
+                        }, 8000);
+                    }, 7000);
+                }, 4000);
+            }
+            cycle();
+        }
+
+        function clearBreathingTimers() {
+            clearTimeout(breatheTimer1); clearTimeout(breatheTimer2); clearTimeout(breatheTimer3);
+        }
+
+        function spawnSheep() {
+            if(!isStarted || isAwake) return;
+            
+            const s = document.createElement('div');
+            s.className = 'sheep';
+            
+            // 스프라이트 이미지를 담당할 자식 요소
+            const sprite = document.createElement('div');
+            sprite.className = 'sheep-sprite';
+            
+            // 크기 다변화 (0.8배 ~ 1.2배)
+            const scale = 0.8 + Math.random() * 0.4; 
+            sprite.style.transform = `scale(${scale})`;
+            
+            s.appendChild(sprite);
+
+            const duration = 8 + Math.random() * 6; // 8~14초로 여유롭게
+            s.style.animationDuration = duration + 's';
+            
+            // 애니메이션 속도도 다변화
+            sprite.style.animationDuration = (0.5 + Math.random() * 0.3) + 's';
+
+            document.body.appendChild(s);
+            
+            // 화면 중앙(점프 구간)을 지날 즈음 숫자 카운트 텍스트 띄우기
+            setTimeout(() => {
+                if(!isAwake && s.parentNode) {
+                    sheepCount++;
+                    showCountText(sheepCount);
+                    saveData(); // 매 마리마다 즉시 저장 및 동기화
+                }
+            }, (duration * 1000) * 0.45);
+
+            // 애니메이션 종료 후 제거 및 다음 양 소환
+            setTimeout(() => {
+                if(s.parentNode) s.remove();
+                if(!isAwake) {
+                    // 다음 양이 나오는 간격도 불규칙하게 (1초 ~ 4초)
+                    setTimeout(spawnSheep, 1000 + Math.random() * 3000);
+                }
+            }, duration * 1000);
+        }
+
+        function showCountText(count) {
+            const t = document.createElement('div');
+            t.className = 'count-text';
+            t.innerText = `양 ${count}마리...`;
+            // 하늘 어딘가에 나타남
+            t.style.left = (30 + Math.random() * 40) + '%';
+            t.style.top = (20 + Math.random() * 30) + '%';
+            document.body.appendChild(t);
+            setTimeout(() => {
+                if(t.parentNode) t.remove();
+            }, 4000);
+        }
+
+        // 터치 패널티 (화면 탭, 마우스 클릭, 휠 스크롤 등 감지)
+        function wakeUp(e) {
+            if(!isStarted || isAwake) return;
+            
+            // 시작 버튼 클릭인 경우 무시
+            if(e && e.target && e.target.closest && e.target.closest('#intro')) return;
+
+            isAwake = true;
+            clearBreathingTimers();
+            
+            if(audioCtx && audioCtx.state === 'running') {
+                audioCtx.suspend();
+            }
+
+            // 번쩍이는 플래시 효과
+            const flash = document.createElement('div');
+            flash.className = 'flash';
+            document.body.appendChild(flash);
+            setTimeout(() => { if(flash.parentNode) flash.remove(); }, 500);
+
+            // 달 초기화
+            document.getElementById('breatheText').innerText = "앗! 리듬이 깨졌어요.";
+            document.getElementById('moon').style.transform = "scale(1)";
+            document.getElementById('moon').style.transition = "transform 0.5s";
+
+            // 기존 양들을 깜짝 놀라 달아나게 함
+            document.querySelectorAll('.sheep').forEach(s => {
+                s.style.animationDuration = '1.5s'; // 엄청 빨리 사라짐
+                const sprite = s.querySelector('.sheep-sprite');
+                if(sprite) sprite.classList.add('panic');
+            });
+
+            document.getElementById('warning').style.opacity = '1';
+            saveData(); // 잠에서 깼을 때(방해받았을 때)의 상태도 기록
+            if(navigator.vibrate) navigator.vibrate([100, 50, 100]); // 짧은 진동 경고
+            
+            // 다크 디밍 살짝 초기화 (벌칙)
+            dimLevel = Math.max(0, dimLevel - 0.2);
+            document.getElementById('dimmer').style.backgroundColor = `rgba(0,0,0,${dimLevel})`;
+
+            clearTimeout(warningTimer);
+            warningTimer = setTimeout(() => {
+                isAwake = false;
+                document.getElementById('warning').style.opacity = '0';
+                document.querySelectorAll('.sheep').forEach(s => s.remove());
+                
+                if(audioCtx) audioCtx.resume();
+                startBreathingGuide();
+                spawnSheep(); // 다시 소환 시작
+            }, 4000);
+        }
+
+        // 전역 이벤트 리스너
+        window.addEventListener('wheel', wakeUp, {passive: true});
+        window.addEventListener('touchmove', wakeUp, {passive: true});
+        window.addEventListener('touchstart', wakeUp, {passive: true});
+        window.addEventListener('mousedown', wakeUp);
+
+        async function saveData() {
+            // 로컬 스토리지 백업
+            let localData = JSON.parse(localStorage.getItem('vcep_sleep_routine')) || [];
+            localData.push({ date: new Date().toISOString(), count: sheepCount });
+            localStorage.setItem('vcep_sleep_routine', JSON.stringify(localData));
+        }
+    </script>
+</body>
+</html>

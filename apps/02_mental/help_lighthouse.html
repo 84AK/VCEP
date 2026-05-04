@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마음의 등대: 다정한 동화 가이드 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper: #fdfbf7;
+            --ink: #5d4037;
+            --lighthouse: #e67e22;
+            --accent: #d4a373;
+        }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            margin: 0;
+            overflow-x: hidden;
+            font-family: 'Nanum Myeongjo', serif;
+            line-height: 1.8;
+        }
+
+        /* Fairytale Illustration Background */
+        .illustration-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('assets/fairytale_lighthouse_happy_rabbit.png') no-repeat center center;
+            background-size: cover; opacity: 0.4; z-index: 1;
+        }
+
+        /* Fog Overlay (Softer & Creamy) */
+        .fog-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
+            background: rgba(253, 251, 247, 0.6);
+            backdrop-filter: blur(25px);
+            transition: 2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Content Area */
+        .content {
+            position: relative; z-index: 20;
+            max-width: 450px; margin: 0 auto;
+            min-height: 100vh;
+            display: flex; flex-direction: column; 
+            align-items: center; justify-content: center;
+            text-align: center;
+            padding: 60px 25px;
+            box-sizing: border-box;
+        }
+
+        header { margin-bottom: 40px; }
+        header h1 { font-family: 'Gaegu', cursive; font-size: 1.2rem; letter-spacing: 2px; color: var(--accent); margin: 0; }
+        header p { font-size: 2rem; font-weight: 800; margin: 15px 0; color: var(--ink); }
+
+        .book-icon {
+            font-size: 4rem; margin: 20px 0; opacity: 0.8;
+        }
+
+        .story-card {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(93, 64, 55, 0.1);
+            backdrop-filter: blur(5px);
+            padding: 30px 25px; border-radius: 40px 10px 40px 10px;
+            box-shadow: 0 10px 30px rgba(93, 64, 55, 0.05);
+            display: none; flex-direction: column; align-items: center;
+            animation: cardAppear 0.8s ease-out forwards;
+        }
+        .story-card.active { display: flex; }
+
+        @keyframes cardAppear {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .story-img {
+            width: 100%; border-radius: 25px; margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 5px solid #fff;
+        }
+
+        .story-title { font-family: 'Gaegu', cursive; font-size: 1.8rem; font-weight: 700; color: var(--lighthouse); margin-bottom: 15px; }
+        .story-text { font-size: 1.05rem; word-break: keep-all; }
+
+        /* Navigation Buttons */
+        .btn-next {
+            background: var(--ink); color: #fff;
+            padding: 12px 35px; border-radius: 50px; border: none;
+            font-family: 'Gaegu', cursive; font-size: 1.3rem;
+            cursor: pointer; transition: 0.3s; margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(93, 64, 55, 0.2);
+        }
+        .btn-next:hover { transform: scale(1.05); background: var(--lighthouse); }
+
+        /* Scripts (Letter Style) */
+        .letter-box {
+            background: #fef9e7; padding: 25px; border-radius: 20px;
+            font-size: 1rem; border: 1px dashed var(--accent);
+            margin: 20px 0; display: none; text-align: left;
+            position: relative;
+        }
+        .letter-box::before { content: '✉'; position: absolute; top: -15px; left: 20px; font-size: 1.5rem; color: var(--accent); }
+
+        /* Page Number in Card */
+        .page-number {
+            font-family: 'Gaegu', cursive; font-size: 0.9rem; color: var(--accent);
+            margin-top: 20px; opacity: 0.8; letter-spacing: 1px;
+        }
+
+        /* Success Page */
+        .success-page {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--paper); color: var(--ink); z-index: 1000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 40px;
+        }
+        .success-page img { width: 80%; max-width: 300px; border-radius: 30px; margin-bottom: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="illustration-bg"></div>
+    <div class="fog-container" id="fog"></div>
+
+    <div class="content">
+        <header>
+            <h1>마음 동화책</h1>
+            <p>안개 너머 등대를 찾아서</p>
+        </header>
+
+        <!-- Page 1 -->
+        <div class="story-card active" id="page1">
+            <img src="assets/rabbit_misty_forest_1777696602362.png" class="story-img" alt="안개 속 토끼">
+            <div class="story-title">첫 번째 이야기</div>
+            <p class="story-text">어느 날 문득, 마음에 짙은 안개가 찾아올 때가 있어요. 앞이 잘 보이지 않아 막막하고 두려운 건 당신이 길을 잃었기 때문이 아니라, 잠시 쉬어가라는 마음의 신호일지도 몰라요.</p>
+            <button class="btn-next" onclick="nextPage(2)">안개 속으로 한 걸음</button>
+            <div class="page-number">Page 1 / 5</div>
+        </div>
+
+        <!-- Page 2 -->
+        <div class="story-card" id="page2">
+            <img src="assets/rabbit_following_light_1777696616484.png" class="story-img" alt="빛을 따르는 토끼">
+            <div class="story-title">두 번째 이야기</div>
+            <p class="story-text">안개 속에서도 당신을 기다리는 작은 등불이 있답니다. 혼자서 길을 찾기 힘들 땐, 등대지기의 손을 빌려도 괜찮아요. 도움을 구하는 것은 당신이 포기했다는 뜻이 아니라, 다시 걷고 싶다는 가장 강력한 의지니까요.</p>
+            <button class="btn-next" onclick="nextPage(3)">등불을 따라서</button>
+            <div class="page-number">Page 2 / 5</div>
+        </div>
+
+        <!-- Page 3 -->
+        <div class="story-card" id="page3">
+            <img src="assets/rabbit_holding_letter_1777696629515.png" class="story-img" alt="편지를 든 토끼">
+            <div class="story-title">세 번째 이야기</div>
+            <p class="story-text">등대지기에게 전화를 걸 때, 무슨 말을 해야 할지 몰라 망설여지나요? 그럴 땐 이 다정한 편지를 소리 내어 읽어보세요. 등대지기는 언제든 당신의 이야기를 들을 준비가 되어 있답니다.</p>
+            <button class="btn-next" style="background:var(--accent);" onclick="toggleLetter()">편지 열어보기</button>
+            <div class="letter-box" id="letter">
+                "안녕하세요, 요즘 마음의 안개가 너무 짙어 길을 찾기가 어려워요. 조금만 쉬어갈 수 있게 도움을 주실 수 있을까요? 처음이라 조금 긴장이 되네요."
+            </div>
+            <button class="btn-next" onclick="nextPage(4)">용기 내어보기</button>
+            <div class="page-number">Page 3 / 5</div>
+        </div>
+
+        <!-- Page 4 -->
+        <div class="story-card" id="page4">
+            <img src="assets/rabbit_cozy_lighthouse_1777696643811.png" class="story-img" alt="등대 집의 토끼">
+            <div class="story-title">네 번째 이야기</div>
+            <p class="story-text">가까운 곳에 당신을 위한 안전한 쉼터들이 늘 준비되어 있어요. 언제든 전화를 걸면 따뜻한 차 한 잔과 같은 위로를 건네줄 분들이 기다리고 있답니다.</p>
+            <div class="letter-box" style="display:block; background: #fff;">
+                🕯️ <b>마음상담전화</b>: 1577-0199<br>
+                🕯️ <b>청소년의 창</b>: 1388<br>
+                🕯️ <b>동네 마음 쉼터</b> (보건소 상담센터)
+            </div>
+            <button class="btn-next" onclick="nextPage(5)">마지막 페이지로</button>
+            <div class="page-number">Page 4 / 5</div>
+        </div>
+
+        <!-- Page 5 -->
+        <div class="story-card" id="page5">
+            <img src="assets/fairytale_lighthouse_happy_rabbit.png" class="story-img" alt="행복한 토끼">
+            <div class="story-title">마지막 이야기</div>
+            <p class="story-text">축하해요! 당신은 벌써 안개를 뚫고 등대 앞에 도착했네요. 당신의 마음속 등불은 이제 그 어느 때보다 환하게 빛나고 있어요. 이제 가벼운 마음으로 첫 발걸음을 떼어 보세요.</p>
+            <button class="btn-next" style="background:var(--lighthouse);" onclick="finish()">책장 덮기</button>
+            <div class="page-number">Page 5 / 5</div>
+        </div>
+    </div>
+
+
+
+    <div class="success-page" id="success">
+        <img src="assets/fairytale_lighthouse_happy_rabbit.png" alt="Lighthouse">
+        <h2 style="font-family: 'Gaegu'; font-size: 2.5rem;">당신의 모든 순간을 응원해요</h2>
+        <p style="padding: 0 40px; color: var(--accent);">안개는 걷혔고, 이제 당신의 앞길엔<br>부드러운 햇살만 가득할 거예요.</p>
+        <button class="btn-next" onclick="location.reload()">처음부터 다시 읽기</button>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        const totalPages = 5;
+
+        function nextPage(page) {
+            currentPage = page;
+            
+            // UI Updates
+            document.querySelectorAll('.story-card').forEach(c => c.classList.remove('active'));
+            document.getElementById('page' + page).classList.add('active');
+            
+            // Fog Updates (Clearing)
+            const fogLevel = 25 - (page * 5);
+            document.getElementById('fog').style.backdropFilter = `blur(${fogLevel}px)`;
+            document.getElementById('fog').style.background = `rgba(253, 251, 247, ${fogLevel/100})`;
+            
+            playPageSound();
+        }
+
+        function toggleLetter() {
+            const el = document.getElementById('letter');
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function finish() {
+            document.getElementById('success').style.display = 'flex';
+            playSuccessSound();
+        }
+
+        // --- Sound Engine ---
+        let audioCtx;
+        function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        window.addEventListener('click', initAudio, {once:true});
+
+        function playPageSound() {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(300 + currentPage * 50, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playSuccessSound() {
+            if(!audioCtx) return;
+            const now = audioCtx.currentTime;
+            [329.63, 392.00, 523.25, 659.25].forEach((f, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(f, now + i * 0.15);
+                gain.gain.setValueAtTime(0.03, now + i * 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.6);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(now + i * 0.15); osc.stop(now + i * 0.15 + 0.6);
+            });
+        }
+    </script>
+</body>
+</html>

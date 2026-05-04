@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>응원의 종이비행기 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sky: #87ceeb;
+            --cloud: #ffffff;
+            --accent: #ffcc00;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; font-family: 'Nanum Myeongjo', serif;
+            background: linear-gradient(to bottom, #87ceeb 0%, #e0f6ff 100%);
+        }
+
+        /* Animated Clouds */
+        .clouds {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1;
+        }
+        .cloud {
+            position: absolute; background: var(--cloud);
+            border-radius: 100px; opacity: 0.6;
+            animation: drift linear infinite;
+        }
+        @keyframes drift {
+            from { transform: translateX(-200px); }
+            to { transform: translateX(100vw); }
+        }
+
+        /* Paper Plane Canvas */
+        #skyCanvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 5; cursor: crosshair;
+        }
+
+        /* Interface */
+        .interface {
+            position: relative; z-index: 100; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; pointer-events: none;
+        }
+
+        header { position: absolute; top: 40px; text-align: center; pointer-events: auto; }
+        header h1 { font-family: 'Outfit'; font-size: 0.8rem; letter-spacing: 5px; opacity: 0.6; margin: 0; text-transform: uppercase; }
+        header p { font-size: 1.5rem; font-weight: 800; color: #1a5f7a; margin: 10px 0; }
+
+        /* Input Form */
+        .input-form {
+            width: 85%; max-width: 400px; background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 40px; border-radius: 40px; text-align: center;
+            pointer-events: auto; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+        }
+        .input-form h2 { font-size: 1.2rem; margin-bottom: 20px; color: #1a5f7a; }
+        .input-form textarea {
+            width: 100%; height: 120px; background: rgba(255,255,255,0.5);
+            border: none; border-radius: 20px; padding: 20px; box-sizing: border-box;
+            font-size: 1rem; outline: none; resize: none; font-family: inherit;
+            margin-bottom: 25px; line-height: 1.6;
+        }
+        .btn-fly {
+            padding: 15px 40px; border-radius: 50px; background: #1a5f7a; color: #fff;
+            border: none; font-family: 'Outfit'; font-weight: 800; cursor: pointer;
+            transition: 0.3s; letter-spacing: 2px;
+        }
+        .btn-fly:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(26, 95, 122, 0.3); }
+
+        /* Message Popup */
+        .message-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80%; max-width: 350px; background: #fff; padding: 40px;
+            border-radius: 30px; box-shadow: 0 30px 100px rgba(0,0,0,0.1);
+            z-index: 500; display: none; text-align: center; animation: popIn 0.5s forwards;
+        }
+        @keyframes popIn {
+            0% { transform: translate(-50%, -40%) scale(0.9); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        .message-text { font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 30px; }
+        .btn-close { background: #eee; border: none; padding: 10px 30px; border-radius: 50px; cursor: pointer; }
+
+        #hint { position: fixed; bottom: 30px; width: 100%; text-align: center; opacity: 0.4; font-size: 0.8rem; letter-spacing: 2px; color: #1a5f7a; }
+    </style>
+</head>
+<body>
+    <div class="clouds" id="cloudContainer"></div>
+    <canvas id="skyCanvas"></canvas>
+
+    <div class="interface">
+        <header>
+            <h1>Paper Planes</h1>
+            <p>익명의 응원을 날려보내세요</p>
+        </header>
+
+        <div class="input-form" id="inputForm">
+            <h2>누군가에게 전할 따뜻한 한 줄</h2>
+            <textarea id="messageInput" placeholder="힘든 하루를 보낸 친구에게,&#10;혹은 나 자신에게 따뜻한 응원을 적어보세요..."></textarea>
+            <button class="btn-fly" onclick="flyAway()">비행기 날리기</button>
+        </div>
+
+        <div id="hint">하늘을 날아다니는 다른 비행기를 잡아보세요!</div>
+    </div>
+
+    <div class="message-popup" id="messagePopup">
+        <div style="font-size: 3rem; margin-bottom: 20px;">✈️</div>
+        <div class="message-text" id="popupText"></div>
+        <button class="btn-close" onclick="closePopup()">닫기</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('skyCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let planes = [];
+        let audioCtx;
+
+        const globalMessages = [
+            "당신은 생각보다 훨씬 더 빛나는 사람이에요.",
+            "잠시 쉬어가도 괜찮아요. 구름도 가끔은 멈춰 서니까요.",
+            "오늘 당신이 보여준 용기에 박수를 보냅니다.",
+            "모든 게 잘 될 거예요. 내가 당신을 응원하고 있어요!",
+            "당신의 미소가 누군가에겐 오늘 하루의 희망이 됩니다.",
+            "충분히 잘하고 있어요. 조금만 더 힘을 내봐요."
+        ];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Create Clouds
+        function initClouds() {
+            const container = document.getElementById('cloudContainer');
+            for(let i=0; i<8; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                const size = 100 + Math.random() * 150;
+                cloud.style.width = size + 'px';
+                cloud.style.height = (size * 0.6) + 'px';
+                cloud.style.top = (Math.random() * 60) + '%';
+                cloud.style.animationDuration = (20 + Math.random() * 40) + 's';
+                cloud.style.animationDelay = (Math.random() * 20) + 's';
+                container.appendChild(cloud);
+            }
+        }
+        initClouds();
+
+        const planeImages = [
+            'pure_paper_plane_heart_1777705196503.png',
+            'pure_paper_plane_star_1777705211375.png',
+            'pure_paper_plane_stripe_1777705230537.png',
+            'pure_paper_plane_dot_1777705244865.png'
+        ];
+
+        const loadedImages = [];
+        let loadedCount = 0;
+
+        planeImages.forEach((src, index) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+                loadedImages[index] = img;
+                loadedCount++;
+            };
+        });
+
+        class PaperPlane {
+            constructor(x, y, text, isUser = false) {
+                this.x = x;
+                this.y = y;
+                this.text = text;
+                this.isUser = isUser;
+                this.size = isUser ? 80 : 50 + Math.random() * 30;
+                this.baseVx = 0.7 + Math.random() * 1.0; 
+                this.vx = this.baseVx;
+                this.vy = (Math.random() - 0.5) * 0.6;
+                this.angle = 0;
+                this.rot = (Math.random() - 0.5) * 0.005;
+                this.imgIndex = Math.floor(Math.random() * planeImages.length);
+                this.isNear = false;
+            }
+
+            update(mx, my) {
+                const distToMouse = Math.sqrt((this.x - mx)**2 + (this.y - my)**2);
+                if (distToMouse < 180) {
+                    this.vx += (this.baseVx * 0.25 - this.vx) * 0.1;
+                    this.isNear = true;
+                } else {
+                    this.vx += (this.baseVx - this.vx) * 0.05;
+                    this.isNear = false;
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += this.rot;
+                this.vy += Math.sin(this.x * 0.02) * 0.02; 
+
+                if (this.x > width + 150) {
+                    this.x = -150;
+                    this.y = Math.random() * (height * 0.8) + (height * 0.1);
+                    this.imgIndex = Math.floor(Math.random() * planeImages.length);
+                }
+            }
+
+            draw() {
+                if (!loadedImages[this.imgIndex]) return;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle + Math.atan2(this.vy, this.vx));
+                
+                if (this.isNear) {
+                    ctx.shadowBlur = 25;
+                    ctx.shadowColor = 'rgba(255, 255, 255, 1)';
+                }
+
+                // Remove white background using multiply blend mode for the specific image
+                ctx.globalCompositeOperation = 'multiply';
+                const img = loadedImages[this.imgIndex];
+                const aspect = img.width / img.height;
+                ctx.drawImage(img, -this.size/2, - (this.size/aspect)/2, this.size, this.size/aspect);
+                ctx.globalCompositeOperation = 'source-over';
+
+                ctx.restore();
+            }
+        }
+
+        // Init planes
+        for(let i=0; i<10; i++) {
+            planes.push(new PaperPlane(Math.random()*width, Math.random()*height, globalMessages[i % globalMessages.length]));
+        }
+
+        let mouseX = 0, mouseY = 0;
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function flyAway() {
+            const input = document.getElementById('messageInput');
+            if(!input.value) return;
+
+            const newPlane = new PaperPlane(-50, height * (0.3 + Math.random() * 0.4), input.value, true);
+            newPlane.baseVx = 5; 
+            newPlane.vx = 5;
+            planes.push(newPlane);
+
+            const form = document.getElementById('inputForm');
+            form.style.transform = 'translateY(100px) scale(0.8)';
+            form.style.opacity = '0';
+            setTimeout(() => form.style.display = 'none', 800);
+
+            input.value = '';
+            playFlySound();
+        }
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            
+            let caught = false;
+            // Catch planes with much larger radius
+            for(let i = planes.length - 1; i >= 0; i--) {
+                const p = planes[i];
+                const dist = Math.sqrt((p.x-mx)**2 + (p.y-my)**2);
+                if(dist < 80) { // Increased hit area
+                    showPopup(p.text);
+                    playSparkleSound();
+                    caught = true;
+                    break;
+                }
+            }
+            if(!caught) initAudio();
+        });
+
+        function showPopup(msg) {
+            const popup = document.getElementById('messagePopup');
+            document.getElementById('popupText').innerText = msg;
+            popup.style.display = 'block';
+        }
+
+        function closePopup() {
+            document.getElementById('messagePopup').style.display = 'none';
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            planes.forEach(p => {
+                p.update(mouseX, mouseY);
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // --- Sound Engine ---
+        function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        
+        function playFlySound() {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 1);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 1);
+        }
+
+        function playSparkleSound() {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
+    </script>
+</body>
+</html>

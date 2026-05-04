@@ -1,0 +1,26 @@
+# OS temporary files
+.DS_Store
+Thumbs.db
+
+# AI Assistant Data
+.gemini/
+.claude/
+.playwright-mcp/
+brain/
+scratch/
+
+# Backup & Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Node.js (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Snapshots and internal system files
+Docs/.pdca-snapshots/
+Docs/.pdca-status.json
+Docs/.bkit-memory.json

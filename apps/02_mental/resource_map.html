@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인천 마음 쉼터 지도 - VCEP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #5c6bc0;
+            --accent: #ff8a65;
+            --glass: rgba(255, 255, 255, 0.85);
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Nanum Myeongjo', serif; overflow: hidden;
+            background: #eef2f3;
+        }
+
+        /* Background Layer */
+        .bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('assets/incheon_map_bg.png') no-repeat center center;
+            background-size: cover; z-index: 1; filter: brightness(1.05);
+        }
+
+        /* Main Layout */
+        .container {
+            position: relative; z-index: 10;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            padding: 30px; box-sizing: border-box;
+        }
+
+        header {
+            text-align: center; margin-bottom: 30px;
+            background: var(--glass); padding: 20px; border-radius: 20px;
+            backdrop-filter: blur(10px); box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        header h1 { font-family: 'Gaegu'; font-size: 2.8rem; margin: 0; color: var(--primary); }
+        header p { margin: 5px 0 0; opacity: 0.7; font-size: 1.1rem; }
+
+        .main-content {
+            display: flex; flex: 1; gap: 30px; overflow: hidden;
+        }
+
+        /* Map Section */
+        .map-section {
+            flex: 1.5; background: var(--glass); border-radius: 30px;
+            padding: 20px; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow); backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        #incheon-svg { width: 95%; height: 95%; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.08)); }
+        
+        .district {
+            stroke: #fff; stroke-width: 3;
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: saturate(0.8);
+        }
+        .district:hover { 
+            transform: scale(1.05) translateY(-5px); 
+            filter: saturate(1.2) brightness(1.05);
+            stroke-width: 5;
+        }
+        .district.active { 
+            stroke: var(--accent); stroke-width: 6; 
+            filter: saturate(1.5);
+        }
+
+        /* 구역별 색상 정의 */
+        #ganghwa { fill: #a5d6a7; } /* 연초록 */
+        #seo { fill: #90caf9; }      /* 연파랑 */
+        #gyeyang { fill: #c5e1a5; }  /* 라임 */
+        #bupyeong { fill: #fff59d; } /* 연노랑 */
+        #namdong { fill: #ffcc80; }  /* 연주황 */
+        #yeonsu { fill: #ce93d8; }   /* 연보라 */
+        #michuhol { fill: #ffab91; } /* 연핑크 */
+        #jung { fill: #80cbc4; }     /* 민트 */
+        #ongjin { fill: #b0bec5; }   /* 회색빛 블루 */
+
+        .district-label {
+            font-family: 'Gaegu'; font-size: 18px; fill: #444; font-weight: 700;
+            pointer-events: none; text-anchor: middle;
+            text-shadow: 0 0 5px rgba(255,255,255,0.8);
+        }
+
+        .district-icon {
+            font-size: 24px; pointer-events: none; text-anchor: middle;
+        }
+
+        /* Info Section */
+        .info-section {
+            flex: 1; display: flex; flex-direction: column; gap: 20px;
+        }
+
+        .info-card {
+            background: white; border-radius: 30px; padding: 35px;
+            box-shadow: var(--shadow); flex: 1; overflow-y: auto;
+            border: 4px solid var(--primary);
+            animation: slideIn 0.5s ease-out;
+            position: relative;
+        }
+        .info-card::before {
+            content: '✨'; position: absolute; top: 20px; right: 20px; font-size: 1.5rem;
+        }
+        @keyframes slideIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .info-card h2 { font-family: 'Gaegu'; font-size: 2.5rem; margin: 0 0 20px 0; color: var(--primary); }
+        .resource-item {
+            padding: 25px; border-radius: 20px; background: #f8faff;
+            margin-bottom: 20px; border: 2px dashed #d1d9ff;
+            transition: 0.3s;
+        }
+        .resource-item:hover { transform: scale(1.02); background: #f0f4ff; }
+        .resource-name { font-weight: 800; font-size: 1.3rem; color: #333; margin-bottom: 8px; }
+        .resource-info { font-size: 1rem; color: #666; line-height: 1.6; }
+        
+        .btn-group { display: flex; gap: 12px; margin-top: 15px; }
+        .call-btn {
+            flex: 1; text-align: center; padding: 12px;
+            background: var(--accent); color: white; border-radius: 15px;
+            text-decoration: none; font-weight: 700; font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(255,138,101,0.3);
+            transition: 0.3s;
+        }
+        .call-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255,138,101,0.5); }
+
+        /* Floating Hotline */
+        .hotline-badge {
+            position: fixed; bottom: 30px; left: 30px;
+            background: var(--accent); color: white; padding: 15px 30px;
+            border-radius: 50px; box-shadow: 0 8px 25px rgba(255,138,101,0.4);
+            font-family: 'Gaegu'; font-size: 1.8rem; font-weight: 700;
+            z-index: 100; display: flex; align-items: center; gap: 12px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; color: #aaa; text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-layer"></div>
+
+    <div class="container">
+        <header>
+            <h1>🌈 인천 우리 동네 마음 쉼터</h1>
+            <p>지도의 알록달록한 구역을 클릭해 보세요!</p>
+        </header>
+
+        <div class="main-content">
+            <div class="map-section">
+                <svg id="incheon-svg" viewBox="0 0 400 400">
+                    <!-- Rounded organic shapes for districts -->
+                    <rect class="district" id="ganghwa" x="40" y="30" width="120" height="110" rx="40" onclick="selectDistrict('ganghwa')" />
+                    <text x="100" y="75" class="district-icon">🌳</text>
+                    <text x="100" y="105" class="district-label">강화군</text>
+
+                    <rect class="district" id="seo" x="170" y="30" width="110" height="140" rx="35" onclick="selectDistrict('seo')" />
+                    <text x="225" y="85" class="district-icon">🌊</text>
+                    <text x="225" y="115" class="district-label">서구</text>
+
+                    <rect class="district" id="gyeyang" x="290" y="30" width="90" height="90" rx="30" onclick="selectDistrict('gyeyang')" />
+                    <text x="335" y="65" class="district-icon">⛰️</text>
+                    <text x="335" y="90" class="district-label">계양구</text>
+
+                    <rect class="district" id="bupyeong" x="290" y="130" width="90" height="90" rx="30" onclick="selectDistrict('bupyeong')" />
+                    <text x="335" y="165" class="district-icon">🌸</text>
+                    <text x="335" y="190" class="district-label">부평구</text>
+
+                    <rect class="district" id="namdong" x="290" y="230" width="90" height="110" rx="30" onclick="selectDistrict('namdong')" />
+                    <text x="335" y="275" class="district-icon">🧡</text>
+                    <text x="335" y="300" class="district-label">남동구</text>
+
+                    <rect class="district" id="yeonsu" x="190" y="260" width="90" height="100" rx="45" onclick="selectDistrict('yeonsu')" />
+                    <text x="235" y="300" class="district-icon">🏙️</text>
+                    <text x="235" y="325" class="district-label">연수구</text>
+
+                    <rect class="district" id="michuhol" x="180" y="180" width="100" height="70" rx="25" onclick="selectDistrict('michuhol')" />
+                    <text x="230" y="210" class="district-icon">📜</text>
+                    <text x="230" y="230" class="district-label">미추홀구</text>
+
+                    <rect class="district" id="jung" x="90" y="150" width="80" height="160" rx="40" onclick="selectDistrict('jung')" />
+                    <text x="130" y="215" class="district-icon">⚓</text>
+                    <text x="130" y="245" class="district-label">중구/동구</text>
+
+                    <rect class="district" id="ongjin" x="25" y="170" width="55" height="190" rx="25" onclick="selectDistrict('ongjin')" />
+                    <text x="52" y="250" class="district-icon">🏝️</text>
+                    <text x="52" y="280" class="district-label">옹진군</text>
+                </svg>
+            </div>
+
+            <div class="info-section" id="info-section">
+                <div class="info-card">
+                    <div class="empty-state">
+                        <span style="font-size: 4rem;">📍</span>
+                        <h3>동네를 선택해 주세요</h3>
+                        <p>지도의 각 구역을 클릭하면<br>상담 센터 정보가 나타납니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hotline-badge">
+        📞 청소년 상담전화 1388 (24시간)
+    </div>
+
+    <script>
+        const resources = {
+            ganghwa: {
+                name: "강화군",
+                centers: [
+                    { name: "강화군 청소년상담복지센터", addr: "인천광역시 강화군 강화읍 강화대로 430번길 20", tel: "032-932-1388", url: "https://ghycw.ganghwa.go.kr/main" }
+                ]
+            },
+            seo: {
+                name: "서구",
+                centers: [
+                    { name: "서구 청소년상담복지센터", addr: "인천광역시 서구 시래로 15", tel: "032-584-1388", url: "http://www.sg1388.or.kr" }
+                ]
+            },
+            gyeyang: {
+                name: "계양구",
+                centers: [
+                    { name: "계양구 청소년상담복지센터", addr: "인천광역시 계양구 계양대로 139번길 14", tel: "032-547-0851", url: "https://gyeyang1388.or.kr/" }
+                ]
+            },
+            bupyeong: {
+                name: "부평구",
+                centers: [
+                    { name: "부평구 청소년상담복지센터", addr: "인천광역시 부평구 광장로 4번길 20", tel: "032-509-8913", url: "https://portal.icbp.go.kr/1388/" }
+                ]
+            },
+            namdong: {
+                name: "남동구",
+                centers: [
+                    { name: "남동구 청소년상담복지센터", addr: "인천광역시 남동구 인주대로 820번길 59", tel: "032-461-1388", url: "http://nd1388.or.kr/" }
+                ]
+            },
+            yeonsu: {
+                name: "연수구",
+                centers: [
+                    { name: "연수구 청소년상담복지센터", addr: "인천광역시 연수구 함박로 15", tel: "032-831-2000", url: "http://www.ysyouth.or.kr/" }
+                ]
+            },
+            michuhol: {
+                name: "미추홀구",
+                centers: [
+                    { name: "미추홀구 청소년상담복지센터", addr: "인천광역시 미추홀구 인하로 155번길 21", tel: "032-887-1388", url: "https://michu1388.michuhol.go.kr/" }
+                ]
+            },
+            jung: {
+                name: "중구/동구",
+                centers: [
+                    { name: "중구 청소년상담복지센터", addr: "인천광역시 중구 운남서로 7", tel: "032-747-1318", url: "http://www.junggu1388.kr" },
+                    { name: "동구 청소년상담복지센터", addr: "인천광역시 동구 샛별로 3-1", tel: "032-777-1388", url: "http://www.dream1388.or.kr" }
+                ]
+            },
+            ongjin: {
+                name: "옹진군",
+                centers: []
+            }
+        };
+
+        function selectDistrict(id) {
+            // Reset active state
+            document.querySelectorAll('.district').forEach(d => d.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+
+            const data = resources[id];
+            const infoSection = document.getElementById('info-section');
+
+            let html = `<div class="info-card">
+                <h2>📍 ${data.name} 쉼터</h2>`;
+            
+            data.centers.forEach(center => {
+                // 홈페이지 버튼 생성 여부 결정
+                const urlButton = center.url ? 
+                    `<a href="${center.url}" target="_blank" class="call-btn" style="background:#5c6bc0;">홈페이지 방문</a>` : '';
+
+                html += `
+                    <div class="resource-item">
+                        <div class="resource-name">${center.name}</div>
+                        <div class="resource-info">
+                            주소: ${center.addr}<br>
+                            전화: ${center.tel}
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <a href="tel:${center.tel}" class="call-btn">전화 걸기</a>
+                            ${urlButton}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            infoSection.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

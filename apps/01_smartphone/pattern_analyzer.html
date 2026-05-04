@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트폰 MBTI - 프리미엄 에디션</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.35);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 30px 60px rgba(0, 0, 0, 0.1);
+            --text-dark: #1e293b;
+            --text-sub: #475569;
+        }
+
+        * { box-sizing: border-box; }
+
+        body { 
+            margin: 0; 
+            /* 동적 파스텔 그라데이션 배경 (Mesh Gradient 느낌) */
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-dark); 
+            font-family: 'Pretendard', 'Inter', sans-serif; 
+            overflow-x: hidden; 
+            min-height: 100vh; 
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 20px;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 인스타그램 스토리 스타일 프로그레스 바 */
+        .story-progress {
+            display: flex; gap: 8px; width: 100%; max-width: 480px; margin-bottom: 30px; margin-top: 20px;
+        }
+        .segment {
+            flex: 1; height: 6px; background: rgba(255, 255, 255, 0.4);
+            border-radius: 4px; overflow: hidden; position: relative;
+        }
+        .segment-fill {
+            height: 100%; width: 0%; background: #fff;
+            transition: width 0.4s ease;
+        }
+        .segment.completed .segment-fill { width: 100%; }
+
+        /* 퀴즈 컨테이너 */
+        .quiz-container {
+            width: 100%; max-width: 480px; position: relative; perspective: 1000px;
+        }
+
+        /* 메인 질문 텍스트 */
+        .question-header {
+            text-align: center; margin-bottom: 40px; animation: slideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .q-number {
+            font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 900; 
+            color: #fff; background: rgba(0,0,0,0.1); padding: 8px 16px; border-radius: 20px;
+            display: inline-block; margin-bottom: 15px;
+        }
+        .q-text {
+            font-size: 1.8rem; font-weight: 800; line-height: 1.4; margin: 0;
+            color: #0f172a; text-shadow: 0 4px 15px rgba(255,255,255,0.5);
+            word-break: keep-all;
+        }
+
+        /* 큼직한 버튼 형태의 선택지 (Apple 스타일) */
+        .options-grid {
+            display: grid; grid-template-rows: 1fr 1fr; gap: 20px; height: 400px;
+            animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .btn-option {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 2px solid var(--glass-border);
+            border-radius: 40px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05), inset 0 0 20px rgba(255,255,255,0.5);
+        }
+        .btn-option:hover {
+            transform: translateY(-8px) scale(1.02);
+            background: rgba(255, 255, 255, 0.7);
+            border-color: #fff; box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+        .btn-option:active { transform: scale(0.96); }
+
+        .opt-emoji {
+            font-size: 4rem; margin-bottom: 15px; 
+            filter: drop-shadow(0 15px 15px rgba(0,0,0,0.2));
+            animation: float 4s ease-in-out infinite;
+        }
+        .opt-text {
+            font-size: 1.2rem; font-weight: 700; color: var(--text-dark); text-align: center;
+        }
+
+        /* 홀로그램 3D 결과 카드 */
+        .result-screen {
+            display: none; width: 100%; text-align: center;
+            animation: fadeIn 0.8s ease;
+        }
+        
+        .holo-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            border-radius: 40px; padding: 50px 30px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15), inset 0 0 30px rgba(255,255,255,0.8);
+            position: relative; overflow: hidden;
+            transform-style: preserve-3d;
+            transition: transform 0.1s;
+        }
+        /* 홀로그램 반사광 효과 */
+        .holo-card::after {
+            content: ''; position: absolute; top: -100%; left: -100%; right: -100%; bottom: -100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 70%);
+            animation: holoGlare 4s infinite linear; pointer-events: none; z-index: 10;
+        }
+
+        .res-type {
+            font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 900;
+            color: #6366f1; letter-spacing: 4px; margin-bottom: 10px;
+            transform: translateZ(30px);
+        }
+        .res-emoji {
+            font-size: 7rem; margin: 20px 0;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.3));
+            transform: translateZ(60px);
+            animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .res-title {
+            font-size: 2rem; font-weight: 800; color: #0f172a; margin-bottom: 20px;
+            line-height: 1.3; transform: translateZ(40px);
+        }
+        .res-desc {
+            font-size: 1.1rem; color: #334155; line-height: 1.6; font-weight: 600;
+            background: rgba(255,255,255,0.5); padding: 20px; border-radius: 24px;
+            transform: translateZ(20px);
+        }
+
+        .btn-restart {
+            margin-top: 30px; background: #0f172a; color: #fff; border: none;
+            padding: 20px 0; width: 100%; border-radius: 30px; font-weight: 800; font-size: 1.2rem;
+            cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 15px 30px rgba(15, 23, 42, 0.3);
+        }
+        .btn-restart:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(15, 23, 42, 0.5); }
+
+        /* 애니메이션 키프레임 */
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5) translateZ(60px); } 80% { transform: scale(1.1) translateZ(60px); } 100% { opacity: 1; transform: scale(1) translateZ(60px); } }
+        @keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
+        @keyframes holoGlare { 0% { transform: translate(-50%, -50%) rotate(45deg); } 100% { transform: translate(50%, 50%) rotate(45deg); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="story-progress" id="progressContainer">
+        <!-- 동적 생성 -->
+    </div>
+
+    <div class="quiz-container">
+        
+        <!-- 퀴즈 화면 -->
+        <div id="quizScreen">
+            <div class="question-header">
+                <div class="q-number" id="qNum">Q1</div>
+                <h2 class="q-text" id="questionText">질문 로딩중...</h2>
+            </div>
+            
+            <div class="options-grid" id="optionsBox">
+                <!-- 옵션 블록이 동적으로 생성됨 -->
+            </div>
+        </div>
+
+        <!-- 홀로그램 결과 화면 -->
+        <div id="resultScreen" class="result-screen">
+            <div class="holo-card" id="holoCard">
+                <div class="res-type" id="resType">SFAL</div>
+                <div class="res-emoji" id="resEmoji">🔥</div>
+                <h2 class="res-title" id="resTitle">결과 타이틀</h2>
+                <div class="res-desc" id="resDesc">결과 설명</div>
+            </div>
+            <button class="btn-restart" onclick="restartQuiz()">다시 테스트하기 🔄</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- VCEP 통합 싱크 시스템 (Iframe 전용) ---
+        (function() {
+            const originalSetItem = localStorage.setItem;
+            localStorage.setItem = function(key, value) {
+                originalSetItem.apply(this, arguments);
+                if(key.startsWith('vcep_')) {
+                    try {
+                        window.parent.postMessage({
+                            type: 'vcep_save',
+                            category: key.replace('vcep_', ''),
+                            data: JSON.parse(value)
+                        }, '*');
+                    } catch(e) { console.warn("Parent sync failed", e); }
+                }
+            };
+        })();
+
+        // 고급스러운 3D 카드 틸트 이펙트 (PC 환경용)
+        const holoCard = document.getElementById('holoCard');
+        document.addEventListener('mousemove', (e) => {
+            if(resultScreen.style.display !== 'block') return;
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+            holoCard.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+        document.addEventListener('mouseleave', () => {
+            holoCard.style.transform = `rotateY(0deg) rotateX(0deg)`;
+        });
+
+        const questions = [
+            // Axis 1: Social(S) vs Private(P)
+            {
+                q: "쉬는 시간, 폰을 켜면 가장 먼저 확인하는 것은?",
+                optA: { text: "카톡, 인스타 (친구 소식)", type: "S", emoji: "💬" },
+                optB: { text: "유튜브, 게임 (나만의 힐링)", type: "P", emoji: "🎧" }
+            },
+            {
+                q: "우울할 때 스마트폰으로 하는 행동은?",
+                optA: { text: "친구에게 연락하거나 SNS에 감성 글 올리기", type: "S", emoji: "📱" },
+                optB: { text: "연락을 끊고 혼자 좋아하는 영상/게임에 빠지기", type: "P", emoji: "🎮" }
+            },
+            {
+                q: "알림이 울렸을 때 나의 반응은?",
+                optA: { text: "누구지?! 바로 확인하고 답장한다.", type: "S", emoji: "⚡" },
+                optB: { text: "일단 무음으로 두고 나중에 몰아서 본다.", type: "P", emoji: "🔕" }
+            },
+            // Axis 2: Fast(F) vs Deep(D)
+            {
+                q: "콘텐츠를 볼 때 나의 스타일은?",
+                optA: { text: "1분 미만 쇼츠/릴스 무한 스크롤!", type: "F", emoji: "🌪️" },
+                optB: { text: "10분 이상 진득하게 하나의 영상을 봄", type: "D", emoji: "☕" }
+            },
+            {
+                q: "유튜브에서 영상을 고를 때 선호하는 것은?",
+                optA: { text: "자극적이고 빠른 요약본 (결말 포함)", type: "F", emoji: "⏩" },
+                optB: { text: "디테일이 살아있는 원본 풀버전", type: "D", emoji: "🎬" }
+            },
+            {
+                q: "글을 읽을 때 나는?",
+                optA: { text: "세 줄 요약 없나요? 스크롤을 휙휙 내린다.", type: "F", emoji: "💨" },
+                optB: { text: "천천히 정독하며 의미를 곱씹는다.", type: "D", emoji: "📖" }
+            },
+            // Axis 3: Active(A) vs Relax(R)
+            {
+                q: "스마트폰을 손에 쥐고 있을 때 나는?",
+                optA: { text: "타이핑, 탭! 손가락이 쉴 틈이 없다.", type: "A", emoji: "🔥" },
+                optB: { text: "가만히 누워서 화면만 멍하니 바라본다.", type: "R", emoji: "🛌" }
+            },
+            {
+                q: "흥미로운 영상을 봤을 때 나는?",
+                optA: { text: "댓글을 달거나 친구에게 즉시 공유한다.", type: "A", emoji: "✍️" },
+                optB: { text: "속으로 '오 재밌네' 하고 다음 영상으로 넘긴다.", type: "R", emoji: "👍" }
+            },
+            {
+                q: "모바일 게임을 한다면 나의 성향은?",
+                optA: { text: "내가 직접 컨트롤하고 경쟁하는 액션/RPG", type: "A", emoji: "⚔️" },
+                optB: { text: "가만히 둬도 알아서 크는 방치형/퍼즐 게임", type: "R", emoji: "🧩" }
+            },
+            // Axis 4: Work(W) vs Loop(L)
+            {
+                q: "폰을 사용하는 주된 이유는?",
+                optA: { text: "필요한 정보 검색이나 할 일을 위해", type: "W", emoji: "🎯" },
+                optB: { text: "딱히 목적 없이 알고리즘이 이끄는 대로~", type: "L", emoji: "🌀" }
+            },
+            {
+                q: "스마트폰 바탕화면의 상태는?",
+                optA: { text: "용도별로 폴더가 깔끔하게 정리되어 있다.", type: "W", emoji: "📁" },
+                optB: { text: "어플이 여기저기 흩어져 있고 빨간 뱃지가 가득!", type: "L", emoji: "🚨" }
+            },
+            {
+                q: "자기 전, 침대에서 나의 모습은?",
+                optA: { text: "내일 날씨나 스케줄을 확인하고 금방 잔다.", type: "W", emoji: "🌙" },
+                optB: { text: "10분만 봐야지.. 하다가 2시간째 스크롤 중", type: "L", emoji: "🧟" }
+            }
+        ];
+
+        // 16개 결과 매핑 (프리미엄 감성에 맞춘 텍스트 및 대표 이모지)
+        const resultsMap = {
+            "SFAW": { emoji: "📡", title: "트렌드 최전선 정보통", desc: "빠르게 쏟아지는 소셜 트렌드를 스펀지처럼 흡수하고 즉각 반응하는 얼리어답터입니다." },
+            "SFAL": { emoji: "🎉", title: "멈추지 않는 소셜 행동대장", desc: "여기 번쩍 저기 번쩍! 친구들의 모든 스토리와 피드에 반응하며 쉴 틈 없이 엄지를 움직입니다." },
+            "SFRW": { emoji: "👀", title: "은밀한 프로 눈팅러", desc: "직접 나서지는 않지만 소셜 미디어의 모든 흐름과 가십을 완벽하게 파악하고 있는 정보의 달인입니다." },
+            "SFRL": { emoji: "🫠", title: "도파민 핑퐁 요정", desc: "끝없는 숏폼의 파도에 몸을 맡긴 채, 다른 사람들의 도파민을 구경하며 대리 힐링하는 타입입니다." },
+            "SDAW": { emoji: "🗣️", title: "심야의 랜선 토론가", desc: "깊이 있는 이슈에 대해 사람들과 길게 의견을 나누고 텍스트를 정독하는 것을 즐깁니다." },
+            "SDAL": { emoji: "✍️", title: "방구석 감성 에세이스트", desc: "새벽 감성을 타고 장문의 글이나 스토리텔링을 통해 세상과 깊이 있게 소통하는 감성파입니다." },
+            "SDRW": { emoji: "🔖", title: "인간 북마크 요정", desc: "나중에 볼 좋은 정보들을 묵묵히 찾아 저장하고 주변에 조용히 공유하는 지식의 전달자입니다." },
+            "SDRL": { emoji: "📻", title: "따뜻한 랜선 리스너", desc: "다른 사람들의 긴 일상 브이로그나 팟캐스트를 가만히 들으며 대리 만족과 평화를 느낍니다." },
+            
+            "PFAW": { emoji: "🚀", title: "스피드런 랭커", desc: "게임을 하든 정보를 찾든, 남들보다 빠르고 효율적으로 타겟을 공략하는 행동파입니다." },
+            "PFAL": { emoji: "🕹️", title: "하드코어 핑거 스나이퍼", desc: "빠른 순발력이 필요한 모바일 게임이나 리듬 게임 등 손가락이 쉴 틈 없는 강렬한 자극을 사랑합니다." },
+            "PFRW": { emoji: "🧠", title: "가성비 지식 수집가", desc: "필요한 잡학 상식을 쇼츠나 요약본으로 빠르게 채워 넣으며 뇌를 자극하는 효율러입니다." },
+            "PFRL": { emoji: "🏄", title: "도파민 파도 서퍼", desc: "뇌를 완전히 비우고 알고리즘이 주는 가장 자극적인 숏폼 도파민을 수동적으로 즐기는 중독 초기 상태! 🚨" },
+            "PDAW": { emoji: "🦉", title: "흔들리지 않는 갓생러", desc: "스마트폰을 철저히 목적과 성장을 위해 '도구'로만 사용하는 상위 1%의 통제력 소유자입니다." },
+            "PDAL": { emoji: "💎", title: "고독한 장인 (몰입러)", desc: "하나의 무거운 콘텐츠나 탄탄한 스토리가 있는 게임에 진득하게 파고들어 끝을 보는 타입입니다." },
+            "PDRW": { emoji: "🍷", title: "온라인 다큐 마니아", desc: "긴 호흡의 다큐멘터리나 깊이 있는 롱폼 영상을 보며 혼자만의 지적 유희를 즐기는 미식가입니다." },
+            "PDRL": { emoji: "🎬", title: "방구석 시네마 마스터", desc: "가장 푹신한 베개와 함께 넷플릭스 정주행을 달리는 진정한 방구석 평화주의자입니다." }
+        };
+
+        let currentQ = 0;
+        let scores = { S:0, P:0, F:0, D:0, A:0, R:0, W:0, L:0 };
+
+        const qNum = document.getElementById("qNum");
+        const qText = document.getElementById("questionText");
+        const optionsBox = document.getElementById("optionsBox");
+        const quizScreen = document.getElementById("quizScreen");
+        const resultScreen = document.getElementById("resultScreen");
+
+        function initQuiz() {
+            const progressContainer = document.getElementById("progressContainer");
+            progressContainer.innerHTML = '';
+            for(let i=0; i<questions.length; i++) {
+                progressContainer.innerHTML += `<div class="segment"><div class="segment-fill" id="fill${i}"></div></div>`;
+            }
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQ];
+            
+            // 화면 트랜지션 애니메이션 강제 재실행
+            quizScreen.style.animation = 'none';
+            void quizScreen.offsetWidth; 
+            quizScreen.style.animation = 'slideIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+            qNum.innerText = `Q${currentQ + 1}`;
+            qText.innerText = q.q;
+            
+            // 스토리 바 채우기
+            for(let i=0; i<questions.length; i++) {
+                const fill = document.getElementById(`fill${i}`);
+                if(i < currentQ) fill.style.width = '100%';
+                else if(i === currentQ) fill.style.width = '50%';
+                else fill.style.width = '0%';
+            }
+
+            optionsBox.innerHTML = `
+                <div class="btn-option" onclick="selectOption('${q.optA.type}')">
+                    <div class="opt-emoji">${q.optA.emoji}</div>
+                    <div class="opt-text">${q.optA.text}</div>
+                </div>
+                <div class="btn-option" onclick="selectOption('${q.optB.type}')">
+                    <div class="opt-emoji">${q.optB.emoji}</div>
+                    <div class="opt-text">${q.optB.text}</div>
+                </div>
+            `;
+        }
+
+        function selectOption(type) {
+            scores[type]++;
+            document.getElementById(`fill${currentQ}`).style.width = '100%'; // 완료 처리
+            currentQ++;
+            if(navigator.vibrate) navigator.vibrate(15);
+
+            if (currentQ < questions.length) {
+                setTimeout(loadQuestion, 200);
+            } else {
+                setTimeout(showResult, 300);
+            }
+        }
+
+        function getMBTI() {
+            let res = "";
+            res += (scores.S >= scores.P) ? "S" : "P";
+            res += (scores.F >= scores.D) ? "F" : "D";
+            res += (scores.A >= scores.R) ? "A" : "R";
+            res += (scores.W >= scores.L) ? "W" : "L";
+            return res;
+        }
+
+        function showResult() {
+            quizScreen.style.display = 'none';
+            resultScreen.style.display = 'block';
+            document.getElementById('progressContainer').style.display = 'none';
+
+            const finalMBTI = getMBTI();
+            const res = resultsMap[finalMBTI];
+            
+            // 데이터 저장 (마스터 앱 연동)
+            localStorage.setItem('vcep_persona_results', JSON.stringify({
+                mbti: finalMBTI,
+                title: res.title,
+                date: new Date().toISOString()
+            }));
+
+            document.getElementById('resType').innerText = finalMBTI;
+            document.getElementById('resEmoji').innerText = res.emoji;
+            document.getElementById('resTitle').innerText = res.title;
+            document.getElementById('resDesc').innerText = res.desc;
+            
+            if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        }
+
+        function restartQuiz() {
+            currentQ = 0;
+            scores = { S:0, P:0, F:0, D:0, A:0, R:0, W:0, L:0 };
+            quizScreen.style.display = 'block';
+            resultScreen.style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'flex';
+            initQuiz();
+        }
+
+        // 초기 시작
+        initQuiz();
+
+    </script>
+</body>
+</html>

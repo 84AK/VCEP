@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의 시간 일기 - 시간 냠냠 요정</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-top: #fff0f5; 
+            --bg-bottom: #fbc2eb; 
+            --primary: #f472b6;
+            --danger: #e11d48;
+            --warning: #fbbf24;
+            --success: #34d399;
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --text-main: #334155;
+            --text-sub: #64748b;
+        }
+
+        body { 
+            margin: 0; background: linear-gradient(135deg, var(--bg-top) 0%, var(--bg-bottom) 100%); 
+            color: var(--text-main); font-family: 'Inter', sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+            display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; transition: background 0.5s ease;
+            padding: 40px 20px 80px 20px; box-sizing: border-box;
+        }
+
+        .diary-header {
+            width: 100%; max-width: 400px; text-align: center; margin-bottom: 25px;
+            animation: fadeInDown 1s ease-out; z-index: 20;
+        }
+        .diary-date {
+            font-family: 'Outfit', sans-serif; font-size: 1.1rem; color: #be185d; 
+            letter-spacing: 2px; font-weight: 900; text-transform: uppercase; margin-bottom: 5px;
+        }
+        .diary-title {
+            font-size: 1.6rem; font-weight: 800; margin: 0; color: var(--text-main);
+        }
+        .diary-subtitle {
+            font-size: 0.95rem; color: var(--text-sub); margin-top: 8px; line-height: 1.5; font-weight: 500;
+        }
+
+        .bento-container {
+            display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 400px;
+            z-index: 20; perspective: 1000px; margin-bottom: 20px;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 2px solid var(--glass-border);
+            border-radius: 28px; padding: 25px;
+            box-shadow: 0 15px 35px rgba(244, 114, 182, 0.15), inset 0 2px 0 rgba(255,255,255,0.8);
+            position: relative; overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 캐릭터 영역 */
+        .character-card {
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            height: 320px; text-align: center; position: relative;
+        }
+        
+        .lost-time { 
+            font-size: 4.5rem; color: var(--primary); font-family: 'Outfit', sans-serif;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8); font-variant-numeric: tabular-nums;
+            font-weight: 900; z-index: 30; transition: all 0.5s ease; position: relative;
+            background: linear-gradient(to bottom, #f43f5e, #be185d);
+            -webkit-background-clip: text; 
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .lost-time-label {
+            font-size: 0.9rem; color: var(--text-sub); margin-bottom: -10px; z-index: 30; font-weight: 700; position: relative;
+        }
+
+        .character-wrapper {
+            position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%);
+            width: 200px; height: 200px; z-index: 10;
+            display: flex; justify-content: center; align-items: center;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .character {
+            width: 100%; height: 100%;
+            background-image: var(--char-bg, url('assets/time_eater.png'));
+            background-size: contain; background-position: center; background-repeat: no-repeat;
+            filter: drop-shadow(0 15px 20px rgba(244, 114, 182, 0.5));
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px) scale(1.02); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* 컨트롤 버튼 */
+        .controls-wrapper {
+            display: flex; flex-direction: column; gap: 12px; padding: 25px 20px;
+        }
+        .controls-title {
+            font-size: 0.85rem; color: var(--text-sub); font-weight: 700; margin-bottom: 5px;
+        }
+        .btn-throw { 
+            background: rgba(255, 255, 255, 0.8); color: var(--text-main); 
+            border: 2px solid #ffffff; 
+            padding: 16px 20px; border-radius: 20px; cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            font-size: 1rem; font-family: 'Inter', sans-serif; display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            animation: fadeInDown 0.3s ease-out;
+        }
+        .btn-throw:hover { 
+            background: #ffffff; transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(244, 114, 182, 0.2);
+        }
+        .btn-throw span.time-badge {
+            background: #fdf2f8; color: #be185d; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 800;
+        }
+
+        /* 직접 입력 UI */
+        .custom-input-row {
+            display: flex; gap: 8px; margin-top: 5px;
+        }
+        .custom-input, .custom-time {
+            background: rgba(255, 255, 255, 0.6); border: 2px solid #ffffff;
+            padding: 12px 15px; border-radius: 16px; font-family: 'Inter', sans-serif;
+            font-size: 0.95rem; color: var(--text-main); outline: none; transition: all 0.3s;
+        }
+        .custom-input:focus, .custom-time:focus {
+            background: #ffffff; box-shadow: 0 4px 15px rgba(244, 114, 182, 0.15);
+        }
+        .custom-input { flex: 1; }
+        .custom-time { width: 70px; text-align: center; }
+        .custom-time::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .btn-custom-add {
+            background: linear-gradient(135deg, var(--primary), #ec4899); color: white; border: none;
+            width: 48px; border-radius: 16px; font-size: 1.5rem; font-weight: 700;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 10px rgba(244, 114, 182, 0.3);
+            display: flex; justify-content: center; align-items: center; padding-bottom: 2px;
+        }
+        .btn-custom-add:hover {
+            transform: translateY(-2px); box-shadow: 0 6px 15px rgba(225, 29, 72, 0.4);
+        }
+
+        /* 리셋 버튼 */
+        .btn-reverse { 
+            background: linear-gradient(135deg, #fbbf24, #f59e0b); 
+            border: 3px solid rgba(255, 255, 255, 0.9); padding: 22px; border-radius: 24px; 
+            cursor: pointer; color: #ffffff; font-weight: 800; font-size: 1.15rem; 
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4), inset 0 2px 5px rgba(255,255,255,0.6); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 400px;
+        }
+        .btn-reverse:active { transform: scale(0.97); }
+        .shake-bar-container {
+            width: 100%; height: 6px; background: rgba(0,0,0,0.15); border-radius: 3px; margin-top: 10px; overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .shake-bar { height: 100%; background: #ffffff; width: 0%; transition: width 0.1s ease-out; box-shadow: 0 0 10px #ffffff;}
+
+        /* 기회비용 파괴 연출 */
+        .opportunity-item {
+            position: absolute; font-size: 2.2rem; z-index: 40; opacity: 0; pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.7, 0, 0.8, 0.1); 
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));
+        }
+
+        /* 붕괴 애니메이션 */
+        .shake-screen { animation: screenShake 0.4s infinite; }
+        .glass-crack { border-color: rgba(244, 114, 182, 0.8) !important; box-shadow: 0 0 40px rgba(244, 114, 182, 0.4) !important; }
+
+        @keyframes screenShake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-2px, 0px) rotate(1deg); }
+            40% { transform: translate(1px, -1px) rotate(-1deg); }
+            60% { transform: translate(-2px, 1px) rotate(0deg); }
+            80% { transform: translate(2px, -1px) rotate(1deg); }
+            100% { transform: translate(0px, 1px) rotate(-1deg); }
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 타격감 애니메이션 */
+        @keyframes buttonHit {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(0.92); filter: brightness(1.3); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        .btn-hit-anim {
+            animation: buttonHit 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        /* 타격 파티클 */
+        .hit-spark {
+            position: absolute; font-size: 1.8rem; pointer-events: none; z-index: 100;
+            animation: sparkFly 0.4s ease-out forwards; text-shadow: 0 0 10px rgba(255,255,255,0.8);
+        }
+        @keyframes sparkFly {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.3) rotate(0deg); }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1.5) rotate(45deg); }
+        }
+        
+        /* 포몽이 딸꾹질 (타격 반응) */
+        @keyframes hiccup {
+            0% { transform: translate(-50%, -50%) scale(var(--base-scale)); }
+            50% { transform: translate(-50%, -55%) scale(calc(var(--base-scale) * 1.05)); }
+            100% { transform: translate(-50%, -50%) scale(var(--base-scale)); }
+        }
+        .char-hiccup {
+            animation: hiccup 0.2s ease-out;
+        }
+
+        /* 카타르시스 엔딩 화면 */
+        .catharsis-msg {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.95); z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 1s ease-in-out;
+            color: var(--text-main); text-align: center; padding: 20px;
+            backdrop-filter: blur(20px);
+        }
+        .catharsis-msg h1 { 
+            font-size: 2.5rem; margin-bottom: 20px; font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b); 
+            -webkit-background-clip: text; 
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .catharsis-msg p { font-size: 1.15rem; color: var(--text-sub); line-height: 1.7; font-weight: 500;}
+        
+        .good-particle { 
+            position: absolute; top: 50%; left: 50%; font-size: 45px; pointer-events: none; opacity: 0; 
+            transition: all 1.5s cubic-bezier(0.1, 0.8, 0.3, 1); z-index: 101; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+        }
+
+    </style>
+</head>
+<body>
+    <div class="diary-header">
+        <div class="diary-date" id="dateDisplay">2026. 05. 01</div>
+        <h1 class="diary-title">오늘의 시간 일기</h1>
+        <p class="diary-subtitle">오늘 하루, 의미 없이 흘려보낸 시간들을<br>시간 냠냠 요정 '포몽이'에게 먹이로 주세요!</p>
+    </div>
+
+    <div class="bento-container" id="appContainer">
+        
+        <!-- 캐릭터 (포몽이) 영역 -->
+        <div class="glass-card character-card" id="bhCard">
+            <div class="lost-time-label">포몽이가 냠냠한 시간</div>
+            <div class="lost-time" id="lostTimeDisplay">0분</div>
+            
+            <div class="character-wrapper" id="charContainer">
+                <div class="character" id="fairyChar"></div>
+            </div>
+        </div>
+
+        <!-- 고해성사 버튼 영역 -->
+        <div class="glass-card controls-wrapper" id="controls">
+            <div class="controls-title">어디에 시간을 흘려보냈나요?</div>
+            <button class="btn-throw" onclick="throwTime(10, event, '📱')">
+                <span>쇼츠/릴스의 늪 📱</span>
+                <span class="time-badge">+10분 먹이주기</span>
+            </button>
+            <button class="btn-throw" onclick="throwTime(30, event, '🎮')">
+                <span>무의미한 모바일 게임 🎮</span>
+                <span class="time-badge">+30분 먹이주기</span>
+            </button>
+            <button class="btn-throw" onclick="throwTime(60, event, '🛏️')">
+                <span>의욕 없이 누워있기 🛏️</span>
+                <span class="time-badge">+60분 먹이주기</span>
+            </button>
+            
+            <!-- 직접 입력 추가 UI -->
+            <div class="custom-input-row" id="customInputRow">
+                <input type="text" id="customName" placeholder="직접 입력 (예: 웹툰 정주행)" class="custom-input">
+                <input type="number" id="customTime" placeholder="분" class="custom-time" min="1" max="999">
+                <button class="btn-custom-add" onclick="addCustomTime(event)">+</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 리셋 사투 영역 -->
+    <button class="btn-reverse" onclick="shakeAction(event)" id="btnReset">
+        포몽이 소화시키기 (폰 흔들기!)
+        <div class="shake-bar-container"><div class="shake-bar" id="shakeBar"></div></div>
+    </button>
+
+    <div class="catharsis-msg" id="msgCatharsis">
+        <h1>Fresh Start ✨</h1>
+        <p>포몽이가 당신의 후회와 낭비된 시간을 맛있게 소화했습니다.<br>홀가분해진 마음으로, 내일 다시 활기차게 시작해요!</p>
+    </div>
+
+    <script>
+        // 오늘 날짜
+        const today = new Date();
+        document.getElementById('dateDisplay').innerText = `${today.getFullYear()}. ${String(today.getMonth()+1).padStart(2,'0')}. ${String(today.getDate()).padStart(2,'0')}`;
+
+        // 배경 투명화(누끼) 처리 (Canvas API)
+        window.addEventListener('DOMContentLoaded', () => {
+            const img = new Image();
+            img.src = 'assets/time_eater.png';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width; canvas.height = img.height;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                for(let i = 0; i < data.length; i += 4) {
+                    let r = data[i], g = data[i+1], b = data[i+2];
+                    // 하얀색 배경 감지 (오차 범위 허용)
+                    if (r > 230 && g > 230 && b > 230) {
+                        data[i+3] = 0; // 투명하게
+                    }
+                }
+                ctx.putImageData(imageData, 0, 0);
+                document.documentElement.style.setProperty('--char-bg', `url(${canvas.toDataURL()})`);
+            };
+        });
+
+        let totalLostMinutes = 0;
+        let shakeCount = 0;
+        const TARGET_SHAKES = 15;
+        let isExploding = false;
+
+        const localUserId = localStorage.getItem('vcep_userId') || "익명유저";
+
+        // 파괴될 기회비용 아이템들
+        const opportunityItems = ['📚', '💪', '👨‍👩‍👧', '💡', '🧹', '🎨', '🧠'];
+
+        function addCustomTime(event) {
+            const nameInput = document.getElementById('customName');
+            const timeInput = document.getElementById('customTime');
+            const name = nameInput.value.trim();
+            const time = parseInt(timeInput.value);
+
+            if (!name || isNaN(time) || time <= 0) {
+                alert('올바른 활동 이름과 분(시간)을 입력해주세요!');
+                return;
+            }
+
+            const controlsBox = document.getElementById('controls');
+            const inputRow = document.getElementById('customInputRow');
+
+            const newBtn = document.createElement('button');
+            newBtn.className = 'btn-throw';
+            // 이모지 대신 직접 펜 이모지를 달아줍니다.
+            newBtn.innerHTML = `<span>${name} ✍️</span><span class="time-badge">+${time}분 먹이주기</span>`;
+            newBtn.onclick = (e) => throwTime(time, e);
+
+            // 입력창 바로 위에 새 버튼 추가
+            controlsBox.insertBefore(newBtn, inputRow);
+
+            // 입력창 초기화
+            nameInput.value = '';
+            timeInput.value = '';
+        }
+
+        function throwTime(minutes, event) {
+            if(isExploding) return;
+            totalLostMinutes += minutes;
+            document.getElementById('lostTimeDisplay').innerText = totalLostMinutes + '분';
+            
+            // 캐릭터(포몽이) 성장
+            const scale = 1 + (totalLostMinutes / 250);
+            document.getElementById('charContainer').style.transform = `translate(-50%, -50%) scale(${scale})`;
+            
+            // 너무 많이 먹으면 덜덜 떠는 효과
+            if (totalLostMinutes > 60) {
+                document.body.classList.add('shake-screen');
+                document.body.style.animationDuration = Math.max(0.1, 0.6 - (totalLostMinutes / 400)) + 's';
+                document.getElementById('bhCard').classList.add('glass-crack');
+            }
+
+            // 기회비용이 포몽이 입(중심)으로 빨려들어가는 연출
+            const btnRect = event.currentTarget.getBoundingClientRect();
+            const charRect = document.getElementById('charContainer').getBoundingClientRect();
+            const targetX = charRect.left + charRect.width/2;
+            const targetY = charRect.top + charRect.height/2 + 20; // 입 위치 쯤으로 보정
+
+            for(let i=0; i < Math.min(minutes/10, 5); i++) {
+                setTimeout(() => {
+                    const item = document.createElement('div');
+                    item.className = 'opportunity-item';
+                    item.innerText = opportunityItems[Math.floor(Math.random() * opportunityItems.length)];
+                    
+                    const startX = btnRect.left + Math.random() * btnRect.width;
+                    const startY = btnRect.top + Math.random() * btnRect.height;
+                    item.style.left = startX + 'px';
+                    item.style.top = startY + 'px';
+                    document.body.appendChild(item);
+                    
+                    item.getBoundingClientRect(); // reflow
+
+                    // 포몽이 중심으로 쏙 빨려감 (치즈처럼 늘어나며)
+                    item.style.opacity = '1';
+                    item.style.left = targetX + 'px';
+                    item.style.top = targetY + 'px';
+                    item.style.transform = `scaleX(0.3) scaleY(${1.5 + Math.random()}) rotate(${Math.random()*360}deg)`;
+                    
+                    setTimeout(() => item.remove(), 800);
+                }, i * 150);
+            }
+        }
+
+        function shakeAction(event) {
+            if (totalLostMinutes === 0) {
+                alert("포몽이에게 줄 먹이가 없네요! 알찬 하루를 보내셨군요.");
+                return;
+            }
+            if (isExploding) return;
+
+            // 1. 진동 피드백 (모바일)
+            if(navigator.vibrate) navigator.vibrate(30);
+
+            // 2. 버튼 펀치 애니메이션
+            const btn = document.getElementById('btnReset');
+            btn.classList.remove('btn-hit-anim');
+            void btn.offsetWidth; // reflow
+            btn.classList.add('btn-hit-anim');
+
+            // 3. 포몽이 딸꾹질 애니메이션
+            const charContainer = document.getElementById('charContainer');
+            const currentScale = 1 + (totalLostMinutes / 250);
+            charContainer.style.setProperty('--base-scale', currentScale);
+            charContainer.classList.remove('char-hiccup');
+            void charContainer.offsetWidth;
+            charContainer.classList.add('char-hiccup');
+
+            // 4. 타격 스파크(파티클) 이펙트
+            if (event) {
+                const spark = document.createElement('div');
+                spark.className = 'hit-spark';
+                spark.innerText = ['💥', '✨', '💢', '🌟'][Math.floor(Math.random()*4)];
+                
+                const rect = btn.getBoundingClientRect();
+                const startX = event.clientX || (rect.left + rect.width/2);
+                const startY = event.clientY || (rect.top + rect.height/2);
+                spark.style.left = startX + 'px';
+                spark.style.top = startY + 'px';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 40 + Math.random() * 60;
+                spark.style.setProperty('--tx', `${Math.cos(angle)*distance}px`);
+                spark.style.setProperty('--ty', `${Math.sin(angle)*distance}px`);
+                
+                document.body.appendChild(spark);
+                setTimeout(() => spark.remove(), 400);
+            }
+
+            shakeCount++;
+            const pct = Math.min(100, (shakeCount / TARGET_SHAKES) * 100);
+            document.getElementById('shakeBar').style.width = pct + '%';
+
+            if (shakeCount >= TARGET_SHAKES) {
+                triggerCatharsis();
+            }
+        }
+
+        if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', (e) => {
+                if(totalLostMinutes === 0 || isExploding) return;
+                const acc = e.accelerationIncludingGravity;
+                if (!acc) return;
+                const totalAcc = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
+                if (totalAcc > 20) shakeAction();
+            });
+        }
+
+        async function triggerCatharsis() {
+            isExploding = true;
+            document.body.classList.remove('shake-screen');
+            document.getElementById('bhCard').classList.remove('glass-crack');
+
+            // 포몽이 축소 (소화됨)
+            document.getElementById('charContainer').style.transform = 'translate(-50%, -50%) scale(0.1)';
+            
+            setTimeout(() => {
+                // 엔딩 파티클 방출 (밝고 긍정적인 에너지)
+                const items = ['✨', '🌟', '🕊️', '🌿', '🌅', '💖'];
+                for(let i=0; i<30; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'good-particle';
+                    p.innerText = items[Math.floor(Math.random() * items.length)];
+                    document.body.appendChild(p);
+                    
+                    setTimeout(() => {
+                        p.style.opacity = '1';
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist = 150 + Math.random() * 400;
+                        p.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(${0.8 + Math.random()}) rotate(${Math.random()*360}deg)`;
+                        p.style.opacity = '0';
+                    }, 50);
+                    setTimeout(() => p.remove(), 1550);
+                }
+
+                // 부드러운 화이트 아웃
+                document.getElementById('msgCatharsis').style.opacity = '1';
+                if(navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 500]);
+            }, 800);
+
+            const savedMinutes = totalLostMinutes;
+            totalLostMinutes = 0;
+            shakeCount = 0;
+            document.getElementById('shakeBar').style.width = '0%';
+
+            setTimeout(() => {
+                document.getElementById('lostTimeDisplay').innerText = '0분';
+                document.getElementById('charContainer').style.transform = 'translate(-50%, -50%) scale(1)';
+                document.getElementById('msgCatharsis').style.opacity = '0';
+                isExploding = false;
+            }, 5000);
+
+            // 로컬 스토리지에 기록 저장
+            const localData = JSON.parse(localStorage.getItem('vcep_time_diary')) || [];
+            localData.push({ date: new Date().toISOString(), restoredMinutes: savedMinutes });
+            localStorage.setItem('vcep_time_diary', JSON.stringify(localData));
+        }
+    </script>
+    <script>
+        // --- VCEP 통합 싱크 시스템 (Iframe 전용) ---
+        (function() {
+            const originalSetItem = localStorage.setItem;
+            localStorage.setItem = function(key, value) {
+                originalSetItem.apply(this, arguments);
+                if(key.startsWith('vcep_')) {
+                    try {
+                        window.parent.postMessage({
+                            type: 'vcep_save',
+                            category: key.replace('vcep_', ''),
+                            data: JSON.parse(value)
+                        }, '*');
+                    } catch(e) { console.warn("Parent sync failed", e); }
+                }
+            };
+        })();
+    </script>
+</body>
+</html>
