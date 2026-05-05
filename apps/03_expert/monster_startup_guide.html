@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monster Startup Guide: 마왕군 기획 가이드</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="마왕군 스타트업 시뮬레이션을 통해 배우는 서비스 기획의 정석. 문제 정의부터 MVP 설계까지 완벽 가이드.">
+    <meta name="keywords" content="서비스 기획, MVP, 페르소나, 마왕군 스타트업, 바이브코딩">
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0d0221;
+            --monster-purple: #2a0845;
+            --monster-green: #00ff41;
+            --monster-red: #ff004c;
+            --glass: rgba(42, 8, 69, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --font-pixel: 'Press Start 2P', cursive;
+            --font-main: 'Inter', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: var(--bg-dark);
+            color: #fff;
+            font-family: var(--font-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Ambient Background Elements */
+        .bg-gradient {
+            position: fixed; inset: 0;
+            background: radial-gradient(circle at 20% 30%, #1a0533 0%, #0d0221 100%);
+            z-index: -2;
+        }
+        .bg-grid {
+            position: fixed; inset: 0;
+            background-image: linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            transform: perspective(500px) rotateX(60deg);
+            transform-origin: top;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove { from { background-position: 0 0; } to { background-position: 0 1000px; } }
+
+        /* Navigation */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; height: 70px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 40px; z-index: 1000;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--monster-purple);
+        }
+        .logo { font-family: var(--font-pixel); font-size: 0.8rem; color: var(--monster-green); text-decoration: none; }
+        .nav-btns { display: flex; gap: 20px; }
+        .nav-btn { color: #fff; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; }
+        .nav-btn:hover { color: var(--monster-red); }
+        .play-btn { background: var(--monster-red); padding: 8px 20px; border-radius: 4px; font-family: var(--font-pixel); font-size: 0.6rem; }
+
+        /* Slide System */
+        .slider-container {
+            width: 100%; height: 100vh;
+            display: flex; transition: transform 0.8s cubic-bezier(0.85, 0, 0.15, 1);
+        }
+        .slide {
+            min-width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            padding: 100px 40px 40px;
+        }
+
+        /* Bento Grid Layout */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 20px;
+            width: 100%; max-width: 1200px; height: 100%; max-height: 800px;
+        }
+
+        .bento-card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            display: flex; flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+        .bento-card:hover { transform: translateY(-5px); border-color: var(--monster-green); }
+        
+        .card-title { font-family: var(--font-pixel); font-size: 1rem; color: var(--monster-green); margin-bottom: 20px; letter-spacing: 1px; }
+        .card-content { font-size: 1.2rem; line-height: 1.8; color: #eee; }
+        .card-icon { font-size: 3.5rem; color: var(--monster-red); margin-bottom: 25px; }
+
+        /* Slide Specific Layouts */
+        /* Slide 1: Intro */
+        .intro-hero { grid-column: 1 / 4; grid-row: 1 / 4; display: flex; flex-direction: column; justify-content: center; }
+        .intro-hero h1 { font-family: var(--font-pixel); font-size: 3.5rem; line-height: 1.2; color: var(--monster-red); text-shadow: 6px 6px #000; margin-bottom: 30px; }
+        .intro-hero p { font-size: 1.5rem; color: #ccc; max-width: 90%; line-height: 1.6; }
+        .intro-char { grid-column: 4 / 5; grid-row: 1 / 5; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); }
+        .intro-char img { width: 90%; height: auto; image-rendering: pixelated; animation: float 3s ease-in-out infinite; }
+        .intro-stats { grid-column: 1 / 4; grid-row: 4 / 5; display: flex; gap: 20px; }
+        .stat-box { flex: 1; background: rgba(255,255,255,0.05); border-radius: 15px; padding: 25px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .stat-box .num { font-family: var(--font-pixel); font-size: 2rem; display: block; color: var(--monster-green); margin-bottom: 10px; }
+        .stat-box .label { font-size: 1.1rem; color: #aaa; }
+
+        /* Common Quest Slide */
+        .quest-main { grid-column: 1 / 3; grid-row: 1 / 5; }
+        .quest-detail-1 { grid-column: 3 / 5; grid-row: 1 / 3; }
+        .quest-detail-2 { grid-column: 3 / 5; grid-row: 3 / 5; }
+
+        /* Slide 6: PRD */
+        .prd-view { grid-column: 1 / 5; grid-row: 1 / 5; font-family: 'Courier New', Courier, monospace; overflow-y: auto; color: var(--monster-green); }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        /* Controls */
+        .controls {
+            position: fixed; bottom: 40px; right: 40px;
+            display: flex; gap: 15px; z-index: 1000;
+        }
+        .ctrl-btn {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: var(--monster-purple); border: 2px solid var(--monster-green);
+            color: #fff; font-size: 1.5rem; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .ctrl-btn:hover { background: var(--monster-green); color: #000; }
+        .progress-bar {
+            position: fixed; bottom: 0; left: 0; height: 6px;
+            background: var(--monster-green); width: 0%; transition: 0.3s; z-index: 1001;
+            box-shadow: 0 0 10px var(--monster-green);
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .bento-grid { grid-template-columns: 1fr; grid-template-rows: auto; overflow-y: auto; display: block; }
+            .bento-card { margin-bottom: 20px; min-height: 200px; }
+            .intro-hero h1 { font-size: 1.5rem; }
+            .slide { padding-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="bg-grid"></div>
+
+    <nav>
+        <a href="../../index.html" class="logo">VCEP: MONSTER STARTUP</a>
+        <div class="nav-btns">
+            <a href="monster_startup.html" class="nav-btn">GAME</a>
+            <a href="monster_startup.html" class="nav-btn play-btn">PLAY NOW</a>
+        </div>
+    </nav>
+
+    <div class="progress-bar" id="progress"></div>
+
+    <div class="slider-container" id="slider">
+        <!-- Slide 1: Intro -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card intro-hero">
+                    <div class="card-title">ORIENTATION</div>
+                    <h1>MONSTER<br>STARTUP GUIDE</h1>
+                    <p>사악한 천재 기획팀을 위한 필수 전략 지침서. 당신의 앱이 던전을 구할 수 있을 것인가?</p>
+                </div>
+                <div class="bento-card intro-char">
+                    <img src="assets/monster_ai_secretary_1777946372077.png" alt="AIDEN">
+                </div>
+                <div class="intro-stats">
+                    <div class="stat-box"><span class="num">06</span><span class="label">QUESTS</span></div>
+                    <div class="stat-box"><span class="num">100%</span><span class="label">EVIL SYNERGY</span></div>
+                    <div class="stat-box"><span class="num">PRD</span><span class="label">FINAL OUTPUT</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 2: Overview -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card" style="grid-column: 1 / 3; grid-row: 1 / 3;">
+                    <i class="fas fa-dungeon card-icon"></i>
+                    <div class="card-title">WORLD VIEW</div>
+                    <div class="card-content">
+                        <strong>"던전은 지금 위기다!"</strong><br>
+                        용사들의 유튜브 공략으로 함정이 무력화되고, 부하 몬스터들은 사기를 잃고 통제 불능 상태입니다. 우리는 '디지털 전환'을 통해 다시 공포의 던전을 재건해야 합니다.
+                    </div>
+                </div>
+                <div class="bento-card" style="grid-column: 3 / 5; grid-row: 1 / 3;">
+                    <i class="fas fa-crosshairs card-icon"></i>
+                    <div class="card-title">YOUR MISSION</div>
+                    <div class="card-content">
+                        당신은 기획자가 되어 문제를 분석하고, 해결책을 제안하며, 최종적으로 마왕님을 설득할 <strong>사악한 기획서(PRD)</strong>를 완성해야 합니다.
+                    </div>
+                </div>
+                <div class="bento-card" style="grid-column: 1 / 5; grid-row: 3 / 5; background: rgba(0,255,65,0.1);">
+                    <div class="card-title">CORE FLOW</div>
+                    <div class="card-content" style="display: flex; justify-content: space-around; align-items: center; height: 100%; font-size: 1.3rem;">
+                        <div style="text-align:center;"><i class="fas fa-edit" style="font-size: 2.5rem; margin-bottom: 15px;"></i><br>부대명 지정</div>
+                        <i class="fas fa-arrow-right" style="color:var(--monster-green); opacity: 0.5;"></i>
+                        <div style="text-align:center;"><i class="fas fa-comments" style="font-size: 2.5rem; margin-bottom: 15px;"></i><br>퀘스트 의사결정</div>
+                        <i class="fas fa-arrow-right" style="color:var(--monster-green); opacity: 0.5;"></i>
+                        <div style="text-align:center;"><i class="fas fa-file-invoice" style="font-size: 2.5rem; margin-bottom: 15px;"></i><br>PRD 생성</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: Learning Path 01 -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card quest-main">
+                    <i class="fas fa-skull card-icon"></i>
+                    <div class="card-title">QUEST 01-02</div>
+                    <h2 style="font-family: var(--font-pixel); font-size: 1.2rem; color: var(--monster-red); margin-bottom: 20px;">문제 정의와 컨셉</h2>
+                    <div class="card-content">
+                        모든 위대한 기획은 '아픔'에서 시작합니다. 던전이 왜 망해가고 있는지 <strong>Pain Point</strong>를 명확히 짚어내는 것이 첫 번째 단계입니다.
+                    </div>
+                </div>
+                <div class="bento-card quest-detail-1">
+                    <div class="card-title">LESSON: PROBLEM</div>
+                    <div class="card-content">"문제 정의는 기획의 80%입니다."<br>사용자가 느끼는 가장 심각한 고통을 선택하여 해결의 우선순위를 정하십시오.</div>
+                </div>
+                <div class="bento-card quest-detail-2">
+                    <div class="card-title">LESSON: CONCEPT</div>
+                    <div class="card-content">"이름이 정체성입니다."<br>컨셉은 앱의 핵심 가치를 한 줄로 정의하는 과정입니다. 가장 사악하고 명확한 이름을 고르십시오.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: Learning Path 02 -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card quest-main">
+                    <i class="fas fa-users card-icon"></i>
+                    <div class="card-title">QUEST 03-04</div>
+                    <h2 style="font-family: var(--font-pixel); font-size: 1.2rem; color: var(--monster-red); margin-bottom: 20px;">타겟과 핵심 기능</h2>
+                    <div class="card-content">
+                        모두를 만족시키려 하면 아무도 만족시킬 수 없습니다. 명확한 <strong>Persona</strong>를 설정하고, 그들에게 꼭 필요한 <strong>MVP</strong>를 선별하십시오.
+                    </div>
+                </div>
+                <div class="bento-card quest-detail-1">
+                    <div class="card-title">LESSON: TARGET</div>
+                    <div class="card-content">"누가 쓰는가?"<br>오크는 단순해야 하고, 스켈레톤은 정교해야 합니다. 사용자의 수준과 환경을 고려한 맞춤형 설계가 필수입니다.</div>
+                </div>
+                <div class="bento-card quest-detail-2">
+                    <div class="card-title">LESSON: FEATURES</div>
+                    <div class="card-content">"Less is More."<br>핵심 기능(MVP) 3가지면 충분합니다. 불필요한 기능은 기획을 멍청하게 만듭니다.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: Learning Path 03 -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card quest-main">
+                    <i class="fas fa-palette card-icon"></i>
+                    <div class="card-title">QUEST 05-06</div>
+                    <h2 style="font-family: var(--font-pixel); font-size: 1.2rem; color: var(--monster-red); margin-bottom: 20px;">UI 디자인과 전략</h2>
+                    <div class="card-content">
+                        디자인은 아름다움 이전에 '도구'입니다. 사용자 경험을 시각화하고, 기획이 실현될 수 있도록 최종적으로 설득하는 과정입니다.
+                    </div>
+                </div>
+                <div class="bento-card quest-detail-1">
+                    <div class="card-title">LESSON: UI/UX</div>
+                    <div class="card-content">"UI는 대화 수단입니다."<br>몬스터들의 특성을 고려한 테마를 선택하십시오. 직관적인 흐름이 기획의 완성도를 높입니다.</div>
+                </div>
+                <div class="bento-card quest-detail-2">
+                    <div class="card-title">LESSON: STRATEGY</div>
+                    <div class="card-content">"마무리는 설득입니다."<br>당신의 기획이 왜 세상을 지배할(또는 던전을 구할) 유일한 방법인지 마왕님께 각인시키십시오.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: Result -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card prd-view">
+                    <div class="card-title">FINAL OUTPUT: PRD EXAMPLE</div>
+                    <pre style="white-space: pre-wrap; font-size: 0.9rem;">
+[마왕군 기획서 - PRD]
+부대명: 붉은 해골단
+앱 명칭: 용사 지옥 (Hero Hell)
+문제 정의: 용사들의 유튜브 공략 유출
+핵심 컨셉: 실시간 함정 매칭 시스템
+타겟 분석: 경비 오크 부대
+핵심 기능: 가짜 보물상자 폭발 알림
+디자인 테마: 피빛 빨강 공포 테마
+최종 전략: 마왕님 즉시 보고 및 배포
+------------------------------
+VIBE CODING PLANNING GUIDE
+1. Persona: 누구를 위한 앱인지 명확히 하라.
+2. Pain Point: 사용자의 고통에서 해결책을 찾아라.
+3. MVP: 본질적인 기능에 집중하라.
+4. UI/UX: 직관적인 도구를 설계하라.
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Conclusion -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card intro-hero" style="grid-column: 1 / 5; text-align: center; align-items: center;">
+                    <i class="fas fa-crown card-icon" style="font-size: 4rem;"></i>
+                    <h1>ARE YOU READY?</h1>
+                    <p style="max-width: 600px;">이제 당신의 사악한 천재성을 발휘할 시간입니다. 마왕님의 던전을 구할 최고의 기획을 시작하십시오!</p>
+                    <a href="monster_startup.html" class="play-btn" style="margin-top: 40px; padding: 20px 60px; font-size: 1rem; text-decoration: none; color: #fff;">GO TO MISSION</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="controls">
+        <button class="ctrl-btn" onclick="moveSlide(-1)"><i class="fas fa-chevron-left"></i></button>
+        <button class="ctrl-btn" onclick="moveSlide(1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        const slider = document.getElementById('slider');
+        const progress = document.getElementById('progress');
+
+        function moveSlide(dir) {
+            currentSlide = (currentSlide + dir + totalSlides) % totalSlides;
+            updateUI();
+        }
+
+        function updateUI() {
+            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+            progress.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') moveSlide(1);
+            if (e.key === 'ArrowLeft') moveSlide(-1);
+        });
+
+        // Touch support
+        let startX = 0;
+        document.addEventListener('touchstart', (e) => startX = e.touches[0].clientX);
+        document.addEventListener('touchend', (e) => {
+            let diff = startX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) moveSlide(diff > 0 ? 1 : -1);
+        });
+
+        // Initial UI
+        updateUI();
+    </script>
+</body>
+</html>

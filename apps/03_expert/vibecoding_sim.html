@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI 실전 시뮬레이터 — 밤샘 개발 실화</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 :root {
   --bg: #0a0a12;
@@ -223,6 +224,49 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);heigh
 /* confetti */
 .confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;animation:confettiFall 2s ease-in forwards;pointer-events:none;z-index:9999;top:-10px}
 @keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+/* ── MOBILE RESPONSIVE ── */
+.mobile-tabs { display: none; }
+
+@media (max-width: 768px) {
+  body { height: 100vh; position: fixed; width: 100%; }
+  .vcep-nav { padding: 0.5rem 1rem; }
+  .nav-links { display: none; } /* Hide desktop links on mobile sim */
+  
+  .topbar { padding: 0 10px; gap: 5px; height: 44px; justify-content: space-between; }
+  .tb-title, .tb-deadline, .step-bar { display: none; }
+  .tb-clock { font-size: 11px; min-width: 50px; }
+  .aiden-mood { display: none; }
+  
+  .main { position: relative; }
+  .col-story, .col-editor, .col-preview { 
+    position: absolute; inset: 0; width: 100%; min-width: 100%; 
+    height: calc(100% - 50px); display: none; 
+  }
+  .main.show-chat .col-story { display: flex; z-index: 10; }
+  .main.show-code .col-editor { display: flex; z-index: 10; }
+  .main.show-app .col-preview { display: flex; z-index: 10; }
+
+  .mobile-tabs { 
+    display: flex; position: absolute; bottom: 0; left: 0; right: 0; 
+    height: 50px; background: #0d0d1a; border-top: 1px solid var(--border); 
+    z-index: 100;
+  }
+  .m-tab { 
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+    font-size: 10px; font-weight: 700; color: var(--muted); cursor: pointer; gap: 2px;
+  }
+  .m-tab i { font-size: 16px; }
+  .m-tab.active { color: var(--accent); background: rgba(79,195,247,0.05); }
+
+  /* Adjust terminal for mobile code tab */
+  .terminal { height: 150px; font-size: 11px; }
+  .col-preview { width: 100%; min-width: 100%; }
+  .pomo { width: 240px; transform: scale(0.9); }
+  .learn-card { padding: 20px; width: 95%; }
+  .lc-title { font-size: 1.2rem; }
+  .lc-tip .tip-desc { font-size: 12px; }
+}
 </style>
 <style>
     /* GNB Standard Style */
@@ -270,6 +314,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);heigh
 <div class="topbar">
   <div class="tb-clock" id="tb-clock">PM 9:14</div>
   <div class="tb-title">🏢 스타트업 사무실 · 야근 중</div>
+  <button onclick="location.href='vibecoding_sim_guide.html'" style="background:rgba(79,195,247,0.1); border:1px solid var(--accent); color:var(--accent); padding:2px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:700;">GUIDE SLIDE</button>
   <div class="tb-deadline" id="tb-deadline">⏰ 데드라인까지 13:00:00</div>
   <div class="step-bar" id="step-bar"></div>
   <div class="aiden-state">
@@ -363,6 +408,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);heigh
     <div class="terminal" id="terminal">
       <div class="tl" style="color:#1e2530">[터미널] 대기 중...</div>
     </div>
+  </div>
+  <!-- MOBILE TABS -->
+  <div class="mobile-tabs">
+    <div class="m-tab active" onclick="switchMobileTab('chat')"><i class="fas fa-comments"></i>채팅</div>
+    <div class="m-tab" onclick="switchMobileTab('code')"><i class="fas fa-code"></i>코드</div>
+    <div class="m-tab" onclick="switchMobileTab('app')"><i class="fas fa-play-circle"></i>앱</div>
   </div>
 </div>
 
@@ -1220,6 +1271,22 @@ async function onUp(){
   S.errFixed++;
   await addMsg('캡처로 딱 보여요! 😮 원형이 박스 밖으로 완전히 삐져나왔네요. 바로 수정할게요!','ai');
   fixCss();
+}
+
+/* ═══════ MOBILE TAB SYSTEM ═══════ */
+function switchMobileTab(tab) {
+  const main = document.querySelector('.main');
+  main.classList.remove('show-chat', 'show-code', 'show-app');
+  main.classList.add('show-' + tab);
+  
+  document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
+  const activeTab = document.querySelector(`.m-tab[onclick*="${tab}"]`);
+  if (activeTab) activeTab.classList.add('active');
+}
+
+// Initial Mobile State
+if (window.innerWidth <= 768) {
+  document.querySelector('.main').classList.add('show-chat');
 }
 
 /* ═══════ INIT ═══════ */

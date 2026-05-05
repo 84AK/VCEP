@@ -305,6 +305,61 @@
             color: #cbd5e1;
             border-color: rgba(148, 163, 184, 0.3);
         }
+
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            body { overflow: auto; height: auto; min-height: 100vh; }
+            
+            #char-box { height: 60vh; top: 0; bottom: auto; }
+            #main-char { height: 100%; }
+
+            #dialogue-box {
+                left: 50% !important;
+                width: 92% !important;
+                bottom: 20px;
+                padding: 20px;
+                font-size: 1rem;
+                max-width: none;
+            }
+            #dialogue-box.with-panel { bottom: 65vh; } /* 액션 패널이 있을 때 위로 이동 */
+
+            #action-panel {
+                position: fixed;
+                top: auto;
+                bottom: 0;
+                right: 0;
+                width: 100%;
+                max-height: 60vh;
+                border-radius: 32px 32px 0 0;
+                padding: 24px;
+                z-index: 200;
+                border-top: 1px solid var(--glass-border);
+            }
+
+            .affection-bar { width: 90%; max-width: 320px; top: 15px; }
+            
+            #intro-screen h1 { font-size: 3.5rem; }
+            #intro-screen p { font-size: 1rem; }
+            
+            #char-select-modal .grid { grid-template-columns: 1fr; gap: 20px; }
+            #char-select-modal .glass-panel { padding: 20px; }
+            
+            #choice-container { padding: 20px; }
+            #scenario-area { flex-direction: column; gap: 20px; }
+            #scenario-area .w-1\/2 { width: 100%; }
+            #scenario-text { font-size: 1.5rem; text-align: center; }
+
+            #ending-screen { padding: 20px; }
+            #ending-screen h1 { font-size: 3.5rem; }
+            #ending-screen .grid { grid-template-columns: 1fr; }
+            
+            input, textarea, select { padding: 12px 20px !important; font-size: 0.9rem; }
+            .btn-primary { padding: 12px; font-size: 1rem; }
+            
+            #choices-list button { padding: 16px 20px; font-size: 1rem; }
+
+            #bgm-control { top: 15px; right: 15px; width: 40px; height: 40px; }
+        }
     </style>
 </head>
 <body>
@@ -346,7 +401,10 @@
         <div class="max-w-2xl text-center">
             <h1 class="text-7xl font-black mb-6 tracking-tighter bg-gradient-to-r from-indigo-400 to-rose-400 bg-clip-text text-transparent">MELT HER HEART</h1>
             <p class="text-slate-400 text-lg mb-12 leading-relaxed">AI의 차가운 논리를 넘어서, 당신만의 프롬프트로 진심을 전달하세요. 4단계의 프롬프트 엔지니어링 미션을 완수하고 해피엔딩을 맞이할 수 있을까요?</p>
-            <button onclick="showCharSelect()" class="btn-primary px-12 py-5 text-xl">START SIMULATION</button>
+            <div class="flex gap-4 justify-center">
+                <button onclick="showCharSelect()" class="btn-primary px-12 py-5 text-xl">START SIMULATION</button>
+                <button onclick="location.href='prompt_practice_guide.html'" class="px-12 py-5 text-xl glass-panel font-black hover:bg-white/10 transition-all">VIEW GUIDE</button>
+            </div>
         </div>
     </div>
 
@@ -615,6 +673,7 @@
             document.getElementById('char-box').classList.remove('hidden-stage');
             document.getElementById('dialogue-box').classList.remove('hidden-stage');
             document.getElementById('dialogue-box').classList.remove('centered');
+            document.getElementById('dialogue-box').classList.add('with-panel');
             document.getElementById('action-panel').classList.remove('hidden-stage');
             
             const introLines = gameState.partner === 'iris' ? 

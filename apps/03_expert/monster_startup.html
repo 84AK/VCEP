@@ -252,6 +252,7 @@
                 <a href="vibecoding.html" class="nav-link">시뮬레이션</a>
                 <a href="../04_gas_crud/gas_hub.html" class="nav-link">GAS</a>
                 <a href="../app_planner.html" class="nav-link">앱 플래너</a>
+                <a href="monster_startup_guide.html" class="nav-link" style="color:var(--monster-green);">게임 가이드</a>
                 <a href="../tutorial_hub.html" class="nav-link">학습 가이드</a>
             </div>
             <button class="sound-toggle" onclick="event.stopPropagation(); toggleBGM()" id="sound-btn">
@@ -288,7 +289,10 @@
             <div class="pixel-border bento-card">
                 <label>SQUAD NAME</label>
                 <input type="text" id="team-name" placeholder="부대 이름 입력...">
-                <button class="btn-start" onclick="startMission()">MISSION START!</button>
+                <div style="display:flex; gap:15px;">
+                    <button class="btn-start" style="flex:1;" onclick="startMission()">MISSION START!</button>
+                    <button class="btn-start" style="flex:1; background:var(--monster-purple);" onclick="location.href='monster_startup_guide.html'">GUIDE SLIDE</button>
+                </div>
             </div>
         </div>
     </div>
@@ -354,7 +358,7 @@
                 preImage: 'assets/bankrupt_dungeon_pixel_1777947106918.png',
                 postStory: ["좋아, 위기 상황이 공유되었군. 마왕님께서 분노로 번개를 내리치기 시작하셨네.", "이제 이 난관을 극복할 앱의 컨셉을 잡아야 할 때일세."],
                 postImage: 'assets/angry_overlord_pixel_1777947150969.png',
-                options: ["용사들의 유튜브 공략 유출로 인한 함정 무력화", "부하 몬스터들의 과도한 복지 요구와 태업 발생", "던전 내부 보물 도난으로 인한 파산 위기", "마왕군의 디지털 전환(DX) 실패로 인한 구식 관리 시스템"],
+                options: ["용사들의 유튜브 공략 유출로 인한 함정 무력화", "부하 몬스터들의 기강 해이와 통제 불능 상태 발생", "던전 내부 보물 도난으로 인한 파산 위기", "마왕군의 디지털 전환(DX) 실패로 인한 구식 관리 시스템"],
                 lesson: '문제 정의는 기획의 80%일세. 해결해야 할 "불편함"이 명확해야 앱의 가치가 빛나는 법이지.'
             },
             { 
@@ -421,7 +425,7 @@
             introSequence: [
                 { text: "서기 666년... 던전 산업은 유례없는 대공황에 직면했다.", img: 'assets/bankrupt_dungeon_pixel_1777947106918.png' },
                 { text: "용사들은 유튜브 공략을 보며 우리 집을 안방처럼 드나들고 있지.", img: 'assets/hero_knight_pixel_1777947119473.png' },
-                { text: "부하 몬스터들은 태업을 벌이고, 마왕님은 번개를 내리치신다!", img: 'assets/angry_overlord_pixel_1777947150969.png' },
+                { text: "부하 몬스터들은 사기를 잃고 흩어지는데, 마왕님은 번개를 내리치신다!", img: 'assets/angry_overlord_pixel_1777947150969.png' },
                 { text: "이대로는 안 된다. 우리에겐 혁신적인 '디지털 전환'이 필요하다.", img: 'assets/cool_architect_pixel_1777947168739.png' },
                 { text: "사악한 천재 기획팀이여, 당신들의 손으로 '스마트 던전' 앱을 탄생시켜라!", img: 'assets/cool_architect_pixel_1777947168739.png' }
             ]

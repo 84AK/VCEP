@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 실전 시뮬레이터 가이드: VibeCoding Troubleshooting</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="AI 인턴 에이든과 함께하는 실전 앱 개발 시뮬레이션 가이드. UI 깨짐과 JS 에러를 해결하는 트러블슈팅 체험.">
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --surface: #12121e;
+            --card: #1a1a2e;
+            --border: #2a2a40;
+            --accent: #4fc3f7;
+            --green: #69db7c;
+            --red: #ff6b6b;
+            --yellow: #ffd43b;
+            --purple: #9775fa;
+            --glass: rgba(18, 18, 30, 0.7);
+            --font-main: 'Inter', sans-serif;
+            --font-code: 'Fira Code', monospace;
+            --font-title: 'Outfit', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: var(--bg);
+            color: #fff;
+            font-family: var(--font-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Tech Background */
+        .bg-glow {
+            position: fixed; inset: 0;
+            background: radial-gradient(circle at 80% 20%, rgba(79, 195, 247, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 20% 80%, rgba(151, 117, 250, 0.05) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 40px; z-index: 1000;
+            background: rgba(10, 10, 18, 0.9); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+        .logo { font-family: var(--font-title); font-weight: 800; font-size: 1.2rem; color: var(--accent); text-decoration: none; }
+        .nav-btns { display: flex; gap: 20px; }
+        .nav-btn { color: #888; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; }
+        .nav-btn:hover { color: #fff; }
+        .play-btn { background: var(--accent); color: #000; padding: 6px 16px; border-radius: 6px; font-weight: 800; }
+
+        /* Slide System */
+        .slider-container {
+            width: 100%; height: 100vh;
+            display: flex; transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .slide {
+            min-width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            padding: 80px 40px 40px;
+        }
+
+        /* Bento Grid */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 20px;
+            width: 100%; max-width: 1300px; height: 100%; max-height: 850px;
+        }
+
+        .bento-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 35px;
+            display: flex; flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            transition: 0.3s;
+            position: relative;
+        }
+        .bento-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        
+        .card-label { font-size: 0.75rem; font-weight: 800; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+        .card-title { font-family: var(--font-title); font-size: 1.6rem; font-weight: 800; margin-bottom: 20px; color: #fff; }
+        .card-text { font-size: 1.15rem; line-height: 1.7; color: #b0b0c0; }
+        .card-icon { font-size: 3rem; color: var(--accent); margin-bottom: 25px; }
+
+        /* Special Highlights */
+        .code-box { background: #08080c; border-radius: 12px; padding: 20px; font-family: var(--font-code); font-size: 0.95rem; color: var(--green); border-left: 4px solid var(--accent); margin-top: 20px; }
+        .highlight-text { color: var(--yellow); font-weight: 700; }
+
+        /* Slide Specifics */
+        .intro-hero { grid-column: 1 / 4; grid-row: 1 / 4; justify-content: center; background: linear-gradient(135deg, #1a1a2e, #12121e); }
+        .intro-hero h1 { font-family: var(--font-title); font-size: 4rem; font-weight: 900; line-height: 1.1; margin-bottom: 25px; color: #fff; }
+        .intro-aiden { grid-column: 4 / 5; grid-row: 1 / 5; align-items: center; justify-content: center; background: radial-gradient(circle, var(--accent) -100%, var(--card) 100%); }
+        .intro-aiden .robot { font-size: 8rem; animation: float 3s ease-in-out infinite; }
+        
+        .quest-main { grid-column: 1 / 3; grid-row: 1 / 5; }
+        .quest-sub-1 { grid-column: 3 / 5; grid-row: 1 / 3; }
+        .quest-sub-2 { grid-column: 3 / 5; grid-row: 3 / 5; }
+
+        /* Controls */
+        .controls {
+            position: fixed; bottom: 40px; right: 40px;
+            display: flex; gap: 15px; z-index: 1000;
+        }
+        .ctrl-btn {
+            width: 55px; height: 55px; border-radius: 15px;
+            background: var(--surface); border: 1px solid var(--border);
+            color: #fff; font-size: 1.2rem; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .ctrl-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+        .progress-bar {
+            position: fixed; bottom: 0; left: 0; height: 4px;
+            background: var(--accent); width: 0%; transition: 0.3s; z-index: 1001;
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        @media (max-width: 1024px) {
+            .bento-grid { grid-template-columns: 1fr; grid-template-rows: auto; overflow-y: auto; display: block; }
+            .bento-card { margin-bottom: 20px; }
+            .intro-hero h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+
+    <nav>
+        <a href="../../index.html" class="logo">VCEP. EXPERT SIM</a>
+        <div class="nav-btns">
+            <a href="vibecoding_sim.html" class="nav-btn">SIMULATOR</a>
+            <a href="vibecoding_sim.html" class="nav-btn play-btn">PLAY SIM</a>
+        </div>
+    </nav>
+
+    <div class="progress-bar" id="progress"></div>
+
+    <div class="slider-container" id="slider">
+        <!-- Slide 1: Intro -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card intro-hero">
+                    <div class="card-label">SIMULATION ORIENTATION</div>
+                    <h1>AI 실전<br>시뮬레이터</h1>
+                    <div class="card-text">AI 인턴 '에이든'과 함께 밤샘 개발 현장에 뛰어드세요. 실무에서 발생하는 트러블슈팅의 전 과정을 체험합니다.</div>
+                </div>
+                <div class="bento-card intro-aiden">
+                    <div class="robot">🤖</div>
+                    <div style="font-family: var(--font-title); font-weight: 800; margin-top: 20px; color: var(--accent);">AIDEN INTERN</div>
+                </div>
+                <div class="bento-card" style="grid-column: 1 / 4; grid-row: 4 / 5; display: flex; flex-direction: row; align-items: center; gap: 30px; padding: 0 40px;">
+                    <div style="text-align: center;"><span style="display: block; font-size: 2rem; font-weight: 900; color: var(--accent);">01</span><span style="font-size: 0.8rem; color: #888;">NIGHT SHIFT</span></div>
+                    <div style="text-align: center;"><span style="display: block; font-size: 2rem; font-weight: 900; color: var(--purple);">02</span><span style="font-size: 0.8rem; color: #888;">REAL BUGS</span></div>
+                    <div style="text-align: center;"><span style="display: block; font-size: 2rem; font-weight: 900; color: var(--green);">01</span><span style="font-size: 0.8rem; color: #888;">PRODUCT</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 2: Development Scenario -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card" style="grid-column: 1 / 3; grid-row: 1 / 3;">
+                    <i class="fas fa-business-time card-icon"></i>
+                    <div class="card-label">SCENARIO</div>
+                    <div class="card-title">밤샘 개발 미션</div>
+                    <div class="card-text">"내일 오전 10시 데모!" <br>김팀장의 갑작스러운 요청으로 시작된 포모도로 앱 개발. 에이든이 초안을 짜지만, 실무는 언제나 변수가 가득합니다.</div>
+                </div>
+                <div class="bento-card" style="grid-column: 3 / 5; grid-row: 1 / 3;">
+                    <i class="fas fa-laptop-code card-icon" style="color: var(--purple);"></i>
+                    <div class="card-label">WORKSPACE</div>
+                    <div class="card-title">인터페이스 활용</div>
+                    <div class="card-text">
+                        • <strong>채팅:</strong> 에이든에게 지시 전달<br>
+                        • <strong>에디터:</strong> 실시간 코드 생성 확인<br>
+                        • <strong>터미널:</strong> 시스템 로그 및 에러 분석
+                    </div>
+                </div>
+                <div class="bento-card" style="grid-column: 1 / 5; grid-row: 3 / 5; background: rgba(79, 195, 247, 0.05);">
+                    <div class="card-label">MISSION FLOW</div>
+                    <div class="card-text" style="display: flex; justify-content: space-around; align-items: center; height: 100%; text-align: center;">
+                        <div><i class="fas fa-file-alt"></i><br>기획 및 지시</div>
+                        <i class="fas fa-chevron-right" style="opacity: 0.3;"></i>
+                        <div><i class="fas fa-tools"></i><br>UI/UX 디버깅</div>
+                        <i class="fas fa-chevron-right" style="opacity: 0.3;"></i>
+                        <div><i class="fas fa-bug"></i><br>JS 로직 수정</div>
+                        <i class="fas fa-chevron-right" style="opacity: 0.3;"></i>
+                        <div><i class="fas fa-check-circle"></i><br>앱 납품 완료</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: UI Troubleshooting -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card quest-main">
+                    <i class="fas fa-eye card-icon" style="color: var(--red);"></i>
+                    <div class="card-label">SIMULATION 01</div>
+                    <div class="card-title">화면이 깨졌을 때<br>(UI 디버깅)</div>
+                    <div class="card-text">
+                        에이든이 만든 원형 타이머가 사각형으로 나오거나 위치가 어긋납니다. AI는 화면을 직접 보지 못하므로 <span class="highlight-text">시각적 컨텍스트</span>를 주어야 합니다.
+                    </div>
+                    <div class="code-box">
+                        💬 "오른쪽 하단이 찌그러졌어. 캡처 보냈으니 확인해봐."
+                    </div>
+                </div>
+                <div class="bento-card quest-sub-1">
+                    <div class="card-label">TOOL: CAPTURE</div>
+                    <div class="card-title">캡처 도구 활용</div>
+                    <div class="card-text">프리뷰 화면에서 문제가 되는 부위를 드래그하여 에이든에게 직접 보여주세요. 백 마디 말보다 한 번의 캡처가 정확합니다.</div>
+                </div>
+                <div class="bento-card quest-sub-2">
+                    <div class="card-label">LESSON</div>
+                    <div class="card-title">시각적 컨텍스트</div>
+                    <div class="card-text">AI에게 "어디가", "어떻게" 깨졌는지 정확한 위치와 현상을 짚어주는 것이 바이브코딩의 핵심입니다.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: Logic Troubleshooting -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card quest-main">
+                    <i class="fas fa-microchip card-icon" style="color: var(--yellow);"></i>
+                    <div class="card-label">SIMULATION 02</div>
+                    <div class="card-title">기능이 오작동할 때<br>(JS 디버깅)</div>
+                    <div class="card-text">
+                        타이머가 멈추지 않거나 속도가 점점 빨라집니다. 이는 <span class="highlight-text">논리적 충돌</span> 때문입니다. 터미널 로그를 통해 원인을 파악해야 합니다.
+                    </div>
+                    <div class="code-box">
+                        > Interval ID: 124... <br>
+                        > Interval ID: 125 (Duplicated!)
+                    </div>
+                </div>
+                <div class="bento-card quest-sub-1">
+                    <div class="card-label">TOOL: TERMINAL</div>
+                    <div class="card-title">로그 분석</div>
+                    <div class="card-text">터미널에 출력되는 로그를 에이든에게 전달하세요. 중복 실행되는 타이머를 끄라고 지시하는 능력이 필요합니다.</div>
+                </div>
+                <div class="bento-card quest-sub-2">
+                    <div class="card-label">LESSON</div>
+                    <div class="card-title">논리적 피드백</div>
+                    <div class="card-text">"작동이 안 돼"가 아니라 "이전 타이머를 종료(Clear)하는 로직을 추가해"라고 논리적으로 지시하세요.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: VibeCoding Strategy -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card" style="grid-column: 1 / 3; grid-row: 1 / 5;">
+                    <i class="fas fa-comments card-icon" style="color: var(--green);"></i>
+                    <div class="card-label">STRATEGY</div>
+                    <div class="card-title">AI 협업의 기술</div>
+                    <div class="card-text">
+                        이 시뮬레이션의 목표는 코드를 직접 짜는 것이 아니라, AI가 코딩을 잘하도록 <strong>방향을 잡는 시니어의 감각</strong>을 익히는 것입니다.
+                        <br><br>
+                        1. 구체적인 피드백<br>
+                        2. 시각적/논리적 근거 제시<br>
+                        3. AI 인턴의 상태 체크
+                    </div>
+                </div>
+                <div class="bento-card" style="grid-column: 3 / 5; grid-row: 1 / 3;">
+                    <div class="card-label">AIDEN'S MENTAL</div>
+                    <div class="card-title">에이든의 멘탈 관리</div>
+                    <div class="card-text">반복된 실패나 무리한 지시는 에이든을 패닉에 빠뜨릴 수 있습니다. 정확한 지시로 에이든의 '인내심'을 지켜주세요.</div>
+                </div>
+                <div class="bento-card" style="grid-column: 3 / 5; grid-row: 3 / 5; border-color: var(--yellow);">
+                    <div class="card-label">HINT SYSTEM</div>
+                    <div class="card-title">💡 힌트 활용</div>
+                    <div class="card-text">막힐 때는 하단의 힌트 버튼을 누르세요. 바이브코딩 시니어 개발자의 조언이 담겨 있습니다.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: Achievement -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card intro-hero" style="grid-column: 1 / 5; text-align: center; align-items: center;">
+                    <i class="fas fa-trophy card-icon" style="font-size: 5rem; color: var(--yellow);"></i>
+                    <h1>밤샘의 결실</h1>
+                    <p style="max-width: 700px;">모든 버그를 잡고 앱을 완성하면 협업 점수와 성취도를 확인할 수 있습니다. 당신은 어떤 시니어 개발자인가요?</p>
+                    <div style="margin-top: 40px; display: flex; gap: 20px;">
+                        <span class="play-btn" style="background: rgba(105, 219, 124, 0.2); color: var(--green); border: 1px solid var(--green);">UI 해결사</span>
+                        <span class="play-btn" style="background: rgba(151, 117, 250, 0.2); color: var(--purple); border: 1px solid var(--purple);">로직 마스터</span>
+                        <span class="play-btn" style="background: rgba(79, 195, 247, 0.2); color: var(--accent); border: 1px solid var(--accent);">협업 천재</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Ready to Play -->
+        <section class="slide">
+            <div class="bento-grid">
+                <div class="bento-card intro-hero" style="grid-column: 1 / 5; text-align: center; align-items: center; border: 2px solid var(--accent);">
+                    <div class="card-label">FINAL STEP</div>
+                    <h1>지금 시뮬레이션을<br>시작하세요</h1>
+                    <p style="margin-top: 20px; color: #888;">AI와 함께 앱을 완성하는 진짜 짜릿함을 경험해 보세요.</p>
+                    <a href="vibecoding_sim.html" class="play-btn" style="margin-top: 40px; padding: 20px 60px; font-size: 1.2rem; text-decoration: none;">START SIMULATION</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="controls">
+        <button class="ctrl-btn" onclick="moveSlide(-1)"><i class="fas fa-chevron-left"></i></button>
+        <button class="ctrl-btn" onclick="moveSlide(1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        const slider = document.getElementById('slider');
+        const progress = document.getElementById('progress');
+
+        function moveSlide(dir) {
+            currentSlide = (currentSlide + dir + totalSlides) % totalSlides;
+            updateUI();
+        }
+
+        function updateUI() {
+            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+            progress.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') moveSlide(1);
+            if (e.key === 'ArrowLeft') moveSlide(-1);
+        });
+
+        let startX = 0;
+        document.addEventListener('touchstart', (e) => startX = e.touches[0].clientX);
+        document.addEventListener('touchend', (e) => {
+            let diff = startX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) moveSlide(diff > 0 ? 1 : -1);
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>
