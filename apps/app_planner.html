@@ -25,7 +25,49 @@
             --step3: #e8442a;
             --step4: #1a9e6e;
             --step5: #e87d2d;
+            --nav-bg: rgba(255, 255, 255, 0.85);
         }
+
+        /* Navbar Styles */
+        nav {
+            background: var(--nav-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .nav-left { display: flex; align-items: center; gap: 0.8rem; }
+        .sheet-title { font-weight: 700; font-size: 1rem; color: var(--text); white-space: nowrap; font-family: 'Gmarket Sans', sans-serif; }
+        
+        .nav-links { display: none !important; }
+        @media (min-width: 1024px) {
+            .nav-links { display: flex !important; gap: 2rem; align-items: center; }
+        }
+        
+        .nav-link { text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
+        .nav-link:hover { color: var(--accent); }
+        .nav-link.active { color: var(--accent); font-weight: 700; }
+        .nav-btn { background: var(--accent); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.85rem; transition: 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+        .nav-btn:hover { background: var(--step1); }
+
+        /* Mobile Menu */
+        #mobile-menu {
+            display: none;
+            position: fixed; top: 60px; left: 0; right: 0; bottom: 0;
+            background: white; z-index: 999;
+            flex-direction: column; align-items: center; justify-content: center;
+            gap: 2rem; padding: 2rem;
+        }
+        #mobile-menu.active { display: flex; }
+        .menu-toggle { display: block; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; padding: 10px; border: none; background: none; outline: none; }
+        @media (min-width: 1024px) { .menu-toggle { display: none !important; } }
 
         * {
             margin: 0;
@@ -53,7 +95,7 @@
         .wrap {
             max-width: 780px;
             margin: 0 auto;
-            padding: 48px 24px 120px;
+            padding: 100px 24px 120px;
             position: relative;
             z-index: 1;
         }
@@ -859,18 +901,30 @@
     </style>
 </head>
 <body>
-    <nav style="background: white; border-bottom: 1px solid #E0E0E0; padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: none;">
-        <div class="nav-left" style="display: flex; align-items: center; gap: 0.8rem;">
-            <span class="sheet-title" style="font-weight: 700; font-size: 1.1rem; color: #3C4043; font-family: sans-serif;">바이브코딩 시뮬레이션</span>
+    <nav>
+        <div class="nav-left">
+            <span class="sheet-title">AI 앱 플래너</span>
         </div>
-        <div class="nav-links" style="display: flex; gap: 2rem; align-items: center;">
-            <a href="../index.html" class="nav-link" style="text-decoration: none; color: #5F6368; font-weight: 500; font-size: 0.9rem; transition: 0.2s; font-family: sans-serif;">홈</a>
-            <a href="03_expert/vibecoding.html" class="nav-link" style="text-decoration: none; color: #5F6368; font-weight: 500; font-size: 0.9rem; transition: 0.2s; font-family: sans-serif;">시뮬레이션</a>
-            <a href="04_gas_crud/gas_hub.html" class="nav-link" style="text-decoration: none; color: #5F6368; font-weight: 500; font-size: 0.9rem; transition: 0.2s; font-family: sans-serif;">GAS</a>
-            <a href="app_planner.html" class="nav-link active" style="text-decoration: none; color: #0F9D58; font-weight: 700; font-size: 0.9rem; transition: 0.2s; font-family: sans-serif;">앱 플래너</a>
-            <a href="tutorial_hub.html" class="nav-btn" style="background: #0F9D58; color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.85rem; transition: 0.2s; font-family: sans-serif; display: flex; align-items: center; gap: 0.5rem;">학습 가이드 <i class="fas fa-graduation-cap"></i></a>
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link">홈</a>
+            <a href="03_expert/vibecoding.html" class="nav-link">시뮬레이션</a>
+            <a href="04_gas_crud/gas_hub.html" class="nav-link">GAS</a>
+            <a href="app_planner.html" class="nav-link active">앱 플래너</a>
+            <a href="tutorial_hub.html" class="nav-btn">학습 가이드 <i class="fas fa-graduation-cap"></i></a>
         </div>
+        <button class="menu-toggle" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
     </nav>
+
+    <!-- Mobile Nav Menu -->
+    <div id="mobile-menu">
+        <a href="../index.html" class="nav-link text-xl">홈</a>
+        <a href="03_expert/vibecoding.html" class="nav-link text-xl">시뮬레이션</a>
+        <a href="04_gas_crud/gas_hub.html" class="nav-link text-xl">GAS</a>
+        <a href="app_planner.html" class="nav-link active text-xl">앱 플래너</a>
+        <a href="tutorial_hub.html" class="nav-btn text-xl">학습 가이드 <i class="fas fa-graduation-cap"></i></a>
+    </div>
     <div class="wrap" style="padding-top: 80px;">
 
         <!-- HEADER -->
@@ -1728,6 +1782,11 @@ ${screenInfo}
         function resetAll() {
             if (!confirm('처음부터 다시 시작할까요? 입력한 내용이 모두 지워져요.')) return;
             location.reload();
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('active');
         }
     </script>
 </body>
