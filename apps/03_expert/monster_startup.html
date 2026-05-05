@@ -25,27 +25,51 @@
             background: var(--bg-dark);
             color: var(--text-main);
             font-family: var(--font-pixel);
-            overflow: hidden;
-            height: 100vh;
+            overflow-x: hidden;
+            min-height: 100vh;
             width: 100vw;
             line-height: 1.6;
-            font-size: 18px;
+            font-size: 16px;
             padding-top: 80px;
         }
 
         nav {
             background: #000;
-            height: 80px;
+            min-height: 80px;
             display: flex; justify-content: space-between; align-items: center;
             position: fixed; top: 0; left: 0; right: 0; z-index: 110000;
             border-bottom: 4px solid var(--monster-purple);
-            padding: 0 40px;
+            padding: 10px 40px;
         }
-        .nav-left .sheet-title { color: var(--monster-green); font-size: 1.2rem; }
-        .nav-right { display: flex; align-items: center; gap: 25px; }
-        .nav-links { display: flex; gap: 25px; }
-        .nav-link { color: #888; text-decoration: none; font-size: 0.8rem; }
+        .nav-left .sheet-title { color: var(--monster-green); font-size: 1rem; }
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+        
+        .nav-links { 
+            display: none; 
+            position: fixed; top: 80px; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            flex-direction: column; align-items: center; justify-content: center;
+            gap: 30px; z-index: 109999; padding: 40px;
+        }
+        .nav-links.active { display: flex; }
+        
+        @media (min-width: 1024px) {
+            .nav-links { 
+                display: flex; position: static; background: none; 
+                flex-direction: row; padding: 0; gap: 25px; 
+            }
+        }
+
+        .nav-link { color: #888; text-decoration: none; font-size: 1rem; transition: color 0.2s; }
+        @media (min-width: 1024px) { .nav-link { font-size: 0.75rem; } }
         .nav-link:hover, .nav-link.active { color: var(--monster-red); }
+        
+        .menu-toggle { 
+            display: block; color: var(--monster-green); font-size: 1.5rem; 
+            background: none; border: none; cursor: pointer; outline: none;
+        }
+        @media (min-width: 1024px) { .menu-toggle { display: none; } }
+
         .sound-toggle { color: var(--monster-green); cursor: pointer; font-size: 1.2rem; background: none; border: none; outline: none; }
 
         .pixel-border {
@@ -57,17 +81,18 @@
         /* Modal Popup - Top Priority */
         #modal-wrap {
             position: fixed; inset: 0; z-index: 2000000; background: rgba(0,0,0,0.9);
-            display: none; align-items: center; justify-content: center;
+            display: none; align-items: center; justify-content: center; padding: 20px;
         }
         .modal-box { 
-            width: 90%; max-width: 600px; padding: 40px; border: 8px solid var(--monster-green); 
+            width: 100%; max-width: 600px; padding: 30px; border: 6px solid var(--monster-green); 
             background: #000; text-align: center; box-shadow: 0 0 50px rgba(0,255,65,0.3);
         }
-        .modal-text { font-size: 1rem; color: #fff; margin-bottom: 30px; line-height: 1.8; }
-        .modal-btns { display: flex; gap: 20px; }
+        .modal-text { font-size: 0.8rem; color: #fff; margin-bottom: 30px; line-height: 1.8; }
+        .modal-btns { display: flex; gap: 15px; flex-direction: column; }
+        @media (min-width: 480px) { .modal-btns { flex-direction: row; } }
         .btn-modal { 
-            flex: 1; padding: 20px; font-family: var(--font-pixel); cursor: pointer; border: 6px solid #fff;
-            font-size: 0.8rem;
+            flex: 1; padding: 15px; font-family: var(--font-pixel); cursor: pointer; border: 4px solid #fff;
+            font-size: 0.7rem;
         }
         .btn-modal.yes { background: var(--monster-green); color: #000; }
         .btn-modal.no { background: var(--monster-purple); color: #fff; }
@@ -76,66 +101,81 @@
         .overlay-wrap {
             position: fixed; inset: 0; background: #000; z-index: 100000;
             display: none; flex-direction: column; justify-content: center; align-items: center;
-            padding: 40px; text-align: center; cursor: pointer;
-            pointer-events: auto;
+            padding: 20px; text-align: center; cursor: pointer;
         }
-        .overlay-box { width: 100%; max-width: 1100px; padding: 60px; border: 6px solid var(--monster-green); background: #000; }
-        .overlay-text { font-size: 1.2rem; color: #fff; margin-bottom: 40px; line-height: 2.2; min-height: 180px; display: flex; align-items: center; justify-content: center; text-align: left; }
-        .click-hint { font-size: 0.8rem; color: var(--monster-green); animation: blink 1s infinite; }
+        .overlay-box { width: 100%; max-width: 1000px; padding: 30px; border: 6px solid var(--monster-green); background: #000; }
+        .overlay-text { font-size: 0.9rem; color: #fff; margin-bottom: 25px; line-height: 1.8; min-height: 120px; display: flex; align-items: center; justify-content: center; text-align: left; }
+        @media (min-width: 768px) {
+            .overlay-box { padding: 60px; }
+            .overlay-text { font-size: 1.2rem; min-height: 180px; }
+        }
+        .click-hint { font-size: 0.7rem; color: var(--monster-green); animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
         /* Setup */
         #setup-wrap {
             position: fixed; inset: 0; top: 80px; z-index: 50000;
-            background: var(--bg-dark); padding: 40px; overflow-y: auto;
+            background: var(--bg-dark); padding: 20px; overflow-y: auto;
             display: none; flex-direction: column; align-items: center; justify-content: center;
         }
-        .setup-inner { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 40px; z-index: 10; }
+        .setup-inner { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 30px; z-index: 10; }
         .setup-header { text-align: center; }
-        .setup-header h1 { font-size: 3.5rem; color: var(--monster-red); text-shadow: 6px 6px #000; margin-bottom: 20px; animation: titlePulse 2s ease-in-out infinite; }
-        .bento-card { padding: 45px; border: 8px solid #fff; background: #111; }
+        .setup-header h1 { font-size: 1.8rem; color: var(--monster-red); text-shadow: 4px 4px #000; margin-bottom: 15px; animation: titlePulse 2s ease-in-out infinite; }
+        @media (min-width: 768px) { .setup-header h1 { font-size: 3.5rem; } }
+        .bento-card { padding: 25px; border: 6px solid #fff; background: #111; }
         input { 
-            width: 100%; background: #000; border: 4px solid #444; padding: 20px; 
-            color: #fff; font-family: var(--font-pixel); font-size: 1rem; outline: none; margin-bottom: 40px;
+            width: 100%; background: #000; border: 4px solid #444; padding: 15px; 
+            color: #fff; font-family: var(--font-pixel); font-size: 0.8rem; outline: none; margin-bottom: 30px;
         }
-        .btn-start { width: 100%; padding: 30px; background: var(--monster-red); color: #fff; font-family: var(--font-pixel); border: 8px solid #fff; cursor: pointer; font-size: 1.6rem; }
+        .btn-start { width: 100%; padding: 20px; background: var(--monster-red); color: #fff; font-family: var(--font-pixel); border: 6px solid #fff; cursor: pointer; font-size: 1rem; }
+        @media (min-width: 768px) { .btn-start { font-size: 1.6rem; padding: 30px; } }
 
-        .title-char { position: absolute; z-index: 1; animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        @keyframes titlePulse { 0%, 100% { transform: scale(1); text-shadow: 6px 6px #000; } 50% { transform: scale(1.05); text-shadow: 10px 10px var(--monster-purple); } }
+        .title-char { position: absolute; z-index: 1; animation: float 3s ease-in-out infinite; opacity: 0.3; pointer-events: none; }
+        @media (min-width: 1024px) { .title-char { opacity: 1; } }
         
-        .char-overlord { top: 10%; right: 10%; width: 250px; animation-delay: 0s; }
-        .char-aiden { bottom: 10%; left: 5%; width: 200px; animation-delay: 0.5s; }
-        .char-orc { bottom: 15%; right: 5%; width: 150px; animation-delay: 1s; }
-        .char-skel { top: 15%; left: 10%; width: 150px; animation-delay: 1.5s; }
+        .char-overlord { top: 10%; right: 5%; width: 150px; }
+        .char-aiden { bottom: 10%; left: 2%; width: 120px; }
+        .char-orc { bottom: 15%; right: 2%; width: 100px; }
+        .char-skel { top: 15%; left: 5%; width: 100px; }
+        @media (min-width: 1200px) {
+            .char-overlord { width: 250px; }
+            .char-aiden { width: 200px; }
+            .char-orc { width: 150px; }
+            .char-skel { width: 150px; }
+        }
 
         /* Main Game Layout */
         #main-container {
-            display: none; height: calc(100vh - 80px); padding: 25px;
-            grid-template-columns: 1fr 450px; gap: 25px;
+            display: none; min-height: calc(100vh - 80px); padding: 15px;
+            grid-template-columns: 1fr; gap: 20px;
+        }
+        @media (min-width: 1024px) {
+            #main-container { grid-template-columns: 1fr 400px; height: calc(100vh - 80px); overflow: hidden; }
         }
         #main-container.active { display: grid; }
 
         .workspace { 
             border: 6px solid #fff; background: #000; 
-            padding: 25px; display: flex; flex-direction: column; overflow: hidden; 
+            padding: 15px; display: flex; flex-direction: column; overflow: hidden; 
         }
-        .ws-header { flex-shrink: 0; margin-bottom: 20px; border-bottom: 4px solid #222; padding-bottom: 10px; }
-        .ws-title { font-size: 1.5rem; color: var(--monster-red); }
-        .ws-desc { font-size: 1rem; color: #888; margin-top: 5px; }
+        .ws-header { flex-shrink: 0; margin-bottom: 15px; border-bottom: 4px solid #222; padding-bottom: 10px; }
+        .ws-title { font-size: 1.2rem; color: var(--monster-red); }
+        .ws-desc { font-size: 0.8rem; color: #888; margin-top: 5px; }
         
-        #form-area { flex: 1; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; }
+        #form-area { flex: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 15px; }
         
-        .nav-steps { flex-shrink: 0; display: flex; gap: 10px; margin-bottom: 25px; }
-        .n-step { flex: 1; height: 12px; background: #222; border: 2px solid #444; }
+        .nav-steps { flex-shrink: 0; display: flex; gap: 5px; margin-bottom: 20px; }
+        .n-step { flex: 1; height: 10px; background: #222; border: 2px solid #444; }
         .n-step.active { background: var(--monster-green); }
         .n-step.done { background: var(--monster-red); }
 
-        .sidebar { display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
-        .action-bar { flex-shrink: 0; display: flex; gap: 25px; border-top: 4px solid #222; padding-top: 20px; }
+        .sidebar { display: flex; flex-direction: column; gap: 15px; }
+        @media (min-width: 1024px) { .sidebar { overflow: hidden; } }
+
+        .action-bar { flex-shrink: 0; display: flex; gap: 15px; border-top: 4px solid #222; padding-top: 15px; }
         .btn-game { 
-            flex: 1; padding: 20px; font-family: var(--font-pixel); font-size: 1rem; cursor: pointer;
-            border: 6px solid #fff; box-shadow: 4px 4px 0 0 #000; transition: all 0.1s;
+            flex: 1; padding: 15px; font-family: var(--font-pixel); font-size: 0.8rem; cursor: pointer;
+            border: 4px solid #fff; box-shadow: 2px 2px 0 0 #000; transition: all 0.1s;
         }
         .btn-game.prev { background: var(--monster-purple); color: #fff; }
         .btn-game.next { background: var(--monster-green); color: #000; }
@@ -203,16 +243,23 @@
     </div>
 
     <nav>
-        <div class="nav-left"><span class="sheet-title">바이브코딩 시뮬레이션: 마왕군 스타트업</span></div>
+        <div class="nav-left">
+            <span class="sheet-title">바이브코딩 시뮬레이션: 마왕군 스타트업</span>
+        </div>
         <div class="nav-right">
-            <div class="nav-links">
+            <div class="nav-links" id="nav-links">
                 <a href="../../index.html" class="nav-link">홈</a>
                 <a href="vibecoding.html" class="nav-link">시뮬레이션</a>
                 <a href="../04_gas_crud/gas_hub.html" class="nav-link">GAS</a>
                 <a href="../app_planner.html" class="nav-link">앱 플래너</a>
                 <a href="../tutorial_hub.html" class="nav-link">학습 가이드</a>
             </div>
-            <button class="sound-toggle" onclick="event.stopPropagation(); toggleBGM()" id="sound-btn"><i class="fas fa-volume-up"></i></button>
+            <button class="sound-toggle" onclick="event.stopPropagation(); toggleBGM()" id="sound-btn">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <button class="menu-toggle" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
     </nav>
 
@@ -527,6 +574,11 @@
             const bgm = document.getElementById('bgm-player'); const btn = document.getElementById('sound-btn');
             if (bgm.volume > 0) { bgm.volume = 0; btn.innerHTML = '<i class="fas fa-volume-mute"></i>'; }
             else { bgm.volume = 1; if (bgm.paused) bgm.play(); btn.innerHTML = '<i class="fas fa-volume-up"></i>'; }
+        }
+
+        function toggleMenu() {
+            const links = document.getElementById('nav-links');
+            links.classList.toggle('active');
         }
 
         function updateDialogue(text) {

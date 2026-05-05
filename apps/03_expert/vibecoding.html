@@ -63,11 +63,10 @@
         }
 
         /* Navbar */
-        /* Standard Nav Styles */
         nav {
             background: white;
             border-bottom: 1px solid #E0E0E0;
-            padding: 0.8rem 2rem;
+            padding: 0.8rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -76,13 +75,30 @@
             z-index: 1000;
         }
         .nav-left { display: flex; align-items: center; gap: 0.8rem; }
-        .sheet-title { font-weight: 700; font-size: 1.1rem; color: #3C4043; font-family: sans-serif; }
-        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .sheet-title { font-weight: 700; font-size: 1rem; color: #3C4043; font-family: sans-serif; white-space: nowrap; }
+        
+        .nav-links { display: none !important; }
+        @media (min-width: 1024px) {
+            .nav-links { display: flex !important; gap: 2rem; align-items: center; }
+        }
+        
         .nav-link { text-decoration: none; color: #5F6368; font-weight: 500; font-size: 0.9rem; transition: 0.2s; font-family: sans-serif; }
         .nav-link:hover { color: #0F9D58; }
         .nav-link.active { color: #0F9D58; font-weight: 700; }
         .nav-btn { background: #0F9D58 !important; color: white !important; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.85rem; transition: 0.2s; font-family: sans-serif; display: flex !important; align-items: center; gap: 0.5rem; }
         .nav-btn:hover { background: #0B8043 !important; }
+
+        /* Mobile Menu */
+        #mobile-menu {
+            display: none;
+            position: fixed; top: 60px; left: 0; right: 0; bottom: 0;
+            background: white; z-index: 999;
+            flex-direction: column; align-items: center; justify-content: center;
+            gap: 2rem; padding: 2rem;
+        }
+        #mobile-menu.active { display: flex; }
+        .menu-toggle { display: block; font-size: 1.5rem; color: #5F6368; cursor: pointer; padding: 10px; }
+        @media (min-width: 1024px) { .menu-toggle { display: none !important; } }
 
         .container { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
 
@@ -155,14 +171,27 @@
         <div class="nav-left">
             <span class="sheet-title">바이브코딩 시뮬레이션</span>
         </div>
-        <div class="nav-links">
+        <!-- Using Tailwind classes for extra reliability -->
+        <div class="nav-links hidden lg:flex">
             <a href="../../index.html" class="nav-link">홈</a>
             <a href="vibecoding.html" class="nav-link active">시뮬레이션</a>
             <a href="../04_gas_crud/gas_hub.html" class="nav-link">GAS</a>
             <a href="../app_planner.html" class="nav-link">앱 플래너</a>
             <a href="../tutorial_hub.html" class="nav-btn">학습 가이드 <i class="fas fa-graduation-cap"></i></a>
         </div>
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </div>
     </nav>
+
+    <!-- Mobile Nav Menu -->
+    <div id="mobile-menu">
+        <a href="../../index.html" class="nav-link text-xl">홈</a>
+        <a href="vibecoding.html" class="nav-link active text-xl">시뮬레이션</a>
+        <a href="../04_gas_crud/gas_hub.html" class="nav-link text-xl">GAS</a>
+        <a href="../app_planner.html" class="nav-link text-xl">앱 플래너</a>
+        <a href="../tutorial_hub.html" class="nav-btn text-xl">학습 가이드 <i class="fas fa-graduation-cap"></i></a>
+    </div>
 
     <div class="container">
         <!-- Hero Section -->
@@ -299,6 +328,11 @@
         }
 
         document.querySelectorAll('.transparent-target').forEach(makeTransparent);
+
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('active');
+        }
     </script>
 </body>
 </html>
