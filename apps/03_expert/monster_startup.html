@@ -29,7 +29,7 @@
             min-height: 100vh;
             width: 100vw;
             line-height: 1.6;
-            font-size: 16px;
+            font-size: 18px;
             padding-top: 80px;
         }
 
@@ -60,8 +60,8 @@
             }
         }
 
-        .nav-link { color: #888; text-decoration: none; font-size: 1rem; transition: color 0.2s; }
-        @media (min-width: 1024px) { .nav-link { font-size: 0.75rem; } }
+        .nav-link { color: #888; text-decoration: none; font-size: 1.2rem; transition: color 0.2s; }
+        @media (min-width: 1024px) { .nav-link { font-size: 1rem; } }
         .nav-link:hover, .nav-link.active { color: var(--monster-red); }
         
         .menu-toggle { 
@@ -87,12 +87,12 @@
             width: 100%; max-width: 600px; padding: 30px; border: 6px solid var(--monster-green); 
             background: #000; text-align: center; box-shadow: 0 0 50px rgba(0,255,65,0.3);
         }
-        .modal-text { font-size: 0.8rem; color: #fff; margin-bottom: 30px; line-height: 1.8; }
+        .modal-text { font-size: 1.2rem; color: #fff; margin-bottom: 30px; line-height: 1.8; }
         .modal-btns { display: flex; gap: 15px; flex-direction: column; }
         @media (min-width: 480px) { .modal-btns { flex-direction: row; } }
         .btn-modal { 
             flex: 1; padding: 15px; font-family: var(--font-pixel); cursor: pointer; border: 4px solid #fff;
-            font-size: 0.7rem;
+            font-size: 1rem;
         }
         .btn-modal.yes { background: var(--monster-green); color: #000; }
         .btn-modal.no { background: var(--monster-purple); color: #fff; }
@@ -124,8 +124,35 @@
         @media (min-width: 768px) { .setup-header h1 { font-size: 3.5rem; } }
         .bento-card { padding: 25px; border: 6px solid #fff; background: #111; }
         input { 
-            width: 100%; background: #000; border: 4px solid #444; padding: 15px; 
-            color: #fff; font-family: var(--font-pixel); font-size: 0.8rem; outline: none; margin-bottom: 30px;
+            width: 100%; background: #000; border: 4px solid var(--monster-green); padding: 20px; 
+            color: #fff; font-family: var(--font-pixel); font-size: 1.2rem; outline: none; margin-bottom: 30px;
+            box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+        input:focus {
+            border-color: #fff;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+        }
+        .input-label {
+            display: block;
+            font-size: 1rem;
+            color: var(--monster-green);
+            margin-bottom: 10px;
+            text-shadow: 2px 2px #000;
+        }
+        .custom-input-box {
+            margin-top: 40px;
+            padding: 20px;
+            border: 4px dashed var(--monster-red);
+            background: rgba(255, 0, 76, 0.05);
+        }
+        .custom-input-box label {
+            color: var(--monster-red) !important;
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
         }
         .btn-start { width: 100%; padding: 20px; background: var(--monster-red); color: #fff; font-family: var(--font-pixel); border: 6px solid #fff; cursor: pointer; font-size: 1rem; }
         @media (min-width: 768px) { .btn-start { font-size: 1.6rem; padding: 30px; } }
@@ -159,8 +186,8 @@
             padding: 15px; display: flex; flex-direction: column; overflow: hidden; 
         }
         .ws-header { flex-shrink: 0; margin-bottom: 15px; border-bottom: 4px solid #222; padding-bottom: 10px; }
-        .ws-title { font-size: 1.2rem; color: var(--monster-red); }
-        .ws-desc { font-size: 0.8rem; color: #888; margin-top: 5px; }
+        .ws-title { font-size: 1.6rem; color: var(--monster-red); }
+        .ws-desc { font-size: 1.1rem; color: #ccc; margin-top: 10px; }
         
         #form-area { flex: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 15px; }
         
@@ -174,7 +201,7 @@
 
         .action-bar { flex-shrink: 0; display: flex; gap: 15px; border-top: 4px solid #222; padding-top: 15px; }
         .btn-game { 
-            flex: 1; padding: 15px; font-family: var(--font-pixel); font-size: 0.8rem; cursor: pointer;
+            flex: 1; padding: 20px; font-family: var(--font-pixel); font-size: 1rem; cursor: pointer;
             border: 4px solid #fff; box-shadow: 2px 2px 0 0 #000; transition: all 0.1s;
         }
         .btn-game.prev { background: var(--monster-purple); color: #fff; }
@@ -182,8 +209,8 @@
 
         .options-container { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 30px; }
         .option-card { 
-            padding: 20px; border: 4px solid #444; background: #111; cursor: pointer; transition: all 0.2s;
-            font-size: 0.9rem; line-height: 1.6; color: #fff; font-family: var(--font-pixel);
+            padding: 25px; border: 4px solid #444; background: #111; cursor: pointer; transition: all 0.2s;
+            font-size: 1.2rem; line-height: 1.4; color: #fff; font-family: var(--font-pixel);
             width: 100%; text-align: left; display: block;
         }
         .option-card:hover { border-color: var(--monster-green); background: #0d1a0d; }
@@ -201,8 +228,8 @@
             flex: 1; border: 6px solid var(--monster-green); background: rgba(0,0,0,0.9);
             padding: 20px; position: relative; overflow-y: auto;
         }
-        .dialogue-name { font-size: 0.9rem; color: var(--monster-green); margin-bottom: 10px; border-bottom: 2px solid #333; display: inline-block; }
-        .dialogue-content { font-size: 1rem; line-height: 1.6; color: #fff; }
+        .dialogue-name { font-size: 1.1rem; color: var(--monster-green); margin-bottom: 10px; border-bottom: 2px solid #333; display: inline-block; }
+        .dialogue-content { font-size: 1.2rem; line-height: 1.6; color: #fff; }
 
         .metric-bar { height: 20px; background: #222; border: 2px solid #444; margin-top: 10px; }
         .metric-fill { height: 100%; background: var(--monster-green); width: 0%; transition: width 0.3s; }
@@ -287,8 +314,8 @@
                 <p>사악한 천재 기획팀이여, 부대 명칭을 정하라!</p>
             </div>
             <div class="pixel-border bento-card">
-                <label>SQUAD NAME</label>
-                <input type="text" id="team-name" placeholder="부대 이름 입력...">
+                <label class="input-label">SQUAD NAME (부대 명칭)</label>
+                <input type="text" id="team-name" placeholder="부대 이름을 입력하세요...">
                 <div style="display:flex; gap:15px;">
                     <button class="btn-start" style="flex:1;" onclick="startMission()">MISSION START!</button>
                     <button class="btn-start" style="flex:1; background:var(--monster-purple);" onclick="location.href='monster_startup_guide.html'">GUIDE SLIDE</button>
@@ -519,7 +546,14 @@
         function renderOptions() {
             const area = document.getElementById('form-area'); area.innerHTML = '';
             const p = PHASES[S.phase - 1];
-            if (S.phase === 2) area.innerHTML += `<label>앱 명칭 (App Name)</label><input type="text" id="app-name-input" onchange="S.data.appName=this.value" value="${S.data.appName || ''}">`;
+            
+            if (S.phase === 2) {
+                const nameWrapper = document.createElement('div');
+                nameWrapper.style.marginBottom = '30px';
+                nameWrapper.innerHTML = `<label class="input-label">APP NAME (앱 명칭을 정해주세요)</label><input type="text" id="app-name-input" placeholder="여기에 앱 이름을 입력..." oninput="S.data.appName=this.value" value="${S.data.appName || ''}">`;
+                area.appendChild(nameWrapper);
+            }
+
             const container = document.createElement('div'); container.className = 'options-container';
             p.options.forEach((opt, idx) => {
                 const card = document.createElement('button');
@@ -532,7 +566,16 @@
                 container.appendChild(card);
             });
             area.appendChild(container);
-            area.innerHTML += `<label>또는 직접 입력 (Custom)</label><input type="text" onchange="S.data[S.phase]=this.value" value="${S.data[S.phase] || ''}">`;
+            
+            // 직접 입력 섹션 강화
+            const customWrapper = document.createElement('div');
+            customWrapper.className = 'custom-input-box pixel-border';
+            customWrapper.innerHTML = `
+                <label class="input-label" style="color:var(--monster-red);">⌨️ DIRECT ENTRY (원하는 내용을 직접 입력하세요)</label>
+                <input type="text" placeholder="선택지에 없는 사악한 아이디어를 직접 입력..." oninput="S.data[S.phase]=this.value" value="${S.data[S.phase] || ''}">
+                <p style="font-size:0.7rem; color:#888; margin-top:-20px;">* 입력창을 클릭하여 키보드로 내용을 작성하세요.</p>
+            `;
+            area.appendChild(customWrapper);
         }
 
         function updateMetrics() {
