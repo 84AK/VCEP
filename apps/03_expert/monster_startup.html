@@ -620,6 +620,182 @@
             showNarrative(S.introSequence, () => { document.getElementById('setup-wrap').style.display = 'flex'; });
         };
         setInterval(() => { document.querySelectorAll('.transparent-target').forEach(makeTransparent); }, 500);
-    </script>
+
+    /* Notion Feedback System (Secure Version) */
+    const NOTION_CONFIG = {
+        apiEndpoint: '/api/feedback',
+        appName: 'Monster Startup'
+    };
+
+    function toggleFeedbackModal() {
+        const modal = document.getElementById('feedback-modal');
+        modal.classList.toggle('hidden-stage-feedback');
+    }
+
+    async function submitFeedback() {
+        const content = document.getElementById('feedback-content').value.trim();
+        const btn = document.getElementById('feedback-submit-btn');
+
+        if (!content) {
+            alert('보고 내용을 입력하십시오!');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = 'REPORTING...';
+
+        try {
+            const response = await fetch(NOTION_CONFIG.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: content,
+                    appName: NOTION_CONFIG.appName
+                })
+            });
+
+            if (response.ok) {
+                alert('기획 보고가 성공적으로 전송되었습니다! 마왕님께서 흡족해하십니다.');
+                document.getElementById('feedback-content').value = '';
+                toggleFeedbackModal();
+            } else {
+                const error = await response.json();
+                alert('보고 실패: ' + (error.message || '시스템 오류'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('오류 발생: 서버리스 함수가 작동하지 않거나 배포 환경이 아닐 수 있습니다.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '작전 보고 전송하기';
+        }
+    }
+</script>
+
+<style>
+    /* Feedback UI Styles (Monster Startup Theme) */
+    .hidden-stage-feedback { display: none !important; }
+    
+    .feedback-fab {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: #000;
+        color: var(--monster-green);
+        padding: 15px 25px;
+        border: 4px solid var(--monster-green);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        box-shadow: 8px 8px 0 var(--monster-purple);
+        z-index: 120000;
+        transition: all 0.2s;
+        font-family: var(--font-pixel);
+    }
+    .feedback-fab:hover {
+        transform: translate(-4px, -4px);
+        box-shadow: 12px 12px 0 var(--monster-purple);
+        color: #fff;
+        border-color: #fff;
+    }
+    .feedback-fab i { font-size: 1.2rem; }
+    .feedback-fab span { font-size: 0.7rem; font-weight: 400; }
+
+    #feedback-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 200000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(13, 2, 33, 0.95);
+        backdrop-filter: blur(10px);
+    }
+
+    .feedback-modal-content {
+        background: #000;
+        border: 6px solid var(--monster-green);
+        width: 100%;
+        max-width: 500px;
+        padding: 40px;
+        box-shadow: 0 0 50px rgba(0, 255, 65, 0.2);
+        position: relative;
+    }
+
+    .feedback-header h3 {
+        font-family: var(--font-pixel);
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        color: var(--monster-green);
+        text-shadow: 3px 3px 0 var(--monster-purple);
+    }
+
+    .feedback-header p { font-size: 0.8rem; color: #888; margin-bottom: 30px; line-height: 1.6; }
+
+    .feedback-body textarea {
+        width: 100%;
+        height: 200px;
+        background: #0d1117;
+        border: 4px solid #333;
+        padding: 20px;
+        color: #fff;
+        font-family: var(--font-pixel);
+        font-size: 0.8rem;
+        resize: none;
+        margin-bottom: 25px;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+
+    .feedback-body textarea:focus {
+        border-color: var(--monster-green);
+    }
+
+    .feedback-submit-btn {
+        width: 100%;
+        padding: 20px;
+        background: var(--monster-green);
+        color: #000;
+        border: 4px solid #fff;
+        font-weight: 800;
+        font-size: 0.9rem;
+        font-family: var(--font-pixel);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .feedback-submit-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 255, 65, 0.3); }
+    .feedback-submit-btn:active { transform: translateY(0); }
+    
+    .feedback-footer { font-size: 0.6rem; color: #555; text-align: center; margin-top: 25px; line-height: 1.8; }
+</style>
+
+<!-- Feedback FAB -->
+<div class="feedback-fab" onclick="toggleFeedbackModal()">
+    <i class="fas fa-terminal"></i>
+    <span>REPORT BUG</span>
+</div>
+
+<!-- Feedback Modal -->
+<div id="feedback-modal" class="hidden-stage-feedback">
+    <div class="feedback-modal-content pixel-border">
+        <div class="feedback-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h3>MISSION LOG</h3>
+                <p>앱 기획 개선안이나 발견된 오류를 마왕군 사령부에 보고하십시오.</p>
+            </div>
+            <button onclick="toggleFeedbackModal()" style="background:none; border:none; color:var(--monster-red); cursor:pointer; font-size:32px;">×</button>
+        </div>
+        <div class="feedback-body">
+            <textarea id="feedback-content" placeholder="예: 몬스터 관리 기능에 이런 옵션이 추가되면 좋겠습니다!"></textarea>
+            <button id="feedback-submit-btn" class="feedback-submit-btn" onclick="submitFeedback()">작전 보고 전송하기</button>
+        </div>
+        <p class="feedback-footer">
+            귀하의 보고서는 암호화되어 노션 데이터베이스로 즉시 전송됩니다.<br>공로가 인정되면 마왕님께 특별 하사품을 받을 수 있습니다.
+        </p>
+    </div>
+</div>
 </body>
 </html>
