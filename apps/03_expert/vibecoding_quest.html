@@ -350,6 +350,180 @@
             }
             type();
         }
-    </script>
+
+    /* Notion Feedback System (Secure Version) */
+    const NOTION_CONFIG = {
+        apiEndpoint: '/api/feedback',
+        appName: 'VibeCoding Quest'
+    };
+
+    function toggleFeedbackModal() {
+        const modal = document.getElementById('feedback-modal');
+        modal.classList.toggle('hidden-stage-feedback');
+    }
+
+    async function submitFeedback() {
+        const content = document.getElementById('feedback-content').value.trim();
+        const btn = document.getElementById('feedback-submit-btn');
+
+        if (!content) {
+            alert('의견을 입력해주세요!');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = 'SENDING...';
+
+        try {
+            const response = await fetch(NOTION_CONFIG.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: content,
+                    appName: NOTION_CONFIG.appName
+                })
+            });
+
+            if (response.ok) {
+                alert('퀘스트 피드백이 전송되었습니다! 감사합니다.');
+                document.getElementById('feedback-content').value = '';
+                toggleFeedbackModal();
+            } else {
+                const error = await response.json();
+                alert('전송 실패: ' + (error.message || '서버 오류'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('오류 발생: 서버리스 함수가 작동하지 않거나 배포 환경이 아닐 수 있습니다.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '소중한 의견 전송하기';
+        }
+    }
+</script>
+
+<style>
+    /* Feedback UI Styles (Quest Theme) */
+    .hidden-stage-feedback { display: none !important; }
+    
+    .feedback-fab {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: var(--pixel-primary);
+        color: #000;
+        padding: 10px 20px;
+        border: 4px solid #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
+        z-index: 5000;
+        transition: all 0.2s;
+        font-family: 'Press Start 2P', cursive;
+    }
+    .feedback-fab:hover {
+        transform: translate(-4px, -4px);
+        box-shadow: 12px 12px 0 rgba(0,0,0,0.5);
+    }
+    .feedback-fab i { font-size: 1.2rem; }
+    .feedback-fab span { font-weight: 900; font-size: 0.6rem; letter-spacing: -0.5px; }
+
+    #feedback-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+    }
+
+    .feedback-modal-content {
+        background: #fff;
+        border: 6px solid #000;
+        width: 100%;
+        max-width: 450px;
+        padding: 30px;
+        box-shadow: 15px 15px 0 var(--pixel-gold);
+        color: #000;
+    }
+
+    .feedback-header h3 {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        color: var(--pixel-accent);
+    }
+
+    .feedback-header p { font-size: 1.2rem; color: #333; margin-bottom: 20px; font-weight: 700; }
+
+    .feedback-body textarea {
+        width: 100%;
+        height: 150px;
+        background: #f0f0f0;
+        border: 4px solid #000;
+        padding: 15px;
+        color: #000;
+        font-size: 1.2rem;
+        font-family: 'Gaegu', cursive;
+        resize: none;
+        margin-bottom: 20px;
+        transition: all 0.2s;
+    }
+
+    .feedback-body textarea:focus {
+        outline: none;
+        background: #fff;
+        border-color: var(--pixel-primary);
+    }
+
+    .feedback-submit-btn {
+        width: 100%;
+        padding: 15px;
+        background: var(--pixel-primary);
+        color: #000;
+        border: 4px solid #000;
+        font-weight: 900;
+        font-size: 1.5rem;
+        font-family: 'Gaegu', cursive;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 5px 5px 0 #000;
+    }
+
+    .feedback-submit-btn:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 #000; }
+    .feedback-submit-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+    .feedback-footer { font-size: 1rem; color: #666; text-align: center; margin-top: 20px; line-height: 1.4; font-weight: 700; }
+</style>
+
+<!-- Feedback FAB -->
+<div class="feedback-fab" onclick="toggleFeedbackModal()">
+    <i class="fas fa-envelope-open-text"></i>
+    <span>QUEST FEEDBACK</span>
+</div>
+
+<!-- Feedback Modal -->
+<div id="feedback-modal" class="hidden-stage-feedback">
+    <div class="feedback-modal-content">
+        <div class="feedback-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h3>QUEST LOG</h3>
+                <p>모험 중 겪은 불편함이나 제안을 남겨주세요.</p>
+            </div>
+            <button onclick="toggleFeedbackModal()" style="background:none; border:none; color:#000; cursor:pointer; font-size:32px; font-weight:bold;">×</button>
+        </div>
+        <div class="feedback-body">
+            <textarea id="feedback-content" placeholder="예: 다음 스테이지에 보스 몬스터를 추가해주세요!"></textarea>
+            <button id="feedback-submit-btn" class="feedback-submit-btn" onclick="submitFeedback()">전설의 피드백 전송하기</button>
+        </div>
+        <p class="feedback-footer">
+            이 기록은 노션 성소로 안전하게 전달되어<br>퀘스트 밸런스 조정에 사용됩니다. 감사합니다! ✨
+        </p>
+    </div>
+</div>
 </body>
 </html>
