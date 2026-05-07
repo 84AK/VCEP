@@ -39,9 +39,9 @@ module.exports = async (req, res) => {
       body: JSON.stringify({
         parent: { database_id: NOTION_DB_ID },
         properties: {
-          '앱 이름': { title: [{ text: { content: appName || 'Unknown App' } }] },
-          '피드백 내용': { rich_text: [{ text: { content: content } }] },
-          '입력 날짜': { date: { start: new Date().toISOString() } }
+          'App Name': { title: [{ text: { content: appName || 'Unknown App' } }] },
+          'Feedback Content': { rich_text: [{ text: { content: content } }] },
+          'Date': { date: { start: new Date().toISOString() } }
         }
       })
     });
