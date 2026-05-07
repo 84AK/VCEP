@@ -1292,6 +1292,182 @@ if (window.innerWidth <= 768) {
 /* ═══════ INIT ═══════ */
 updateSteps();updatePat();tickDeadline();
 runPhase(0);
+
+    /* Notion Feedback System (Secure Version) */
+    const NOTION_CONFIG = {
+        apiEndpoint: '/api/feedback',
+        appName: 'VibeCoding Simulation'
+    };
+
+    function toggleFeedbackModal() {
+        const modal = document.getElementById('feedback-modal');
+        modal.classList.toggle('hidden-stage-feedback');
+    }
+
+    async function submitFeedback() {
+        const content = document.getElementById('feedback-content').value.trim();
+        const btn = document.getElementById('feedback-submit-btn');
+
+        if (!content) {
+            alert('의견을 입력해주세요!');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = '전송 중...';
+
+        try {
+            const response = await fetch(NOTION_CONFIG.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: content,
+                    appName: NOTION_CONFIG.appName
+                })
+            });
+
+            if (response.ok) {
+                alert('피드백이 성공적으로 전송되었습니다! 감사합니다.');
+                document.getElementById('feedback-content').value = '';
+                toggleFeedbackModal();
+            } else {
+                const error = await response.json();
+                alert('전송 실패: ' + (error.message || '서버 오류'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('오류 발생: 서버리스 함수가 작동하지 않거나 배포 환경이 아닐 수 있습니다.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '소중한 의견 전송하기';
+        }
+    }
 </script>
+
+<style>
+    /* Feedback UI Styles */
+    .hidden-stage-feedback { display: none !important; }
+    
+    .feedback-fab {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: linear-gradient(135deg, #4fc3f7, #9775fa);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        box-shadow: 0 10px 25px rgba(79, 195, 247, 0.4);
+        z-index: 5000;
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-family: 'Inter', sans-serif;
+    }
+    .feedback-fab:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 15px 40px rgba(99, 102, 241, 0.6);
+    }
+    .feedback-fab i { font-size: 1.2rem; }
+    .feedback-fab span { font-weight: 800; font-size: 0.9rem; letter-spacing: -0.5px; }
+
+    #feedback-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(10, 10, 18, 0.9);
+        backdrop-filter: blur(20px);
+    }
+
+    .feedback-modal-content {
+        background: #1a1a2e;
+        border: 1px solid rgba(79, 195, 247, 0.3);
+        border-radius: 24px;
+        width: 100%;
+        max-width: 450px;
+        padding: 35px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .feedback-header h3 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, #4fc3f7, #9775fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .feedback-header p { font-size: 13px; color: #6e7681; margin-bottom: 25px; }
+
+    .feedback-body textarea {
+        width: 100%;
+        height: 180px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 20px;
+        color: white;
+        font-size: 14px;
+        resize: none;
+        margin-bottom: 20px;
+        transition: all 0.3s;
+    }
+
+    .feedback-body textarea:focus {
+        outline: none;
+        border-color: #4fc3f7;
+        background: rgba(79, 195, 247, 0.05);
+    }
+
+    .feedback-submit-btn {
+        width: 100%;
+        padding: 16px;
+        background: #4fc3f7;
+        color: #0a0a12;
+        border: none;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .feedback-submit-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+    .feedback-footer { font-size: 10px; color: #6e7681; text-align: center; margin-top: 20px; line-height: 1.6; }
+</style>
+
+<!-- Feedback FAB -->
+<div class="feedback-fab" onclick="toggleFeedbackModal()">
+    <i class="fas fa-comment-dots"></i>
+    <span>의견 보내기</span>
+</div>
+
+<!-- Feedback Modal -->
+<div id="feedback-modal" class="hidden-stage-feedback">
+    <div class="feedback-modal-content">
+        <div class="feedback-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h3>FEEDBACK</h3>
+                <p>더 나은 시뮬레이션을 위한 아이디어를 들려주세요.</p>
+            </div>
+            <button onclick="toggleFeedbackModal()" style="background:none; border:none; color:#6e7681; cursor:pointer; font-size:24px;">×</button>
+        </div>
+        <div class="feedback-body">
+            <textarea id="feedback-content" placeholder="예: 이런 시나리오가 추가되면 좋겠어요! 버그를 발견했어요."></textarea>
+            <button id="feedback-submit-btn" class="feedback-submit-btn" onclick="submitFeedback()">소중한 의견 전송하기</button>
+        </div>
+        <p class="feedback-footer">
+            보내주신 의견은 노션 데이터베이스로 안전하게 전달되어<br>시스템 개선에 직접 활용됩니다. 감사합니다! ✨
+        </p>
+    </div>
+</div>
 </body>
 </html>
