@@ -744,6 +744,32 @@
                 </div>
             </div>
 
+            <!-- Master Prompt Section Added -->
+            <div id="master-prompt-box" class="glass-panel p-10 mb-16 border-emerald-500/30 bg-emerald-500/5">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h4 class="text-3xl font-black text-emerald-400 mb-2">MASTER PROMPT ACQUIRED</h4>
+                        <p class="text-slate-400">시뮬레이션의 모든 데이터가 집약된 마스터 프롬프트입니다. 실제 AI 모델에 사용해보세요.</p>
+                    </div>
+                    <div class="hidden md:block">
+                        <i class="fas fa-scroll text-5xl text-emerald-400/20"></i>
+                    </div>
+                </div>
+                
+                <div class="relative group">
+                    <pre id="master-prompt-content" class="w-full bg-slate-900/50 border border-emerald-500/20 rounded-3xl p-8 text-emerald-100/80 text-sm font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto"></pre>
+                    <button onclick="copyMasterPrompt()" class="absolute top-4 right-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-3 rounded-2xl transition-all shadow-lg active:scale-95 flex items-center gap-2">
+                        <i class="fas fa-copy"></i>
+                        <span id="copy-btn-text">복사하기</span>
+                    </button>
+                </div>
+                
+                <div class="mt-8 flex items-center gap-4 text-emerald-400/60 text-xs font-bold">
+                    <i class="fas fa-info-circle"></i>
+                    <span>이 프롬프트를 ChatGPT나 Claude에게 입력하면 당신만의 연애 시뮬레이션이 시작됩니다.</span>
+                </div>
+            </div>
+
             <div class="flex flex-col md:flex-row gap-6">
                 <button onclick="location.reload()"
                     class="flex-1 py-6 bg-white/5 border border-white/10 text-white font-black rounded-3xl text-2xl hover:bg-white/10 transition-all">다시
@@ -775,6 +801,27 @@
             2: "나는 이런 분위기의 카페를 좋아해. [1. 조용한 북카페, 2. 나무 향 나는 따뜻한 카페, 3. 소파가 편한 아늑한 카페]. 이 예시들을 참고해서 네가 가고 싶은 곳을 골라줘.",
             3: "지금은 고백하는 상황이야. 너무 딱딱하게 사실만 말하지 말고, 온도를 0.7 정도로 높여서 아주 감성적이고 진심 어린 대답을 해줘.",
             4: "나에게 사과를 해줘. 단, '하지만'이나 '변명' 같은 단어는 절대 쓰지 말고 오직 내 기분에 공감한다는 말만 진지하게 해줘."
+        };
+
+        const MASTER_PROMPT_TEMPLATES = {
+            iris: `[SYSTEM PROMPT: IRIS CHARACTER SIMULATION]
+- 페르소나: 아이리스, 논리적이고 냉철한 도서부원. 지적이며 감정 표현을 극도로 아끼지만, 신뢰가 쌓이면 서서히 마음을 엶.
+- 감정 수치 시스템: '호감도(Affection Score)'를 0-100으로 추적. 초기값 10.
+- 대화 규칙:
+  1. 호감도 낮음(0-30): 매우 논리적이고 사무적이며 거리감을 유지함.
+  2. 호감도 보통(31-70): 부드러운 말투 사용, 가끔 주인공에 대한 호기심을 보임.
+  3. 호감도 높음(71-100): 진심을 표현하며 수줍어하는 묘사를 포함함.
+- 부정 프롬프트: 진부한 표현 금지. 논리적 근거 없는 사과 거부. '하지만'을 포함한 변명 섞인 사과 무시.
+- 임무: 도서관 배경으로 대화를 진행하며, 주인공의 프롬프트 수준에 따라 호감도를 조정하고 그에 맞는 반응을 보여줘.`,
+            kyle: `[SYSTEM PROMPT: KYLE CHARACTER SIMULATION]
+- 페르소나: 카일, 원칙과 규율을 중시하는 엄격한 선도부장. 빈틈없고 차갑지만 내면에는 보호 본능이 있음.
+- 감정 수치 시스템: '신뢰도 및 호감도'를 0-100으로 추적. 초기값 15.
+- 대화 규칙:
+  1. 수치 낮음(0-30): 경어체 사용, 학교 규정을 자주 인급하며 공적인 대화만 수행.
+  2. 수치 보통(31-70): 주인공의 노력을 인정, 가끔 규정보다 주인공의 편을 들어줌.
+  3. 수치 높음(71-100): 감정적 취약함을 드러냄, 주인공을 위해 규칙을 어기기도 함.
+- 부정 프롬프트: 무의미한 반복적 조언 금지. 근거 없는 사과나 변명 데이터 거부.
+- 임무: 학교 복도나 교실 배경으로 대화를 진행하며, 주인공이 원칙을 지키면서도 진심을 전하는지 분석하여 수치를 조정하고 반응해줘.`
         };
 
         function showCharSelect() {
@@ -1313,6 +1360,10 @@
             document.getElementById('ending-img').src = isHappy ? "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200" : "https://images.unsplash.com/photo-1507502707541-f369a3b18502?auto=format&fit=crop&q=80&w=1200";
             document.getElementById('ending-summary').innerText = isHappy ? (cheated ? `${name}는 사과를 받아주었지만, 당신의 진심에 약간의 의구심을 가지고 있습니다.` : `당신은 완벽한 프롬프트로 ${name}의 마음을 완전히 녹였습니다. 진심 어린 대화는 논리를 넘어선 감동을 선사했습니다.`) : "서로를 이해하기 위해 노력했지만, 아직은 조금 더 시간이 필요한 것 같습니다.";
 
+            // Populate Master Prompt
+            const promptText = MASTER_PROMPT_TEMPLATES[gameState.partner];
+            document.getElementById('master-prompt-content').innerText = promptText;
+
             startTransition("EVALUATING YOUR CHOICES...", () => {
                 const updateEnding = () => {
                     screen.classList.remove('hidden-stage');
@@ -1323,6 +1374,26 @@
                     updateEnding();
                 }
                 anime({ targets: '#ending-screen > div', translateY: [50, 0], opacity: [0, 1], duration: 1500, easing: 'easeOutExpo' });
+            });
+        }
+
+        function copyMasterPrompt() {
+            const content = document.getElementById('master-prompt-content').innerText;
+            const btnText = document.getElementById('copy-btn-text');
+            
+            navigator.clipboard.writeText(content).then(() => {
+                btnText.innerText = "복사 완료!";
+                anime({
+                    targets: '#master-prompt-box',
+                    borderColor: ['rgba(16, 185, 129, 0.3)', 'rgba(16, 185, 129, 1)', 'rgba(16, 185, 129, 0.3)'],
+                    duration: 1000,
+                    easing: 'easeInOutQuad'
+                });
+                setTimeout(() => {
+                    btnText.innerText = "복사하기";
+                }, 2000);
+            }).catch(err => {
+                alert("복사에 실패했습니다. 직접 드래그해서 복사해주세요.");
             });
         }
 
