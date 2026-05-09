@@ -661,8 +661,23 @@
             const bgm = document.getElementById('bgm-player');
             document.addEventListener('click', () => { if(bgm.paused) bgm.play().catch(()=>{}); }, {once: true});
             showNarrative(S.introSequence, () => { document.getElementById('setup-wrap').style.display = 'flex'; });
+            
+            // Initial processing
+            document.querySelectorAll('.transparent-target').forEach(makeTransparent);
         };
-        setInterval(() => { document.querySelectorAll('.transparent-target').forEach(makeTransparent); }, 500);
+
+        // Optimized image processing using MutationObserver
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1) {
+                        if (node.classList.contains('transparent-target')) makeTransparent(node);
+                        node.querySelectorAll('.transparent-target').forEach(makeTransparent);
+                    }
+                });
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
 
     /* Notion Feedback System (Secure Version) */
     const NOTION_CONFIG = {

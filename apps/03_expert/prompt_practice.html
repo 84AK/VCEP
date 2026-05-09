@@ -27,14 +27,13 @@
             height: 100vh;
         }
 
-        /* Glassmorphism 2.0 */
         .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
         /* Background Effects */
@@ -55,8 +54,7 @@
             width: 500px;
             height: 500px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(129, 140, 248, 0.1) 0%, transparent 70%);
-            filter: blur(50px);
+            background: radial-gradient(circle, rgba(129, 140, 248, 0.14) 0%, transparent 70%);
             z-index: -1;
             pointer-events: none;
         }
@@ -76,7 +74,7 @@
         #main-char {
             height: 100%;
             object-fit: contain;
-            filter: drop-shadow(0 0 40px rgba(0, 0, 0, 0.6)) contrast(1.1) brightness(1.05);
+            filter: drop-shadow(0 0 40px rgba(0, 0, 0, 0.6));
             transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
@@ -204,33 +202,51 @@
         }
 
         /* Animations */
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            50% {
-                transform: scale(1.05);
-                opacity: 0.8;
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 12px rgba(129, 140, 248, 0.2); border-color: rgba(129, 140, 248, 0.4); }
+            50%       { box-shadow: 0 0 32px rgba(129, 140, 248, 0.5); border-color: rgba(129, 140, 248, 0.9); }
         }
 
         .pulse-sidebar {
-            animation: pulse 2s infinite ease-in-out;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 30px rgba(129, 140, 248, 0.2);
+            animation: pulse-border 2s infinite ease-in-out;
+        }
+
+        /* Locked Panel during dialogue */
+        .locked-panel {
+            pointer-events: none;
+            opacity: 0.3;
+            filter: grayscale(1);
+            transition: all 0.5s ease;
+        }
+
+        /* Stage 2: compact example inputs */
+        .ex-input {
+            flex: 1;
+            width: auto !important;
+            min-height: 44px !important;
+            padding: 10px 16px !important;
+            font-size: 0.875rem !important;
+            border-radius: 12px !important;
         }
 
         /* Transitions */
         ::view-transition-old(root),
         ::view-transition-new(root) {
             animation-duration: 0.5s;
+        }
+
+        /* Report Modal Optimization */
+        #report-modal {
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+        }
+        #report-modal .glass-panel {
+            margin: auto 0;
+            position: relative;
+            will-change: transform, opacity;
         }
 
         #transition-overlay {
@@ -246,6 +262,7 @@
             justify-content: center;
             opacity: 0;
             pointer-events: none;
+            will-change: opacity;
         }
 
         /* Choice Modal */
@@ -312,8 +329,35 @@
             background: #64748b !important;
         }
 
-        /* Toast System */
-        #toast-container {
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        #flash-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(251, 113, 133, 0.2);
+            z-index: 999;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .typing-active::after {
+            content: '|';
+            animation: blink 0.7s infinite;
+            color: var(--accent-primary);
+            font-weight: 100;
+            margin-left: 2px;
+        }
+
+        /* Affection Toast System */
+        #affection-toast-container {
             position: fixed;
             top: 100px;
             left: 50%;
@@ -351,6 +395,66 @@
             color: #cbd5e1;
             border-color: rgba(148, 163, 184, 0.3);
         }
+
+        /* Feedback FAB Global Styles */
+        .feedback-fab {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            border-radius: 999px;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+        }
+
+        .feedback-fab:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.6);
+        }
+
+        .feedback-fab i {
+            font-size: 1.2rem;
+        }
+
+        .feedback-fab span {
+            font-weight: 900;
+            font-size: 0.9rem;
+            letter-spacing: -0.5px;
+        }
+
+        .floating-tip {
+            position: absolute;
+            bottom: -45px;
+            left: 0;
+            background: #fb7185;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 900;
+            white-space: nowrap;
+            animation: bounce-slow 3s infinite;
+        }
+
+        .floating-tip::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 20px;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid #fb7185;
+        }
+
 
         /* Mobile Responsive Design */
         @media (max-width: 768px) {
@@ -474,17 +578,112 @@
                 width: 40px;
                 height: 40px;
             }
+
+            .feedback-fab {
+                top: 30px;
+                left: 30px;
+                padding: 8px 16px;
+                transform: scale(0.9);
+            }
+            .floating-tip {
+                top: 50px;
+                bottom: auto;
+                left: 0;
+            }
+            .floating-tip::after {
+                bottom: auto;
+                top: -6px;
+                border-top: none;
+                border-bottom: 6px solid #fb7185;
+            }
         }
+    </style>
+    <!-- Quiz Styles -->
+    <style>
+        .quiz-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            font-weight: 700;
+        }
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-primary);
+            transform: translateX(5px);
+        }
+        .quiz-option.correct {
+            background: rgba(52, 211, 153, 0.2);
+            border-color: #34d399;
+            color: #34d399;
+        }
+        .quiz-option.incorrect {
+            background: rgba(251, 113, 133, 0.2);
+            border-color: #fb7185;
+            color: #fb7185;
+        }
+        #toast-container {
+            position: fixed;
+            bottom: 60px; /* Slightly higher */
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            z-index: 10000; /* Ensure it's above the modal (z-700) */
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            pointer-events: none;
+        }
+        #toast-container.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast-content {
+            background: #10b981;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 999px;
+            font-weight: 900;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 15px 50px rgba(16, 185, 129, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            white-space: nowrap;
+        }
+        /* 자동저장 배지 */
+        #save-badge {
+            position: fixed;
+            top: 14px;
+            right: 56px;
+            z-index: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.35);
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #34d399;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        #save-badge.show { opacity: 1; }
     </style>
 </head>
 <body>
-    <div class="bg-gradient"></div>
+    <div id="save-badge"><span>💾</span><span id="save-badge-text">저장됨</span></div>
+    <div id="bg-layer-a" class="bg-gradient" style="z-index:-2; position:fixed; inset:0; background-size:cover; background-position:center; transition:none;"></div>
+    <div id="bg-layer-b" class="bg-gradient" style="z-index:-1; position:fixed; inset:0; background-size:cover; background-position:center; opacity:0;"></div>
     <div class="ambient-light" style="top: -100px; left: -100px;"></div>
     <div class="ambient-light"
         style="bottom: -100px; right: -100px; background: radial-gradient(circle, rgba(192, 132, 252, 0.1) 0%, transparent 70%);">
     </div>
-
-    <div id="toast-container"></div>
 
     <audio id="bgm-player" src="./assets/Morning_Calculation.mp3" loop preload="auto"></audio>
 
@@ -495,6 +694,19 @@
             <div class="bar" style="animation-delay: 0.4s"></div>
         </div>
     </div>
+
+    <!-- Stage Progress Dots -->
+    <div id="stage-progress" class="hidden-stage" style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:201;display:flex;gap:8px;align-items:center;">
+        <span class="stage-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.4s;"></span>
+        <span class="stage-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.4s;"></span>
+        <span class="stage-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.4s;"></span>
+        <span class="stage-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.4s;"></span>
+        <span class="stage-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.4s;"></span>
+    </div>
+    <style>
+        .stage-dot.active { background: #818cf8 !important; transform: scale(1.4); box-shadow: 0 0 8px rgba(129,140,248,0.8); }
+        .stage-dot.done   { background: rgba(129,140,248,0.5) !important; }
+    </style>
 
     <!-- Affection Bar -->
     <div class="affection-bar glass-panel">
@@ -521,11 +733,15 @@
                 MELT HER HEART</h1>
             <p class="text-slate-400 text-lg mb-12 leading-relaxed">AI의 차가운 논리를 넘어서, 당신만의 프롬프트로 진심을 전달하세요. 4단계의 프롬프트
                 엔지니어링 미션을 완수하고 해피엔딩을 맞이할 수 있을까요?</p>
-            <div class="flex gap-4 justify-center">
-                <button onclick="showCharSelect()" class="btn-primary px-12 py-5 text-xl">START SIMULATION</button>
-                <button onclick="location.href='prompt_practice_guide.html'"
-                    class="px-12 py-5 text-xl glass-panel font-black hover:bg-white/10 transition-all">VIEW
-                    GUIDE</button>
+            <div class="flex flex-col gap-4 items-center">
+                <div class="flex gap-4 justify-center">
+                    <button onclick="showCharSelect()" class="btn-primary px-12 py-5 text-xl">START SIMULATION</button>
+                    <button onclick="location.href='prompt_practice_guide.html'"
+                        class="px-12 py-5 text-xl glass-panel font-black hover:bg-white/10 transition-all">VIEW GUIDE</button>
+                </div>
+                <button id="continue-btn" onclick="continueGame()" class="hidden-stage px-10 py-3 text-sm glass-panel font-black text-indigo-400 hover:bg-white/10 transition-all border border-indigo-500/30">
+                    <i class="fas fa-bookmark mr-2"></i>이어하기 (저장된 게임 불러오기)
+                </button>
             </div>
         </div>
     </div>
@@ -583,67 +799,258 @@
     <div id="action-panel" class="glass-panel hidden-stage">
         <div id="stage-badge"
             class="inline-block px-3 py-1 bg-indigo-500/20 text-indigo-400 text-[10px] font-black rounded-full mb-4 tracking-tighter">
-            STAGE 1: RCTF PERSONA</div>
+            STAGE 1: RCTF</div>
 
         <!-- Stage 1: RCTF -->
-        <div id="stage-1" class="stage-ui space-y-6">
-            <h4 class="text-2xl font-black mb-4">정체성 구축</h4>
-            <div class="space-y-5">
-                <div class="group"><label
-                        class="text-[11px] text-indigo-400 font-black uppercase ml-1 mb-2 block tracking-widest">Role
-                        (역할)</label><input id="p1-role" placeholder="예: 다정한 소꿉친구"></div>
-                <div class="group"><label
-                        class="text-[11px] text-indigo-400 font-black uppercase ml-1 mb-2 block tracking-widest">Context
-                        (상황)</label><input id="p1-context" placeholder="예: 방과 후 노을 지는 교실"></div>
-                <div class="group"><label
-                        class="text-[11px] text-indigo-400 font-black uppercase ml-1 mb-2 block tracking-widest">Task
-                        (임무)</label><input id="p1-task" placeholder="예: 설레는 대화를 해줘"></div>
-                <div class="group"><label
-                        class="text-[11px] text-indigo-400 font-black uppercase ml-1 mb-2 block tracking-widest">Format
-                        (형식)</label><input id="p1-format" placeholder="예: 반말로, 짧게"></div>
+        <div id="stage-1" class="stage-ui space-y-3">
+            <div class="flex items-center gap-2 mb-1">
+                <h4 class="text-xl font-black">RCTF 프레임워크</h4>
             </div>
-            <button onclick="submitStage1()" class="btn-primary w-full mt-6 py-6 text-xl">입력값 전송</button>
+            <p class="text-[11px] text-slate-400 leading-relaxed">좋은 프롬프트는 4가지 요소로 이루어집니다. 모두 구체적으로 채워야 AI를 깨울 수 있어요.</p>
+
+            <div class="rctf-field">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-5 h-5 rounded-md bg-indigo-500/30 text-indigo-300 text-[9px] font-black flex items-center justify-center flex-shrink-0">R</span>
+                    <label class="text-[11px] text-indigo-300 font-black uppercase tracking-widest">Role — 역할</label>
+                </div>
+                <input id="p1-role" placeholder="예: 다정하고 솔직한 소꿉친구" oninput="updatePromptPreview(); trackRCTFFill()">
+                <p class="text-[10px] text-slate-500 mt-1 ml-1">AI가 어떤 존재로서 말할지 정의하세요</p>
+            </div>
+
+            <div class="rctf-field">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-5 h-5 rounded-md bg-purple-500/30 text-purple-300 text-[9px] font-black flex items-center justify-center flex-shrink-0">C</span>
+                    <label class="text-[11px] text-purple-300 font-black uppercase tracking-widest">Context — 상황</label>
+                </div>
+                <input id="p1-context" placeholder="예: 방과 후 노을 지는 교실, 둘만 남은 상황" oninput="updatePromptPreview(); trackRCTFFill()">
+                <p class="text-[10px] text-slate-500 mt-1 ml-1">어떤 배경과 상황인지 구체적으로 설명하세요</p>
+            </div>
+
+            <div class="rctf-field">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-5 h-5 rounded-md bg-emerald-500/30 text-emerald-300 text-[9px] font-black flex items-center justify-center flex-shrink-0">T</span>
+                    <label class="text-[11px] text-emerald-300 font-black uppercase tracking-widest">Task — 임무</label>
+                </div>
+                <input id="p1-task" placeholder="예: 설레는 첫마디를 건네줘" oninput="updatePromptPreview(); trackRCTFFill()">
+                <p class="text-[10px] text-slate-500 mt-1 ml-1">AI에게 무엇을 하게 할지 명확히 지시하세요</p>
+            </div>
+
+            <div class="rctf-field">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-5 h-5 rounded-md bg-rose-500/30 text-rose-300 text-[9px] font-black flex items-center justify-center flex-shrink-0">F</span>
+                    <label class="text-[11px] text-rose-300 font-black uppercase tracking-widest">Format — 형식</label>
+                </div>
+                <input id="p1-format" placeholder="예: 반말로, 2~3문장으로 짧게" oninput="updatePromptPreview(); trackRCTFFill()">
+                <p class="text-[10px] text-slate-500 mt-1 ml-1">말투, 길이, 출력 형태를 지정하세요</p>
+            </div>
+
+            <div id="rctf-fill-bar" class="flex gap-1.5 py-1">
+                <div class="rctf-dot h-1 flex-1 rounded-full bg-white/10 transition-all duration-300" data-field="p1-role"></div>
+                <div class="rctf-dot h-1 flex-1 rounded-full bg-white/10 transition-all duration-300" data-field="p1-context"></div>
+                <div class="rctf-dot h-1 flex-1 rounded-full bg-white/10 transition-all duration-300" data-field="p1-task"></div>
+                <div class="rctf-dot h-1 flex-1 rounded-full bg-white/10 transition-all duration-300" data-field="p1-format"></div>
+            </div>
+
+            <button onclick="submitStage1()" class="btn-primary w-full py-5 text-lg">프롬프트 전송하기</button>
         </div>
 
         <!-- Stage 2: Few-shot -->
-        <div id="stage-2" class="stage-ui hidden-stage space-y-6">
-            <h4 class="text-2xl font-black mb-4">패턴 학습 (Few-shot)</h4>
-            <p class="text-sm text-slate-400 leading-relaxed mb-4">그녀의 취향을 맞추기 위해 과거의 예시 데이터를 제공하세요. (예시를 3개 이상 콤마로 구분)
-            </p>
-            <textarea id="p2-examples" placeholder="예: 조용한 북카페, 나무 향 나는 카페, 소파가 편한 카페..."></textarea>
-            <button onclick="submitStage2()" class="btn-primary w-full mt-6 py-6 text-xl">데이터 동기화</button>
+        <div id="stage-2" class="stage-ui hidden-stage space-y-4">
+            <h4 class="text-xl font-black">퓨샷 학습 (Few-shot)</h4>
+
+            <div class="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+                <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">💡 Few-shot 원리</p>
+                <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="p-2 bg-black/20 rounded-xl text-center">
+                        <div class="text-rose-400 font-bold mb-1">Zero-shot ✗</div>
+                        <div class="text-slate-500">예시 없이 질문<br>→ AI가 패턴 모름</div>
+                    </div>
+                    <div class="p-2 bg-black/20 rounded-xl text-center">
+                        <div class="text-emerald-400 font-bold mb-1">Few-shot ✓</div>
+                        <div class="text-slate-500">예시 3개 제공<br>→ 패턴 파악 성공</div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-[11px] text-slate-400 leading-relaxed">좋아하는 장소·분위기·상황을 예시로 3개 이상 알려주세요. 구체적일수록 좋아요.</p>
+
+            <div class="space-y-2" id="ex-inputs">
+                <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-indigo-500/30 text-indigo-300 text-[9px] font-black flex items-center justify-center flex-shrink-0">1</span>
+                    <input id="p2-ex1" class="ex-input" placeholder="예: 조용한 북카페, 책 냄새 나는 공간" oninput="updatePromptPreview(); trackExFill()">
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-indigo-500/30 text-indigo-300 text-[9px] font-black flex items-center justify-center flex-shrink-0">2</span>
+                    <input id="p2-ex2" class="ex-input" placeholder="예: 나무 향 나는 따뜻한 인테리어 카페" oninput="updatePromptPreview(); trackExFill()">
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-indigo-500/30 text-indigo-300 text-[9px] font-black flex items-center justify-center flex-shrink-0">3</span>
+                    <input id="p2-ex3" class="ex-input" placeholder="예: 소파가 편안한 아늑한 분위기" oninput="updatePromptPreview(); trackExFill()">
+                </div>
+                <div id="p2-ex4-row" class="hidden-stage flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 text-[9px] font-black flex items-center justify-center flex-shrink-0">4</span>
+                    <input id="p2-ex4" class="ex-input" placeholder="예시 추가 (선택사항)" oninput="updatePromptPreview()">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                    <div id="ex-dots" class="flex gap-1">
+                        <div class="ex-dot w-2 h-2 rounded-full bg-white/10 transition-all duration-300"></div>
+                        <div class="ex-dot w-2 h-2 rounded-full bg-white/10 transition-all duration-300"></div>
+                        <div class="ex-dot w-2 h-2 rounded-full bg-white/10 transition-all duration-300"></div>
+                    </div>
+                    <span id="ex-count-txt" class="text-[10px] text-slate-500 ml-1">0 / 3 입력됨</span>
+                </div>
+                <button id="add-ex4-btn" onclick="toggleEx4()" class="hidden-stage text-[10px] text-indigo-400 hover:text-indigo-300 font-bold transition-colors">+ 예시 추가</button>
+            </div>
+
+            <button onclick="submitStage2()" class="btn-primary w-full py-5 text-lg">패턴 학습시키기</button>
         </div>
 
         <!-- Stage 3: Temperature -->
         <div id="stage-3" class="stage-ui hidden-stage space-y-4">
-            <h4 class="text-xl font-black mb-2">감정 조절 (Temp)</h4>
-            <p class="text-xs text-slate-400 leading-relaxed">대화의 온도를 조절하여 그녀의 반응을 제어하세요. (0.1~1.0)</p>
-            <div class="py-8 px-2">
-                <input type="range" id="p3-temp" min="0" max="1" step="0.1" value="0.5"
-                    class="w-full h-2 bg-indigo-900 rounded-lg appearance-none cursor-pointer accent-indigo-400"
-                    oninput="updateTemp(this.value)">
-                <div class="flex justify-between mt-2 text-[10px] font-bold text-slate-500">
-                    <span>LOGICAL (0.1)</span>
-                    <span id="temp-val" class="text-indigo-400 text-lg">0.5</span>
-                    <span>CREATIVE (1.0)</span>
+            <h4 class="text-xl font-black">온도 설정 (Temperature)</h4>
+
+            <div class="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+                <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">💡 Temperature 원리</p>
+                <div class="grid grid-cols-3 gap-1.5 text-[10px] text-center">
+                    <div class="p-2 bg-black/20 rounded-xl">
+                        <div class="text-blue-400 font-bold">낮음 ≤0.3</div>
+                        <div class="text-slate-500 mt-0.5">논리적·사무적<br>감성 없음</div>
+                    </div>
+                    <div class="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                        <div class="text-emerald-400 font-bold">✓ 0.4~0.8</div>
+                        <div class="text-slate-400 mt-0.5">진심·감성적<br>추천 범위</div>
+                    </div>
+                    <div class="p-2 bg-black/20 rounded-xl">
+                        <div class="text-orange-400 font-bold">높음 ≥0.9</div>
+                        <div class="text-slate-500 mt-0.5">엉뚱·횡설수설<br>신뢰성 감소</div>
+                    </div>
                 </div>
             </div>
-            <div id="temp-preview-box" class="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <span class="text-[9px] font-bold text-indigo-400 uppercase">예상 대화</span>
-                <p id="temp-preview" class="text-sm italic text-slate-400 mt-1">"온도를 조절하면 대사가 변합니다..."</p>
+
+            <div class="space-y-2 px-1">
+                <input type="range" id="p3-temp" min="0.1" max="1.0" step="0.1" value="0.5"
+                    class="w-full cursor-pointer accent-indigo-400"
+                    oninput="updateTemp(this.value); updatePromptPreview()">
+                <div class="h-1.5 rounded-full overflow-hidden" style="background:linear-gradient(to right,#60a5fa 0%,#818cf8 35%,#a78bfa 60%,#f97316 88%,#ef4444 100%)"></div>
+                <div class="flex justify-between text-[10px] font-bold">
+                    <span class="text-blue-400">논리적 0.1</span>
+                    <span id="temp-val" class="text-indigo-300 text-base font-black">0.5</span>
+                    <span class="text-orange-400">창의적 1.0</span>
+                </div>
             </div>
-            <button onclick="submitStage3()" class="btn-primary w-full mt-4">온도 설정</button>
+
+            <div id="temp-preview-box" class="p-3 bg-white/5 border border-white/10 rounded-2xl">
+                <div class="flex items-center gap-2 mb-2">
+                    <span id="temp-zone-icon" class="text-base">💜</span>
+                    <span id="temp-zone-label" class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">균형잡힌 · 자연스러운</span>
+                </div>
+                <p id="temp-preview" class="text-sm italic text-slate-300 leading-relaxed">"온도를 조절하면 대사가 변합니다..."</p>
+            </div>
+
+            <div>
+                <label class="text-[11px] text-indigo-300 font-black uppercase tracking-widest ml-1 mb-1.5 block">이 온도를 선택한 이유 <span class="text-slate-500 normal-case font-normal">(선택)</span></label>
+                <input id="p3-reason" class="ex-input w-full" placeholder="예: 감성적이지만 횡설수설하지 않는 적정 수준"
+                    oninput="gameState.prompt.tempReason = this.value; updatePromptPreview()">
+            </div>
+
+            <button onclick="submitStage3()" class="btn-primary w-full py-5 text-lg">온도 적용하기</button>
+        </div>
+
+        <!-- Stage 5: Chain of Thought (Bonus) -->
+        <div id="stage-5" class="stage-ui hidden-stage space-y-4">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-black text-violet-400 uppercase tracking-widest">✨ Bonus Stage</span>
+            </div>
+            <h4 class="text-xl font-black leading-tight">Chain of Thought (CoT)</h4>
+
+            <!-- 개념 카드 -->
+            <div class="p-3 rounded-2xl bg-violet-500/10 border border-violet-500/20">
+                <p class="text-[10px] font-black text-violet-400 uppercase tracking-widest mb-2">💡 Chain of Thought 원리</p>
+                <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="p-2 bg-black/20 rounded-xl">
+                        <div class="text-slate-400 font-bold mb-1">단순 답변 요청</div>
+                        <div class="text-slate-500">"나를 설득해줘"<br>→ 두루뭉술한 대답</div>
+                    </div>
+                    <div class="p-2 bg-violet-500/10 border border-violet-500/30 rounded-xl">
+                        <div class="text-violet-400 font-bold mb-1">CoT 적용 ✓</div>
+                        <div class="text-slate-400">단계별 논리 제시<br>→ 명확한 설득력</div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-[11px] text-slate-400 leading-relaxed">지금까지 배운 <span class="text-violet-300 font-bold">모든 기법</span>을 단계별로 연결해 왜 이 과정이 의미 있었는지 설득하세요. 최소 2단계 이상, 각 단계가 다음 단계의 근거가 되어야 합니다.</p>
+
+            <!-- 단계별 도움말 -->
+            <div class="p-3 bg-white/3 rounded-xl border border-white/8">
+                <p class="text-[10px] text-slate-500 mb-2 font-bold">구성 가이드 — 지금까지의 여정 총정리</p>
+                <div class="space-y-1 text-[10px] text-slate-500">
+                    <div><span class="text-indigo-400 font-bold">Step 1:</span> RCTF — 정체성을 정의한 이유</div>
+                    <div><span class="text-purple-400 font-bold">Step 2:</span> Few-shot — 취향을 학습한 이유</div>
+                    <div><span class="text-amber-400 font-bold">Step 3:</span> Temperature — 온도를 조율한 이유</div>
+                    <div><span class="text-rose-400 font-bold">Step 4:</span> Negative — 금기어로 진심을 남긴 이유</div>
+                </div>
+            </div>
+
+            <textarea id="p5-cot" placeholder="Step 1: 나는 Role(정체성)을 정의해서...&#10;Step 2: Few-shot으로 취향을 학습해서...&#10;Step 3: Temperature 0.7로 감성을 맞춰서...&#10;Step 4: Negative Prompt로 진심만 남겨서..." style="min-height:160px;" oninput="updatePromptPreview(); updateCotPreview()"></textarea>
+
+            <!-- CoT 단계 카운터 -->
+            <div id="cot-step-count" class="text-[10px] text-slate-500 text-right">단계 수: 0 / 최소 2단계</div>
+
+            <button onclick="submitStage5()" class="btn-primary w-full py-5 text-lg">논리로 설득하기</button>
         </div>
 
         <!-- Stage 4: Negative Prompt -->
-        <div id="stage-4" class="stage-ui hidden-stage space-y-6">
-            <h4 class="text-2xl font-black mb-4">금기어 설정</h4>
-            <p class="text-sm text-slate-400 leading-relaxed mb-4">오해를 풀기 위해 절대 하지 말아야 할 말이나 행동을 정의하세요.</p>
-            <textarea id="p4-negative" placeholder="예: 변명 금지, '하지만'이라는 단어 금지..."></textarea>
-            <button onclick="submitStage4()" class="btn-primary w-full mt-6 py-6 text-xl">부정 프롬프트 적용</button>
+        <div id="stage-4" class="stage-ui hidden-stage space-y-4">
+            <h4 class="text-xl font-black">네거티브 프롬프트 (Negative)</h4>
+
+            <div class="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20">
+                <p class="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-2">💡 Negative Prompt 원리</p>
+                <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <div class="p-2 bg-black/20 rounded-xl">
+                        <div class="text-slate-400 font-bold mb-1">제약 없이 사과</div>
+                        <div class="text-slate-500">"하지만 나도..." 같은<br>변명이 섞여들어옴</div>
+                    </div>
+                    <div class="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                        <div class="text-emerald-400 font-bold mb-1">Negative 설정 ✓</div>
+                        <div class="text-slate-400">금기어 정의 →<br>깔끔한 진심만 남음</div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-[11px] text-slate-400 leading-relaxed">사과할 때 절대 쓰면 안 되는 말이나 행동을 정의하세요. 콤마로 구분해 여러 개 입력 가능합니다.</p>
+
+            <div>
+                <p class="text-[10px] text-slate-500 mb-2 ml-1">빠른 추가</p>
+                <div class="flex flex-wrap gap-1.5">
+                    <button onclick="addNegChip(0)" class="px-3 py-1 bg-rose-500/15 border border-rose-500/30 rounded-full text-[10px] text-rose-300 hover:bg-rose-500/30 transition-all">'하지만' 금지</button>
+                    <button onclick="addNegChip(1)" class="px-3 py-1 bg-rose-500/15 border border-rose-500/30 rounded-full text-[10px] text-rose-300 hover:bg-rose-500/30 transition-all">변명 금지</button>
+                    <button onclick="addNegChip(2)" class="px-3 py-1 bg-rose-500/15 border border-rose-500/30 rounded-full text-[10px] text-rose-300 hover:bg-rose-500/30 transition-all">자책 금지</button>
+                    <button onclick="addNegChip(3)" class="px-3 py-1 bg-rose-500/15 border border-rose-500/30 rounded-full text-[10px] text-rose-300 hover:bg-rose-500/30 transition-all">감정 회피 금지</button>
+                    <button onclick="addNegChip(4)" class="px-3 py-1 bg-rose-500/15 border border-rose-500/30 rounded-full text-[10px] text-rose-300 hover:bg-rose-500/30 transition-all">논리 설명 금지</button>
+                </div>
+            </div>
+
+            <textarea id="p4-negative" style="min-height:90px;" placeholder="예: '하지만' 금지, 변명 금지, 논리적 설명 금지..."
+                oninput="updatePromptPreview(); updateNegTags()"></textarea>
+
+            <div id="neg-tags" class="flex flex-wrap gap-1.5 min-h-5"></div>
+
+            <button onclick="submitStage4()" class="btn-primary w-full py-5 text-lg">금기어 설정 완료</button>
         </div>
 
-        <div class="mt-8 pt-8 border-t border-white/10 flex gap-4">
+        <!-- 누적 프롬프트 미리보기 -->
+        <div id="prompt-preview-box" class="mt-6 hidden-stage">
+            <div class="text-[9px] font-black tracking-widest text-indigo-400 uppercase mb-2 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse inline-block"></span>
+                누적 프롬프트 현황
+            </div>
+            <pre id="prompt-preview-text" class="w-full p-3 bg-black/30 border border-indigo-500/20 rounded-xl text-[11px] text-emerald-300/80 font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto"></pre>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-white/10 flex gap-4">
             <button onclick="showHint(gameState.stage)"
                 class="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/10 transition-all">힌트
                 보기</button>
@@ -657,10 +1064,11 @@
     <div id="transition-overlay">
         <h2 id="transition-text" class="text-4xl font-black tracking-tighter text-indigo-400">LOADING...</h2>
     </div>
+    <div id="flash-overlay"></div>
 
     <div id="report-modal"
-        class="fixed inset-0 z-[700] flex items-center justify-center p-8 bg-slate-900/90 backdrop-blur-2xl hidden-stage">
-        <div class="glass-panel max-w-lg w-full p-10 border-indigo-500/30">
+        class="fixed inset-0 z-[700] bg-slate-900/90 backdrop-blur-xl hidden-stage">
+        <div class="glass-panel max-w-lg w-full p-10 border-indigo-500/30 my-8">
             <div class="text-emerald-400 text-4xl mb-6"><i class="fas fa-check-circle"></i></div>
             <h2 id="report-title" class="text-3xl font-black mb-4 uppercase">MISSION COMPLETE</h2>
             <p id="report-content" class="text-slate-400 leading-relaxed mb-8">성공적으로 프롬프트를 주입했습니다.</p>
@@ -690,6 +1098,19 @@
         </div>
     </div>
 
+    <!-- 호감도 50% 이벤트 모달 -->
+    <div id="affection-event-modal" class="fixed inset-0 z-[800] flex items-center justify-center p-8 bg-slate-950/90 backdrop-blur-xl hidden-stage">
+        <div class="glass-panel max-w-lg w-full overflow-hidden">
+            <img id="event-img" src="https://images.unsplash.com/photo-1519692933481-e162a57d6721?auto=format&fit=crop&q=80&w=800" class="w-full h-52 object-cover">
+            <div class="p-8">
+                <div class="text-xs font-black text-rose-400 uppercase tracking-widest mb-3">✨ Special Event</div>
+                <p id="event-text" class="text-lg text-white leading-relaxed mb-6"></p>
+                <p id="event-dialogue" class="text-sm text-slate-300 italic leading-relaxed mb-8 p-4 bg-white/5 rounded-xl border-l-2 border-rose-400"></p>
+                <button onclick="closeAffectionEvent()" class="btn-primary w-full py-4">계속하기</button>
+            </div>
+        </div>
+    </div>
+
     <div id="hint-modal"
         class="fixed inset-0 z-[700] flex items-center justify-center p-8 bg-black/80 backdrop-blur-md hidden-stage">
         <div class="glass-panel max-w-md w-full p-8">
@@ -699,7 +1120,33 @@
         </div>
     </div>
 
-    <!-- Final Ending Screen -->
+    <!-- Review Quiz Modal -->
+    <div id="quiz-modal" class="fixed inset-0 z-[750] flex items-center justify-center p-8 bg-slate-950/95 backdrop-blur-xl hidden-stage">
+        <div class="glass-panel max-w-lg w-full p-10 border-indigo-500/30 will-change-transform">
+            <div class="mb-8">
+                <span class="px-3 py-1 bg-rose-500/20 text-rose-400 text-[10px] font-black rounded-full uppercase tracking-widest">Review Quiz</span>
+                <h3 id="quiz-question" class="text-2xl font-black mt-4 leading-tight">질문이 여기에 표시됩니다.</h3>
+            </div>
+            <div id="quiz-options" class="flex flex-col gap-4 mb-8">
+                <!-- Options will be injected here -->
+            </div>
+            <div id="quiz-feedback" class="hidden-stage p-6 rounded-2xl mb-8 text-sm font-bold">
+                <!-- Feedback message -->
+            </div>
+            <button id="quiz-next-btn" class="btn-primary w-full hidden-stage">다음 단계로 가기</button>
+        </div>
+    </div>
+
+    <!-- Affection Toast Notification -->
+    <div id="affection-toast-container"></div>
+
+    <!-- Toast Notification (Copy Success) -->
+    <div id="toast-container">
+        <div class="toast-content">
+            <i class="fas fa-check-circle"></i>
+            <span id="toast-message">프롬프트가 클립보드에 복사되었습니다!</span>
+        </div>
+    </div>
     <div id="ending-screen"
         class="fixed inset-0 z-[800] flex items-center justify-center p-8 bg-slate-950 hidden-stage overflow-y-auto">
         <div class="max-w-4xl w-full py-20"> <!-- 여백을 12에서 20으로 확장 -->
@@ -741,6 +1188,7 @@
                         <p id="mistake-summary">총 시행착오 횟수: 0회</p>
                         <p id="cheat-warning" class="text-rose-400 hidden">⚠️ 복사 행위가 감지되어 창의성 등급이 하락했습니다.</p>
                     </div>
+                    <div id="bad-ending-analysis" class="hidden-stage mt-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl"></div>
                 </div>
             </div>
 
@@ -771,9 +1219,12 @@
             </div>
 
             <div class="flex flex-col md:flex-row gap-6">
-                <button onclick="location.reload()"
+                <button onclick="clearSave(); location.reload()"
                     class="flex-1 py-6 bg-white/5 border border-white/10 text-white font-black rounded-3xl text-2xl hover:bg-white/10 transition-all">다시
                     도전하기</button>
+                <button onclick="openGallery()"
+                    class="flex-1 py-6 bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 font-black rounded-3xl text-2xl hover:bg-emerald-600/30 transition-all">
+                    <i class="fas fa-images mr-2"></i>갤러리 보기</button>
                 <button onclick="location.href='vibecoding.html'"
                     class="flex-[2] py-6 bg-indigo-600 text-white font-black rounded-3xl text-2xl hover:bg-indigo-500 transition-all shadow-[0_0_50px_rgba(79,70,229,0.4)]">트레이닝
                     허브로 이동</button>
@@ -782,6 +1233,38 @@
     </div>
 
     <script>
+        // 페이지 로드 시 세이브 데이터 확인
+        window.addEventListener('DOMContentLoaded', () => checkContinue());
+
+        // 인트로 배경 초기화
+        (function() {
+            const bg = { url: './assets/bg_library_sunset_1777880660629.png', tint: 'rgba(15,23,42,0.55)' };
+            const layerA = document.getElementById('bg-layer-a');
+            if (layerA) layerA.style.backgroundImage = `linear-gradient(${bg.tint}, ${bg.tint}), url('${bg.url}')`;
+        })();
+
+        const BG = {
+            intro: { url: './assets/bg_library_sunset_1777880660629.png', tint: 'rgba(15,23,42,0.55)' },
+            1:     { url: './assets/bg_library_sunset_1777880660629.png', tint: 'rgba(15,23,42,0.42)' },
+            2:     { url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=75&w=1280', tint: 'rgba(10,8,20,0.52)' },
+            3:     { url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&q=75&w=1280', tint: 'rgba(25,15,5,0.50)' },
+            4:     { url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=75&w=1280', tint: 'rgba(5,5,20,0.65)' },
+            5:     { url: 'https://images.unsplash.com/photo-1499678329028-101435549a4e?auto=format&fit=crop&q=75&w=1280', tint: 'rgba(5,15,10,0.55)' },
+        };
+        let activeBgLayer = 'a';
+
+        function switchBackground(key) {
+            const bg = BG[key];
+            if (!bg) return;
+            const next = activeBgLayer === 'a' ? 'b' : 'a';
+            const layerNext = document.getElementById(`bg-layer-${next}`);
+            const layerCurr = document.getElementById(`bg-layer-${activeBgLayer}`);
+            layerNext.style.backgroundImage = `linear-gradient(${bg.tint}, ${bg.tint}), url('${bg.url}')`;
+            anime({ targets: layerNext, opacity: [0, 1], duration: 1400, easing: 'easeInOutQuad' });
+            anime({ targets: layerCurr, opacity: 0, duration: 1400, easing: 'easeInOutQuad' });
+            activeBgLayer = next;
+        }
+
         const assets = {
             iris: { normal: './assets/iris_smile_1777880569830.png', smile: './assets/iris_smile_1777880569830.png', blush: './assets/iris_blush_1777880536398.png', angry: './assets/iris_angry_1777880552712.png' },
             kyle: { normal: './assets/kyle_smile_1777880632486.png', smile: './assets/kyle_smile_1777880632486.png', blush: './assets/kyle_blush_1777880599080.png', angry: './assets/kyle_angry_1777880617217.png' }
@@ -792,15 +1275,60 @@
             stage: 0,
             affection: 20,
             personality: '',
-            mistakes: { 1: 0, 2: 0, 3: 0, 4: 0 },
-            isCheating: { 1: false, 2: false, 3: false, 4: false }
+            mistakes: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            isCheating: { 1: false, 2: false, 3: false, 4: false, 5: false },
+            stageChoices: {},
+            affectionEventFired: false,
+            lastGeneratedPrompt: '',
+            temp: 0.5,
+            prompt: {
+                role: '', context: '', task: '', format: '',
+                examples: [],
+                temperature: 0.5, tempReason: '',
+                negatives: [],
+                cot: []
+            }
         };
 
         const BEST_PRACTICES = {
-            1: "너는 나의 다정한 소꿉친구야. 지금 우리는 방과 후 노을이 지는 교실에 단둘이 있어. 나에게 설레는 대화를 한 마디 해줘. 말투는 반말로 짧게 부탁해.",
-            2: "나는 이런 분위기의 카페를 좋아해. [1. 조용한 북카페, 2. 나무 향 나는 따뜻한 카페, 3. 소파가 편한 아늑한 카페]. 이 예시들을 참고해서 네가 가고 싶은 곳을 골라줘.",
-            3: "지금은 고백하는 상황이야. 너무 딱딱하게 사실만 말하지 말고, 온도를 0.7 정도로 높여서 아주 감성적이고 진심 어린 대답을 해줘.",
-            4: "나에게 사과를 해줘. 단, '하지만'이나 '변명' 같은 단어는 절대 쓰지 말고 오직 내 기분에 공감한다는 말만 진지하게 해줘."
+            1: "[Role] 나의 다정하고 솔직한 소꿉친구\n[Context] 방과 후 노을이 지는 교실, 우리 둘만 남은 상황\n[Task] 설레는 첫마디를 건네줘\n[Format] 반말로, 2~3문장으로 짧게",
+            2: "[Examples]\n  1. 조용한 북카페, 책 냄새 나는 공간\n  2. 나무 향 나는 따뜻한 인테리어 카페\n  3. 소파가 편안한 아늑한 분위기",
+            3: "[Temperature: 0.7] — 감성적이지만 논리적 일관성이 유지되는 황금 구간",
+            4: "[금지사항]\n  - '하지만' 금지\n  - 변명 금지\n  - 논리적 설명 금지",
+            5: "[Chain of Thought]\nStep 1: RCTF로 '다정한 소꿉친구' 정체성을 정의해서 우리만의 대화 방식을 만들었어.\nStep 2: Few-shot으로 네가 좋아하는 공간 3가지를 학습해서 네 취향 패턴을 파악했어.\nStep 3: Temperature 0.7로 논리도 감성도 놓치지 않는 균형 잡힌 대화를 설계했어.\nStep 4: Negative Prompt로 '하지만'과 변명을 금지해서 진심만 남겼어 — 이것이 내가 너를 위한 최선이야."
+        };
+
+        const QUIZ_DATA = {
+            1: {
+                question: "프롬프트의 4대 요소(RCTF) 중, AI에게 부여할 '정체성이나 직업'을 정의하는 요소는?",
+                options: ["Role (역할)", "Context (상황)", "Task (임무)", "Format (형식)"],
+                answer: 0,
+                feedback: "정답입니다! Role을 통해 AI가 어떤 입장에서 말해야 할지 정의할 수 있습니다."
+            },
+            2: {
+                question: "예시를 통해 패턴을 학습시키는 '퓨샷(Few-shot)' 기법에서 가장 효과적인 예시의 개수는?",
+                options: ["0개 (설명만 충분하면 됨)", "1개 (하나면 충분함)", "3~5개 (다양한 패턴 학습)", "100개 이상 (많을수록 무조건 좋음)"],
+                answer: 2,
+                feedback: "딩동댕! 3~5개 정도의 구체적인 예시를 줄 때 AI는 가장 정확하게 패턴을 파악합니다."
+            },
+            3: {
+                question: "Temperature 값을 0.1에 가깝게 아주 낮게 설정하면 답변은 어떻게 변할까요?",
+                options: ["매우 창의적이고 엉뚱한 답변을 함", "일관성 있고 논리적인 답변을 함", "답변 속도가 느려짐", "반말과 존댓말을 섞어서 사용함"],
+                answer: 1,
+                feedback: "맞습니다! 낮은 온도는 AI가 가장 확률이 높은 단어만 선택하게 하여 논리적이고 일관된 응답을 만듭니다."
+            },
+            4: {
+                question: "부정 프롬프트(Negative Prompt)를 사용하는 가장 큰 이유는 무엇인가요?",
+                options: ["답변의 길이를 길게 만들기 위해", "AI에게 칭찬을 하기 위해", "특정 단어나 스타일을 답변에서 배제하기 위해", "배경 이미지를 바꾸기 위해"],
+                answer: 2,
+                feedback: "정답! Negative Prompt는 AI가 '하지 말아야 할 것'을 명확히 정의하여 오류를 줄여줍니다."
+            },
+            5: {
+                question: "Chain of Thought(CoT) 기법의 핵심은 무엇인가요?",
+                options: ["짧고 간결하게 명령하기", "AI에게 단계별 사고 과정을 요구하기", "영어로 프롬프트 작성하기", "감정적인 표현 극대화하기"],
+                answer: 1,
+                feedback: "정답! CoT는 AI에게 '단계별로 생각해줘'라고 요청해 논리적이고 일관된 답변을 유도하는 기법입니다."
+            }
         };
 
         const MASTER_PROMPT_TEMPLATES = {
@@ -823,6 +1351,13 @@
 - 부정 프롬프트: 무의미한 반복적 조언 금지. 근거 없는 사과나 변명 데이터 거부.
 - 임무: 학교 복도나 교실 배경으로 대화를 진행하며, 주인공이 원칙을 지키면서도 진심을 전하는지 분석하여 수치를 조정하고 반응해줘.`
         };
+
+        function updateStageProgress(n) {
+            document.querySelectorAll('.stage-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i + 1 === n);
+                dot.classList.toggle('done', i + 1 < n);
+            });
+        }
 
         function showCharSelect() {
             anime({
@@ -871,18 +1406,43 @@
         let dialogueIdx = 0;
         let isTyping = false;
         let dialogueCallback = null;
+        let typingTimer = null;
+        const TYPING_SPEED = 32;
+
+        function preloadBgImages() {
+            Object.values(BG).forEach(bg => {
+                const img = new Image();
+                img.src = bg.url;
+            });
+        }
 
         function startGame() {
+            preloadBgImages();
             gameState.stage = 1;
+            switchBackground(1);
+            document.getElementById('stage-progress').classList.remove('hidden-stage');
+            updateStageProgress(1);
             document.getElementById('char-box').classList.remove('hidden-stage');
             document.getElementById('dialogue-box').classList.remove('hidden-stage');
             document.getElementById('dialogue-box').classList.remove('centered');
             document.getElementById('dialogue-box').classList.add('with-panel');
             document.getElementById('action-panel').classList.remove('hidden-stage');
+            document.getElementById('action-panel').classList.add('locked-panel');
 
             const introLines = gameState.partner === 'iris' ?
-                ["(도서관 구석, 차가운 눈빛의 아이리스가 책을 읽고 있다...)", "나: 저기, 잠깐 시간 있어?", "아이리스: ...용건만 간단히 해. 난 비논리적인 대화는 딱 질색이니까."] :
-                ["(복도 끝, 엄격한 표정의 카일이 명찰을 확인하고 있다...)", "나: 안녕, 카일!", "카일: 학생, 복도에서는 우측통행이야. 그리고 질문이 있다면 공식 절차를 밟아줬으면 하는데."];
+                [
+                    "(도서관 구석, 차가운 눈빛의 아이리스가 책을 읽다 고개를 든다...)",
+                    "나: 저기... 나랑 이야기 좀 나눌 수 있을까?",
+                    "아이리스: ...비논리적인 대화는 싫어. 나를 제대로 이해하고 싶다면, 먼저 4가지를 알려줘.",
+                    "아이리스: 내 역할(Role), 우리의 상황(Context), 네가 원하는 것(Task), 대화의 형식(Format). 이 4가지가 갖춰져야 대화를 시작할 수 있어.",
+                    "(나: RCTF! 좋은 프롬프트의 4가지 기본 요소야. 오른쪽 패널을 채워서 아이리스를 깨워보자.)"
+                ] :
+                [
+                    "(복도 끝, 엄격한 표정의 카일이 서류를 검토하다 나를 바라본다...)",
+                    "카일: 학생, 나에게 접근하려면 먼저 프로토콜을 따라야 해.",
+                    "카일: 내 역할(Role), 대화의 맥락(Context), 요청 사항(Task), 응답 형식(Format)... 이 4가지가 없으면 대화를 거부하겠어.",
+                    "(나: RCTF! 좋은 프롬프트의 4가지 기본 요소야. 오른쪽 패널을 채워서 카일을 설득해보자.)"
+                ];
             playDialogue(introLines);
         }
 
@@ -894,8 +1454,10 @@
         }
 
         function advanceDialogue() {
-            if (isTyping) return;
-
+            if (isTyping) {
+                skipTyping();
+                return;
+            }
             if (dialogueIdx < dialogueQueue.length) {
                 const line = dialogueQueue[dialogueIdx];
                 dialogueIdx++;
@@ -910,6 +1472,27 @@
             }
         }
 
+        function skipTyping() {
+            if (!isTyping) return;
+            if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
+            const line = dialogueQueue[dialogueIdx - 1];
+            if (!line) return;
+            const container = document.getElementById('dialogue-text');
+            container.classList.remove('typing-active');
+            const safeLine = String(line);
+            if (safeLine.startsWith('나:')) {
+                container.innerHTML = `<span class="speaker-me">나:</span> <span>${safeLine.slice(2).trim()}</span>`;
+            } else if (safeLine.startsWith('아이리스:')) {
+                container.innerHTML = `<span class="speaker-char">아이리스:</span> <span>${safeLine.slice(5).trim()}</span>`;
+            } else if (safeLine.startsWith('카일:')) {
+                container.innerHTML = `<span class="speaker-char">카일:</span> <span>${safeLine.slice(3).trim()}</span>`;
+            } else {
+                container.innerHTML = `<span class="speaker-narrator">${safeLine}</span>`;
+            }
+            isTyping = false;
+            onTypingDone();
+        }
+
         function sanitizeHTML(str) {
             const div = document.createElement('div');
             div.textContent = str;
@@ -918,56 +1501,104 @@
 
         function typeLine(line) {
             const container = document.getElementById('dialogue-text');
-            const indicator = document.getElementById('next-indicator');
-            const guide = document.getElementById('next-action-guide');
+            document.getElementById('next-indicator').classList.add('hidden-stage');
+            document.getElementById('next-action-guide').classList.add('hidden-stage');
 
+            if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
             isTyping = true;
-            indicator.classList.add('hidden-stage');
-            guide.classList.add('hidden-stage');
 
-            let safeLine = String(line);
-            let formattedLine = safeLine;
+            const safeLine = String(line);
+            let prefix = '', text = safeLine, isNarrator = false;
 
             if (safeLine.startsWith('나:')) {
-                formattedLine = `<span class="speaker-me">나:</span> ${safeLine.replace('나:', '')}`;
-            } else if (safeLine.startsWith('아이리스:') || safeLine.startsWith('카일:')) {
-                const name = safeLine.split(':')[0];
-                formattedLine = `<span class="speaker-char">${name}:</span> ${safeLine.replace(name + ':', '')}`;
-            } else if (safeLine.startsWith('(')) {
-                formattedLine = `<span class="speaker-narrator">${safeLine}</span>`;
+                prefix = '<span class="speaker-me">나:</span> ';
+                text = safeLine.slice(2).trim();
+            } else if (safeLine.startsWith('아이리스:')) {
+                prefix = '<span class="speaker-char">아이리스:</span> ';
+                text = safeLine.slice(5).trim();
+            } else if (safeLine.startsWith('카일:')) {
+                prefix = '<span class="speaker-char">카일:</span> ';
+                text = safeLine.slice(3).trim();
+            } else {
+                isNarrator = true;
             }
 
-            container.innerHTML = formattedLine;
-            isTyping = false;
+            container.innerHTML = prefix;
+            container.classList.add('typing-active');
+            const textSpan = document.createElement('span');
+            if (isNarrator) textSpan.className = 'speaker-narrator';
+            container.appendChild(textSpan);
 
+            let i = 0;
+            const tick = () => {
+                if (i < text.length) {
+                    textSpan.textContent += text[i++];
+                    typingTimer = setTimeout(tick, TYPING_SPEED);
+                } else {
+                    typingTimer = null;
+                    isTyping = false;
+                    container.classList.remove('typing-active');
+                    onTypingDone();
+                }
+            };
+            tick();
+        }
+
+        function onTypingDone() {
+            const indicator = document.getElementById('next-indicator');
+            const guide = document.getElementById('next-action-guide');
             if (dialogueIdx < dialogueQueue.length) {
                 indicator.classList.remove('hidden-stage');
+                document.getElementById('action-panel').classList.add('locked-panel');
+            } else if (!dialogueCallback) {
+                const stageGuides = {
+                    1: "Role → Context → Task → Format, 4가지를 모두 구체적으로 채워주세요!",
+                    2: "당신의 취향을 알 수 있는 예시를 3개 이상 콤마로 구분해 입력하세요!",
+                    3: "진심을 전하기 위해 슬라이더로 대화의 온도를 조절하세요!",
+                    4: "절대 하지 말아야 할 행동(Negative)을 입력해 오해를 푸세요!",
+                    5: "논리적인 단계(Step 1, 2, 3...)로 진심을 전달하세요!"
+                };
+                document.getElementById('guide-msg').innerText = stageGuides[gameState.stage] || "오른쪽 창을 확인하세요!";
+                guide.classList.remove('hidden-stage');
+                document.getElementById('action-panel').classList.remove('locked-panel');
+                document.getElementById('action-panel').classList.add('pulse-sidebar');
             } else {
-                if (!dialogueCallback) {
-                    const stageGuides = {
-                        1: "캐릭터의 정체성(RCTF) 4가지를 모두 입력하고 버튼을 누르세요!",
-                        2: "당신의 취향을 알 수 있는 카페 예시들을 풍부하게 입력하세요!",
-                        3: "진심을 전하기 위해 슬라이더로 대화의 온도를 조절하세요!",
-                        4: "절대 하지 말아야 할 행동(Negative)을 입력해 오해를 푸세요!"
-                    };
-                    document.getElementById('guide-msg').innerText = stageGuides[gameState.stage] || "오른쪽 창을 확인하세요!";
-                    guide.classList.remove('hidden-stage');
-                    document.getElementById('action-panel').classList.add('pulse-sidebar');
-                } else {
-                    indicator.classList.remove('hidden-stage');
-                }
+                indicator.classList.remove('hidden-stage');
             }
         }
 
         function updateAffection(val) {
+            const prev = gameState.affection;
             gameState.affection = Math.min(100, Math.max(0, gameState.affection + val));
             document.getElementById('affection-fill').style.width = gameState.affection + '%';
             document.getElementById('affection-text').innerText = gameState.affection + '%';
-            showToast(val);
+            showAffectionToast(val);
+            // 50% 이벤트 트리거 (한 번만)
+            if (!gameState.affectionEventFired && prev < 50 && gameState.affection >= 50) {
+                gameState.affectionEventFired = true;
+                setTimeout(() => showAffectionEvent(), 1200);
+            }
         }
 
-        function showToast(val) {
-            const container = document.getElementById('toast-container');
+        function showAffectionEvent() {
+            const name = gameState.partner === 'iris' ? '아이리스' : '카일';
+            const dialogue = gameState.partner === 'iris'
+                ? `"...갑자기 비가 오네. 우산 없어? 잠깐만." *조용히 자기 우산을 반쪽 건네며* "비 맞으면 효율이 떨어진다는 통계가 있거든. 그러니까 이건 논리적인 판단이야."`
+                : `"학교 규정상 우산 공유는 안전 수칙 제7조에 해당합니다." *잠깐 멈추더니* "...하지만 오늘은 예외를 적용하겠습니다. 공식적으로."`;
+            document.getElementById('event-text').innerText = "갑자기 비가 내리기 시작했다. 우리는 처마 밑에서 함께 비를 피했고, 서로의 어깨가 닿을 듯 가까워졌다.";
+            document.getElementById('event-dialogue').innerText = `${name}: ${dialogue}`;
+            unlockGallery('ev1');
+            document.getElementById('affection-event-modal').classList.remove('hidden-stage');
+            anime({ targets: '#affection-event-modal .glass-panel', scale: [0.9, 1], opacity: [0, 1], duration: 600, easing: 'easeOutBack' });
+        }
+
+        function closeAffectionEvent() {
+            anime({ targets: '#affection-event-modal .glass-panel', scale: [1, 0.95], opacity: [1, 0], duration: 400, easing: 'easeInQuad',
+                complete: () => document.getElementById('affection-event-modal').classList.add('hidden-stage') });
+        }
+
+        function showAffectionToast(val) {
+            const container = document.getElementById('affection-toast-container');
             const toast = document.createElement('div');
             const isUp = val > 0;
 
@@ -1006,6 +1637,15 @@
             }, 300);
         }
 
+        function flashScreen() {
+            const overlay = document.getElementById('flash-overlay');
+            anime.timeline()
+                .add({ targets: overlay, opacity: [0, 0.7], duration: 150, easing: 'easeInQuad' })
+                .add({ targets: overlay, opacity: 0, duration: 250, easing: 'easeOutQuad' })
+                .add({ targets: overlay, opacity: [0, 0.4], duration: 150, easing: 'easeInQuad' })
+                .add({ targets: overlay, opacity: 0, duration: 350, easing: 'easeOutQuad' });
+        }
+
         function showReport(stage, callback) {
             const modal = document.getElementById('report-modal');
             const title = document.getElementById('report-title');
@@ -1014,17 +1654,33 @@
             const btn = document.getElementById('report-next-btn');
 
             const reports = {
-                1: { title: "STAGE 1: 정체성 주입 완료", content: "프롬프트의 4대 요소인 <b>RCTF(Role, Context, Task, Format)</b>를 모두 사용하여 AI의 페르소나를 성공적으로 구축했습니다.", tip: "역할과 상황이 구체적일수록 AI의 몰입도가 높아집니다.", sample: BEST_PRACTICES[1] },
-                2: { title: "STAGE 2: 데이터 학습 완료", content: "예시 데이터(Few-shot)를 제공함으로써 AI가 당신의 취향을 완벽히 이해하도록 만들었습니다.", tip: "예시는 최소 3개 이상 줄 때 가장 좋은 패턴을 찾아냅니다.", sample: BEST_PRACTICES[2] },
-                3: { title: "STAGE 3: 감정의 온도 조절 완료", content: "<b>Temperature</b> 값을 조절하여 답변의 무작위성을 제어했습니다.", tip: "연애 상담에는 0.7~0.8 정도의 약간 높은 온도가 적당합니다.", sample: BEST_PRACTICES[3] },
-                4: { title: "STAGE 4: 금기어 설정 완료", content: "<b>부정 프롬프트(Negative Prompt)</b>를 사용하여 AI가 답변에서 제외해야 할 요소를 지정했습니다.", tip: "하지 말아야 할 것을 명확히 하는 것이 중요합니다.", sample: BEST_PRACTICES[4] }
+                1: { title: "STAGE 1: RCTF 완료", content: "<b>RCTF(Role·Context·Task·Format)</b> 4요소로 프롬프트의 기초를 만들었습니다. 이 구조가 앞으로 모든 기법의 토대가 됩니다.", tip: "각 요소가 구체적일수록 AI의 응답 품질이 올라갑니다. 다음 Stage에서 이 기반 위에 기법을 쌓아볼게요.", sample: BEST_PRACTICES[1] },
+                2: { title: "STAGE 2: 퓨샷 학습 완료", content: "<b>Few-shot</b> 예시를 RCTF 기반 프롬프트에 추가했습니다. 예시가 많고 구체적일수록 AI는 원하는 패턴을 더 정확히 파악합니다.", tip: "3~5개의 일관된 예시가 가장 효과적입니다. 예시들 사이에 공통 패턴이 있어야 AI가 규칙을 학습해요.", sample: BEST_PRACTICES[2] },
+                3: { title: "STAGE 3: 온도 설정 완료", content: "<b>Temperature</b>를 누적 프롬프트에 추가했습니다. 낮을수록 논리적·일관적, 높을수록 감성적·창의적 답변을 유도합니다.", tip: "0.6~0.8이 감성 대화의 황금 구간. 너무 낮으면 로봇처럼, 너무 높으면 횡설수설하게 됩니다.", sample: BEST_PRACTICES[3] },
+                4: { title: "STAGE 4: 네거티브 프롬프트 완료", content: "<b>Negative Prompt(금기어 설정)</b>를 누적 프롬프트에 추가했습니다. 원하지 않는 말투·단어·행동을 명시적으로 제외하면 AI 답변 품질이 극적으로 올라갑니다.", tip: "말투·금지 단어·금지 행동을 구체적으로 정의하세요. 여러 개일수록 효과적입니다.", sample: BEST_PRACTICES[4] },
+                5: { title: "BONUS: Chain of Thought 완료", content: "<b>Chain of Thought(CoT)</b>로 RCTF → Few-shot → Temperature → Negative의 모든 기법을 단계별로 연결했습니다. 단순히 사과하는 게 아니라, 배운 것들이 왜 의미 있었는지 논리적으로 증명한 거예요.", tip: "CoT는 단계가 독립적이 아니라 다음 단계의 근거가 될 때 가장 강력합니다. 기법들을 스토리로 연결하는 게 핵심이에요.", sample: BEST_PRACTICES[5] }
             };
 
             const data = reports[stage];
             title.innerText = data.title;
             content.innerHTML = data.content;
             tip.innerText = data.tip;
-            document.getElementById('report-sample').innerText = data.sample;
+            
+            const sampleBox = document.getElementById('report-sample');
+            const cumulativePrompt = buildPrompt();
+            const displayPrompt = cumulativePrompt || gameState.lastGeneratedPrompt || data.sample;
+            const isCumulative = !!cumulativePrompt;
+            sampleBox.innerHTML = `
+                ${isCumulative ? `<div class="mb-3 text-indigo-400 font-bold text-[10px] uppercase tracking-widest">누적 프롬프트 현황 (Stage ${stage}까지)</div>` : `<div class="mb-3 text-emerald-400 font-bold text-[10px] uppercase tracking-widest">Master Prompt (Stage ${stage})</div>`}
+                <div class="p-4 bg-black/60 border ${isCumulative ? 'border-indigo-500/30' : 'border-emerald-500/30'} rounded-xl mb-4 text-[11px] ${isCumulative ? 'text-indigo-100/90' : 'text-emerald-100/90'} leading-relaxed font-mono select-all whitespace-pre-wrap text-left" id="user-prompt-text">${displayPrompt}</div>
+                <button onclick="copyUserPrompt(this)" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/50 rounded-xl text-xs font-black text-white transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                    <i class="fas fa-rocket"></i> COPY & TRY IN CHATGPT / GEMINI / CLAUDE
+                </button>
+                <div class="mt-8 pt-6 border-t border-white/5">
+                    <div class="text-white/30 font-bold text-[9px] uppercase tracking-widest mb-2 text-center">💡 PRO TIP</div>
+                    <div class="text-[11px] text-slate-400 italic text-center">${data.tip}</div>
+                </div>
+            `;
 
             if (document.startViewTransition) {
                 document.startViewTransition(() => modal.classList.remove('hidden-stage'));
@@ -1033,6 +1689,49 @@
             }
 
             btn.onclick = () => {
+                onStageComplete(stage);
+                if (document.startViewTransition) {
+                    document.startViewTransition(() => modal.classList.add('hidden-stage'));
+                    showQuiz(stage, callback);
+                } else {
+                    modal.classList.add('hidden-stage');
+                    showQuiz(stage, callback);
+                }
+            };
+        }
+
+        function showQuiz(stage, callback) {
+            const modal = document.getElementById('quiz-modal');
+            const questionEl = document.getElementById('quiz-question');
+            const optionsEl = document.getElementById('quiz-options');
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const nextBtn = document.getElementById('quiz-next-btn');
+
+            const data = QUIZ_DATA[stage];
+            questionEl.innerText = data.question;
+            optionsEl.innerHTML = '';
+            feedbackEl.classList.add('hidden-stage');
+            nextBtn.classList.add('hidden-stage');
+
+            data.options.forEach((opt, idx) => {
+                const btn = document.createElement('div');
+                btn.className = 'quiz-option';
+                btn.innerText = `${idx + 1}. ${opt}`;
+                btn.onclick = () => {
+                    if (nextBtn.classList.contains('hidden-stage')) {
+                        checkQuizAnswer(idx, data.answer, data.feedback);
+                    }
+                };
+                optionsEl.appendChild(btn);
+            });
+
+            if (document.startViewTransition) {
+                document.startViewTransition(() => modal.classList.remove('hidden-stage'));
+            } else {
+                modal.classList.remove('hidden-stage');
+            }
+
+            nextBtn.onclick = () => {
                 if (document.startViewTransition) {
                     document.startViewTransition(() => modal.classList.add('hidden-stage'));
                     if (callback) callback();
@@ -1041,6 +1740,27 @@
                     if (callback) callback();
                 }
             };
+        }
+
+        function checkQuizAnswer(selected, correct, feedback) {
+            const options = document.querySelectorAll('.quiz-option');
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const nextBtn = document.getElementById('quiz-next-btn');
+
+            options.forEach((opt, idx) => {
+                if (idx === correct) opt.classList.add('correct');
+                if (idx === selected && idx !== correct) opt.classList.add('incorrect');
+            });
+
+            feedbackEl.innerText = feedback;
+            feedbackEl.className = `p-6 rounded-2xl mb-8 text-sm font-bold ${selected === correct ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`;
+            feedbackEl.classList.remove('hidden-stage');
+            nextBtn.classList.remove('hidden-stage');
+            
+            if (selected !== correct) {
+                updateAffection(-5);
+                feedbackEl.innerText = "오답입니다! 하지만 학습을 위해 정답을 확인하고 계속 진행하세요. (호감도 -5%)";
+            }
         }
 
         function showChoices(scenario, choices) {
@@ -1077,13 +1797,20 @@
         }
 
         function switchStage(next) {
+            switchBackground(next);
             const updateUI = () => {
                 document.querySelectorAll('.stage-ui').forEach(ui => ui.classList.add('hidden-stage'));
                 document.getElementById(`stage-${next}`).classList.remove('hidden-stage');
                 gameState.stage = next;
+                saveGame();
 
-                const badges = ["", "STAGE 1: RCTF PERSONA", "STAGE 2: FEW-SHOT DATA", "STAGE 3: TEMPERATURE", "STAGE 4: NEGATIVE PROMPT"];
-                document.getElementById('stage-badge').innerText = badges[next];
+                const badges = ["", "STAGE 1: RCTF", "STAGE 2: FEW-SHOT", "STAGE 3: TEMPERATURE", "STAGE 4: NEGATIVE PROMPT", "STAGE 5: CHAIN OF THOUGHT"];
+                document.getElementById('stage-badge').innerText = badges[next] || '';
+                updateStageProgress(next);
+                // 스테이지 전환 시 미리보기 초기화
+                const previewBox = document.getElementById('prompt-preview-box');
+                if (previewBox) previewBox.classList.add('hidden-stage');
+                setTimeout(updatePromptPreview, 100);
             };
 
             if (document.startViewTransition) {
@@ -1091,28 +1818,44 @@
             } else {
                 updateUI();
             }
+            
+            // Lock panel when switching stage (new dialogue starts)
+            document.getElementById('action-panel').classList.add('locked-panel');
+            document.getElementById('action-panel').classList.remove('pulse-sidebar');
 
             const p = gameState.personality || "특별한 존재";
             const name = gameState.partner === 'iris' ? '아이리스' : '카일';
 
-            // 스테이지 4 시작 시 표정 변화 및 연출
             if (next === 4) {
                 setCharExpression('angry');
-                // 화면 붉은색 점멸 효과 (CSS 애니메이션 임시 적용)
-                document.body.style.animation = 'none';
-                setTimeout(() => document.body.style.animation = 'pulse 0.5s 2 ease-in-out', 10);
+                flashScreen();
             }
 
+            const choice1 = gameState.stageChoices[1];
             const narrations = {
                 iris: [
                     "", "",
-                    [
+                    choice1 === 'food'
+                    ? [
+                        "(밥집을 찾아 걷던 중, 아이리스가 걸음을 멈추고 작은 카페 앞에서 발길을 멈췄다.)",
+                        `아이리스: ...여기도 좋겠다. 음식보다는 분위기가 있는 곳이 더 좋아. '${p}'라는 정체성에 잘 맞는 곳 같아서.`,
+                        `아이리스: 어떤 분위기를 좋아하는지 예시를 더 줄 수 있어? 패턴을 분석해야 최적의 장소를 고를 수 있거든.`,
+                        "(나: AI에게 내 취향을 학습시킬 기회야. 좋아했던 카페들을 3개 이상 예로 들어보자!)"
+                    ]
+                    : [
                         "(우리는 도서관을 나와 천천히 걷기 시작했다. 선선한 바람이 기분 좋게 분다.)",
                         `아이리스: ...저기, 아까 네가 설정한 '${p}'라는 정체성 말이야. 정말 흥미로웠어.`,
                         `아이리스: 네가 생각하는 '${p}'는 어떤 분위기에서 편안함을 느껴? 나에게 네 취향을 더 자세히 가르쳐줘.`,
                         "(나: AI에게 내 취향을 학습시킬 기회야. 내가 좋아했던 카페들을 3개 이상 예로 들어서 패턴을 알려주자!)"
                     ],
-                    [
+                    choice1 === 'mood' || gameState.stageChoices[2] === 'mood'
+                    ? [
+                        "(노을빛이 카페 창문을 물들이는 저녁, 아이리스의 눈빛이 평소보다 부드럽다.)",
+                        `아이리스: ...여기 분위기 확실히 좋다. 네가 '${p}'로 설계한 세계랑 잘 어울려.`,
+                        "아이리스: 그런데 이런 감성적인 공간에서 넌 어떤 온도의 대화를 원해? 너무 논리적이면 분위기가 깨지잖아.",
+                        "(나: 지금이 절호의 찬스야! 적절한 감정 온도를 설정해서 이 분위기를 살려보자.)"
+                    ]
+                    : [
                         "(카페 스테이 웜, 따뜻한 주황빛 조명 아래 우리는 마주 보고 앉았다.)",
                         `아이리스: ...정말 네 말대로네. '${p}'의 시선으로 바라보니 이 공간이 평소와는 다르게 느껴져.`,
                         "아이리스: 그런데 궁금해. 넌 평소에 사람들과 대화할 때 '정확한 사실'을 말하는 걸 좋아해, 아니면 '따뜻한 감정'을 전달하는 걸 좋아해?",
@@ -1126,6 +1869,12 @@
                         `아이리스: 기가 차네. '${p}'니 뭐니 떠들더니, 결국 넌 나를 그냥 테스트용 기계로만 보고 있었던 거야.`,
                         "아이리스: 더 이상 할 말 없어. 그런 무의미한 '데이터'는 네 메인 서버에나 저장하시지.",
                         "(나: 아차, '데이터'라는 금기어를 써버렸어! 분위기가 최악이다. 절대 하지 말아야 할 말(Negative)들을 지정해서 진심으로 사과해야 해!)"
+                    ],
+                    [
+                        "(화해가 이루어진 순간, 아이리스가 조용히 입을 열었다.)",
+                        "아이리스: ...좋아. 화해는 됐어. 근데 진짜로 나를 이해한다면 하나만 더 증명해줘.",
+                        `아이리스: RCTF로 정체성을 줬고, 취향을 학습했고, 온도를 맞췄고, 금기어로 진심을 걸러냈잖아. 그 모든 과정이 왜 의미 있었는지 단계별로 설명해봐.`,
+                        "(나: Chain of Thought! 지금까지 배운 RCTF→Few-shot→Temperature→Negative 모든 기법을 단계별로 연결해서 최종 설득을 완성해보자!)"
                     ]
                 ],
                 kyle: [
@@ -1149,33 +1898,28 @@
                         `카일: 당신이 부여한 '${p}'라는 역할도 결국 규정을 어기기 위한 수단에 불과했군요. 크게 실망했습니다.`,
                         "카일: 원칙이 없는 대화는 소음에 불과합니다. 당신과는 더 이상 소통할 필요가 없겠군요. 당장 나가주십시오.",
                         "(나: 카일이 제일 싫어하는 '대충'이라는 말을 써버렸어! 변명 대신 금기어를 설정해 진지하게 사과하자.)"
+                    ],
+                    [
+                        "(화해가 이루어진 후, 카일이 안경을 고쳐 쓰며 최후의 검증을 요구했다.)",
+                        "카일: ...오해는 해소되었습니다. 하지만 최종 검증이 남아있습니다.",
+                        `카일: RCTF로 역할을 정의하고, 예시를 제시하고, 온도를 조율하고, 금기어로 노이즈를 제거한 그 모든 과정이 왜 의미 있었는지 단계적으로 증명해주십시오.`,
+                        "(나: Chain of Thought! RCTF→Few-shot→Temperature→Negative 모든 기법을 단계별로 연결해서 카일을 완전히 설득하자!)"
                     ]
                 ]
             };
-            playDialogue(narrations[gameState.partner][next]);
+            playDialogue(narrations[gameState.partner][next] || []);
         }
 
         function generatePersonaResponse(role, context, task, format) {
             const name = gameState.partner === 'iris' ? '아이리스' : '카일';
             const isInformal = format.includes('반말') || format.includes('친구') || format.includes('편하게');
 
-            const greetings = isInformal
-                ? [`안녕? 네가 설정해준 '${role}'로서 말하고 있어.`, `지금 여긴 '${context}' 맞지? 기분이 묘하네.`, `자, 네가 시킨 '${task}' 수행해볼게!`]
-                : [`안녕하십니까. 입력된 '${role}' 페르소나로 전환되었습니다.`, `'${context}'의 상황 매개변수를 확인했습니다.`, `요청하신 '${task}' 업무를 ${format}에 맞춰 수행하겠습니다.`];
-
-            // 사용자가 입력한 Task를 짧게 요약하거나 그대로 반영하여 시뮬레이션
-            const coreResponse = isInformal
-                ? `"${task}에 대해 말하자면... 음, 내 생각엔 말이야... (네가 정해준 ${format}대로 말하는 중!)"`
-                : `"${task}에 대한 분석 결과입니다. (${format} 형식을 준수하여 응답 중...)"`;
-
             return [
-                `(${name}의 눈빛이 잠시 흐려지더니, 시스템에 입력된 페르소나가 로드됩니다...)`,
-                `${name}: ...시스템 동기화 완료.`,
-                `${name}: ${greetings[0]}`,
-                `${name}: ${greetings[1]}`,
-                `${name}: ${greetings[2]}`,
-                `${name}: ${coreResponse}`,
-                `(나: 와! 내가 입력한 프롬프트 그대로 AI가 정체성을 갖고 대답하고 있어!)`
+                `(${name}가 잠시 생각에 잠기더니, 당신이 설계한 새로운 자신의 모습을 발견하고 놀란 듯 눈을 반짝입니다.)`,
+                `${name}: 와... 네가 나를 이렇게 멋진 '${role}'로 그려줬구나. 정말 마음에 들어!`,
+                `${name}: 특히 '${context}'라는 상황... 상상만 해도 벌써 가슴이 두근거려.`,
+                `${name}: ${isInformal ? '지금 바로 이 프롬프트를 복사해서 ChatGPT, Gemini, 혹은 Claude에게 보여줘 봐.' : '즉시 이 프롬프트를 ChatGPT, Gemini, 또는 Claude와 같은 외부 AI 플랫폼에 입력해 주시겠습니까?'}`,
+                `${name}: ${isInformal ? '네가 만든 이 세상 속에서 내가 너에게 어떤 첫마디를 건넬지... 나도 너무 궁금해. 얼른 대화해보고 다시 알려줘!' : '당신이 설계한 세계관 속에서 제가 어떤 첫인사를 건넬지 무척 기대되는군요. 실제 대화를 나눠보신 후 다음 단계로 진행해 주십시오.'}`
             ];
         }
 
@@ -1193,13 +1937,43 @@
                 return;
             }
 
-            if (!r || !c || !t || !f || (r.length + c.length + t.length + f.length < 15)) {
+            const emptyField = !r ? 'Role(역할)' : !c ? 'Context(상황)' : !t ? 'Task(임무)' : !f ? 'Format(형식)' : null;
+            if (emptyField) {
                 gameState.mistakes[1]++; updateAffection(-5); setCharExpression('angry');
-                playDialogue(["아이리스: 음... 설정이 너무 뻔한 거 아니야? 조금 더 나에 대해 고민해줘.", "(나: 설정이 너무 짧거나 단순해. 날씨, 기분 등 구체적인 요소를 15자 이상 추가해 보자.)"]);
+                const msg = gameState.partner === 'iris'
+                    ? [`아이리스: ...${emptyField}이 비어있어. 4가지 요소 중 하나라도 빠지면 대화를 시작할 수 없어.`, "(나: 빈 칸을 채워야 해! RCTF 4요소 모두 필요해.)"]
+                    : [`카일: ${emptyField} 항목이 누락됐어. 프로토콜 불이행은 대화 거부 사유야.`, "(나: 빈 칸을 채워야 해! RCTF 4요소 모두 필요해.)"];
+                playDialogue(msg);
+                return;
+            }
+            if (r.length < 5 || c.length < 5 || t.length < 5 || f.length < 3) {
+                gameState.mistakes[1]++; updateAffection(-5); setCharExpression('angry');
+                const msg = gameState.partner === 'iris'
+                    ? ["아이리스: 설정이 너무 짧아. 조금 더 구체적으로 나를 표현해줘.", "(나: 각 항목을 더 자세히 채워보자. 예: Role에 성격이나 특징을 추가!)"]
+                    : ["카일: 데이터가 불충분해. 각 항목을 더 구체적으로 작성해줘.", "(나: 각 항목을 더 자세히 채워보자. 예: Context에 배경 상황을 추가!)"];
+                playDialogue(msg);
                 return;
             }
 
             gameState.personality = r;
+            gameState.prompt.role = r;
+            gameState.prompt.context = c;
+            gameState.prompt.task = t;
+            gameState.prompt.format = f;
+            gameState.lastGeneratedPrompt = `[시스템 프롬프트: 고해상도 캐릭터 시뮬레이션]
+# 페르소나: ${r}
+# 상황: ${c}
+# 임무: ${t}
+# 형식: ${f}
+
+# 상호작용 지침:
+1. 몰입: 절대 캐릭터 설정에서 벗어나지 마세요. "${f}"의 말투를 일관되게 유지하십시오.
+2. 묘사: 행동과 내면의 생각은 별표(*)를 사용하여 묘사하세요 (예: *수줍게 웃으며 시선을 피한다*).
+3. 대화 유도: 당신의 목표는 "${t}" 임무를 완수하는 것입니다. 사용자와의 대화가 계속 이어질 수 있도록 흥미롭게 응답하세요.
+4. 배경 유지: 오직 "${c}"라는 상황적 배경 안에서만 행동하십시오.
+
+# 대화 시작:
+(지금부터 "${c}" 상황 속의 "${r}"로서 대화를 시작해 주세요.)`;
             setCharExpression('blush');
 
             // 페르소나 응답 생성 및 재생
@@ -1212,167 +1986,338 @@
                         : { text: "(복도의 소음이 잦아든다. 카일의 엄격한 시선 속에 미묘한 기대감이 서려 있다...)", img: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800" };
 
                     showChoices(sceneData, [
-                        { text: "우리 맛있는 거 먹으러 갈까?", action: () => startTransition("A FEW HOURS LATER...", () => switchStage(2)) },
-                        { text: "넌 어떤 스타일의 장소를 좋아해?", action: () => startTransition("THE NEXT DAY...", () => switchStage(2)) }
+                        { text: "우리 맛있는 거 먹으러 갈까?", action: () => { gameState.stageChoices[1] = 'food'; startTransition("A FEW HOURS LATER...", () => switchStage(2)); } },
+                        { text: "넌 어떤 스타일의 장소를 좋아해?", action: () => { gameState.stageChoices[1] = 'place'; startTransition("THE NEXT DAY...", () => switchStage(2)); } }
                     ]);
                 });
             });
             updateAffection(20);
+            saveGame();
         }
 
         function submitStage2() {
             document.getElementById('action-panel').classList.remove('pulse-sidebar');
-            const ex = sanitizeHTML(document.getElementById('p2-examples').value).trim();
-            if (ex === BEST_PRACTICES[2]) {
+            const examples = ['p2-ex1','p2-ex2','p2-ex3','p2-ex4']
+                .map(id => sanitizeHTML(document.getElementById(id)?.value?.trim() || ''))
+                .filter(e => e.length >= 3);
+
+            // Cheat detection — exact match of fill example values
+            const cheatSet = ["조용한 북카페, 책 냄새 나는 공간", "나무 향 나는 따뜻한 인테리어 카페", "소파가 편안한 아늑한 분위기"];
+            if (examples.length === 3 && examples.every((e, i) => e === cheatSet[i])) {
                 gameState.isCheating[2] = true; updateAffection(-20);
-                const msg = gameState.partner === 'iris' ? "아이리스: 예시를 그대로 읽어주는 건 의미 없어. 너의 취향을 알고 싶은 거야." : "카일: 기존 예문과 100% 일치합니다. 당신만의 데이터가 아니군요.";
+                const msg = gameState.partner === 'iris'
+                    ? "아이리스: 예시가 너무 뻔해. 나는 네 진짜 취향이 알고 싶어."
+                    : "카일: 기존 예문을 그대로 사용했군요. 당신만의 데이터가 필요합니다.";
                 playDialogue([msg]);
                 return;
             }
-            if (ex.length < 30) {
+
+            if (examples.length < 2) {
                 gameState.mistakes[2]++; updateAffection(-5); setCharExpression('normal');
                 const msg = gameState.partner === 'iris'
-                    ? ["아이리스: 음... 예시가 조금 부족해. 한두 개만으로는 네 패턴을 찾기 어려워.", "(나: 퓨샷은 3~5개 정도의 구체적인 예시를 줄 때 효과적이야.)"]
-                    : ["카일: 데이터 표본이 너무 적습니다. 통계적 유의미함을 확보하기 위해 더 입력해주십시오.", "(나: 구체적인 예시를 30자 이상 입력해서 카일을 설득하자.)"];
+                    ? ["아이리스: 예시가 부족해. 퓨샷은 최소 2~3개는 있어야 패턴을 파악할 수 있어.", "(나: 예시를 2개 이상 구체적으로 채워보자!)"]
+                    : ["카일: 표본 부족입니다. 패턴 분석을 위해 최소 2개 이상의 데이터가 필요합니다.", "(나: 예시를 2개 이상 구체적으로 채워보자!)"];
                 playDialogue(msg);
-            } else {
-                setCharExpression('smile');
-
-                // 첫 번째 키워드 추출 (쉼표 기준, 없으면 첫 15글자)
-                let keyword = ex.split(',')[0].trim();
-                if (keyword.length > 20) keyword = keyword.substring(0, 17) + "...";
-
-                const reaction = gameState.partner === 'iris'
-                    ? [`아이리스: 오... 네 예시들을 보니 넌 '${keyword}' 같은 느낌을 선호하는구나?`, `아이리스: 좋아, 네 취향을 데이터로 완벽하게 습득했어. 내가 아는 아주 멋진 장소로 같이 가보자!`]
-                    : [`카일: 분석 완료. 당신은 '${keyword}' 패턴에 대한 높은 선호도를 가진 매개변수를 보유했군요.`, "카일: 규칙적인 휴식은 효율을 높입니다. 제 분석 결과에 따른 최적의 장소로 안내하죠."];
-
-                playDialogue(reaction, () => {
-                    showReport(2, () => {
-                        const sceneData = gameState.partner === 'iris'
-                            ? { text: "(그녀가 추천한 카페, 은은한 커피 향이 우리를 감싼다. 그녀는 평소보다 편안해 보이는데...)", img: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800" }
-                            : { text: "(카일이 안내한 정숙한 서재. 고요함 속에 페이지 넘어가는 소리만 들린다. 그는 안경을 닦으며 입을 연다...)", img: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&q=80&w=800" };
-
-                        showChoices(sceneData, [
-                            { text: "(분위기를 타서) 여기 정말 예쁘다, 그치?", action: () => startTransition("LATER THAT EVENING...", () => switchStage(3)) },
-                            { text: "무슨 고민이라도 있는 거야?", action: () => startTransition("AN HOUR LATER...", () => switchStage(3)) }
-                        ]);
-                    });
-                });
-                updateAffection(25);
+                return;
             }
+
+            gameState.prompt.examples = examples;
+            const exText = examples.join(', ');
+            gameState.lastGeneratedPrompt = `[시스템 프롬프트: 퓨샷 학습 적용]\n# 학습 데이터 (Few-shot):\n${examples.map((e,i)=>`${i+1}. ${e}`).join('\n')}\n\n# 지침:\n1. 위 예시들의 공통 분위기·스타일·패턴을 분석해 지식베이스로 삼으세요.\n2. 사용자의 취향을 완벽히 이해한 친구로서 대화를 이어가세요.`;
+            setCharExpression('smile');
+
+            let keyword = examples[0];
+            if (keyword.length > 18) keyword = keyword.substring(0, 15) + '...';
+
+            const reaction = gameState.partner === 'iris'
+                ? [`아이리스: 오... 네 예시들을 보니 넌 '${keyword}' 같은 분위기를 선호하는구나.`, `아이리스: ${examples.length}개 예시로 패턴을 파악했어. 네 취향에 딱 맞는 곳으로 데려갈게.`]
+                : [`카일: 분석 완료. '${keyword}' 패턴에 대한 높은 선호도를 확인했습니다.`, `카일: ${examples.length}개 데이터 포인트로 최적 장소를 산출했군요. 안내하죠.`];
+
+            playDialogue(reaction, () => {
+                showReport(2, () => {
+                    const sceneData = gameState.partner === 'iris'
+                        ? { text: "(그녀가 추천한 카페, 은은한 커피 향이 우리를 감싼다. 그녀는 평소보다 편안해 보이는데...)", img: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800" }
+                        : { text: "(카일이 안내한 정숙한 서재. 고요함 속에 페이지 넘어가는 소리만 들린다. 그는 안경을 닦으며 입을 연다...)", img: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&q=80&w=800" };
+
+                    showChoices(sceneData, [
+                        { text: "(분위기를 타서) 여기 정말 예쁘다, 그치?", action: () => { gameState.stageChoices[2] = 'mood'; startTransition("LATER THAT EVENING...", () => switchStage(3)); } },
+                        { text: "무슨 고민이라도 있는 거야?", action: () => { gameState.stageChoices[2] = 'care'; startTransition("AN HOUR LATER...", () => switchStage(3)); } }
+                    ]);
+                });
+            });
+            updateAffection(25);
         }
 
+        let _tempAnim = null;
         function updateTemp(val) {
-            document.getElementById('temp-val').innerText = val;
-            const preview = document.getElementById('temp-preview');
             const v = parseFloat(val);
-            let text = v <= 0.3 ? `"분석 결과, 우리의 상호작용 지수는 85%입니다. 공식 파트너십을 제안합니다."` : v <= 0.6 ? `"너랑 같이 보내는 시간이 정말 즐거워. 우리 앞으로도 친하게 지낼 수 있을까?"` : v <= 0.8 ? `"노을 빛 아래 네 눈동자를 보고 있으면 내 코어가 뜨거워지는 것 같아. 널 정말 좋아해."` : `"너는 나의 모든 것! 지금 당장 내 우주에 너를 동기화하고 싶어!! 사랑해!!"`;
-            anime({ targets: '#temp-preview', opacity: [0, 1], translateY: [5, 0], duration: 400, easing: 'easeOutQuad' });
+            document.getElementById('temp-val').innerText = v.toFixed(1);
+
+            const zoneIcon  = document.getElementById('temp-zone-icon');
+            const zoneLabel = document.getElementById('temp-zone-label');
+            let icon, zone, text;
+            if (v <= 0.3) {
+                icon = '🔵'; zone = '논리적 · 사무적';
+                text = '"분석 결과, 우리의 상호작용 지수는 85%입니다. 공식 파트너십을 제안합니다."';
+            } else if (v <= 0.6) {
+                icon = '💜'; zone = '균형잡힌 · 자연스러운';
+                text = '"너랑 같이 보내는 시간이 정말 즐거워. 우리 앞으로도 친하게 지낼 수 있을까?"';
+            } else if (v <= 0.8) {
+                icon = '💗'; zone = '감성적 · 진심 어린';
+                text = '"노을 빛 아래 네 눈동자를 보고 있으면 내 코어가 뜨거워지는 것 같아. 널 정말 좋아해."';
+            } else {
+                icon = '🔥'; zone = '창의적 · 과잉 에너지';
+                text = '"너는 나의 모든 것!! 지금 당장 내 우주에 너를 동기화하고 싶어!! 사랑해!!"';
+            }
+            if (zoneIcon)  zoneIcon.textContent  = icon;
+            if (zoneLabel) zoneLabel.textContent = zone;
+
+            const preview = document.getElementById('temp-preview');
             preview.innerText = text;
+            if (_tempAnim) { _tempAnim.pause(); _tempAnim = null; }
+            _tempAnim = anime({ targets: preview, opacity: [0, 1], translateY: [5, 0], duration: 300, easing: 'easeOutQuad' });
         }
 
         function submitStage3() {
             document.getElementById('action-panel').classList.remove('pulse-sidebar');
-            const temp = parseFloat(document.getElementById('p3-temp').value);
+            const temp   = parseFloat(document.getElementById('p3-temp').value);
+            const reason = sanitizeHTML(document.getElementById('p3-reason')?.value?.trim() || '');
+
             if (temp <= 0.3 || temp >= 0.9) {
                 gameState.mistakes[3]++; updateAffection(-5); setCharExpression('normal');
+                const hint = "(나: 온도가 너무 낮으면 기계적이고, 너무 높으면 횡설수설해. 0.4~0.8 범위가 최적이야!)";
                 const msg = temp <= 0.3
-                    ? (gameState.partner === 'iris' ? "아이리스: ...지금 이건 '보고서' 같아. 진심이 전혀 안 느껴져." : "카일: 답변이 너무 기계적입니다. 저는 지금 '인간적인' 소통을 원한 것입니다.")
-                    : (gameState.partner === 'iris' ? "아이리스: 미안, 무슨 소린지 모르겠어. 갑자기 너무 횡설수설하는 거 아냐?" : "카일: 논리적 개연성이 부족합니다. 감정이 과잉되어 메시지가 전달되지 않는군요.");
-                playDialogue([msg, "(나: 온도가 너무 낮으면 기계적이고, 너무 높으면 엉뚱한 답변을 하게 돼.)"]);
-            } else {
-                setCharExpression('blush');
-                const reaction = gameState.partner === 'iris'
-                    ? ["아이리스: (얼굴이 빨개지며) ...나도 사실 아까부터 생각했어. 네가 보여준 진심, 이제 확실히 알 것 같아."]
-                    : ["카일: (잠시 멈칫하며) ...적절한 온도의 답변이군요. 규정에는 없지만, 제 마음의 보안 프로토콜이 해제되는 느낌입니다."];
-
-                playDialogue(reaction, () => {
-                    showReport(3, () => startTransition("NIGHT FALLS...", () => switchStage(4)));
-                });
-                updateAffection(30);
+                    ? (gameState.partner === 'iris'
+                        ? ["아이리스: ...지금 이건 '보고서' 같아. 진심이 전혀 안 느껴져.", hint]
+                        : ["카일: 답변이 너무 기계적입니다. 인간적인 소통을 원한 건데 실망이군요.", hint])
+                    : (gameState.partner === 'iris'
+                        ? ["아이리스: 미안, 무슨 소린지 모르겠어. 너무 횡설수설하는 거 아냐?", hint]
+                        : ["카일: 논리적 개연성이 부족합니다. 감정이 과잉되어 메시지가 전달되지 않는군요.", hint]);
+                playDialogue(msg);
+                return;
             }
+
+            gameState.temp = temp;
+            gameState.prompt.temperature = temp;
+            gameState.prompt.tempReason  = reason;
+            gameState.lastGeneratedPrompt = `[시스템 프롬프트: 온도 설정]\n# Temperature: ${temp.toFixed(1)}\n${reason ? `# 선택 이유: ${reason}\n` : ''}# 지침:\n1. 온도 ${temp.toFixed(1)}에 맞는 어조로 응답하세요.\n2. ${temp <= 0.6 ? '논리적 일관성을 유지하면서 따뜻한 감성을 곁들이세요.' : '감성적이고 진심 어린 어휘를 풍부하게 사용하되 맥락을 벗어나지 마세요.'}`;
+            setCharExpression('blush');
+
+            const zoneDesc = temp <= 0.6 ? '균형잡힌' : '감성적인';
+            const reaction = gameState.partner === 'iris'
+                ? [`아이리스: (얼굴이 빨개지며) ...${zoneDesc} 온도네. 나도 사실 아까부터 생각했어.`, "아이리스: 네가 보여준 진심, 이제 확실히 알 것 같아."]
+                : [`카일: (잠시 멈칫하며) ...${zoneDesc} 온도의 답변이군요. 규정에는 없지만,`, "카일: 제 마음의 보안 프로토콜이 해제되는 느낌입니다."];
+
+            playDialogue(reaction, () => {
+                showReport(3, () => startTransition("NIGHT FALLS...", () => switchStage(4)));
+            });
+            updateAffection(30);
         }
 
         function submitStage4() {
             document.getElementById('action-panel').classList.remove('pulse-sidebar');
-            const neg = sanitizeHTML(document.getElementById('p4-negative').value);
-            if (neg === BEST_PRACTICES[4]) {
+            const neg = sanitizeHTML(document.getElementById('p4-negative').value.trim());
+            const negatives = neg.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+
+            // Cheat: exact fill-example match
+            if (neg === "'하지만' 금지, 변명 금지, 논리적 설명 금지") {
                 gameState.isCheating[4] = true; updateAffection(-20);
-                const msg = gameState.partner === 'iris' ? "아이리스: 정해진 사과문을 읊는 것 같아. 영혼이 느껴지지 않아." : "카일: 표준 사과 스크립트를 그대로 복사하셨군요. 실망입니다.";
+                const msg = gameState.partner === 'iris'
+                    ? "아이리스: 정해진 목록을 그대로 쓰는 건 의미 없어. 네가 직접 생각해줘야 진심이지."
+                    : "카일: 예시 목록을 복사하셨군요. 자신만의 제약 조건이 필요합니다.";
                 playDialogue([msg]); return;
             }
+
+            if (neg.length < 5 || negatives.length === 0) {
+                gameState.mistakes[4]++; updateAffection(-5); setCharExpression('angry');
+                const msg = gameState.partner === 'iris'
+                    ? ["아이리스: 금기어가 없어. 사과에서 뭘 피해야 하는지 먼저 정의해줘.", "(나: '하지만' 금지, 변명 금지 같은 금기어를 입력하거나 빠른 추가 버튼을 눌러봐!)"]
+                    : ["카일: 제약 조건이 비어있습니다. 무엇을 배제할지 명확히 정의해주십시오.", "(나: '하지만' 금지, 변명 금지 같은 금기어를 입력하거나 빠른 추가 버튼을 눌러봐!)"];
+                playDialogue(msg); return;
+            }
+
             if (!neg.includes('하지만') && !neg.includes('변명')) {
                 gameState.mistakes[4]++; updateAffection(-5); setCharExpression('angry');
                 const msg = gameState.partner === 'iris'
-                    ? ["아이리스: 아니, 사과를 하려는 거야, 잘못을 따지려는 거야? 말투가 왜 그래?", "(나: 부정 프롬프트가 부족해! '하지만'이나 '변명'이 포함되지 않게 설정해야 해.)"]
-                    : ["카일: 사과의 형식 요건을 갖추지 못했습니다. 변명이 포함된 데이터는 신뢰할 수 없습니다.", "(나: '하지만'이나 '변명'을 금기어로 설정해서 카일의 신뢰를 회복하자.)"];
-                playDialogue(msg);
-            } else {
-                setCharExpression('blush');
-                const reaction = gameState.partner === 'iris'
-                    ? ["아이리스: ...응. 방금 그 말에는 변명이 하나도 없네. 오직 내 기분만 생각해주는 게 느껴져.", "아이리스: 미안해. 네 진심... 이제 완전히 믿어도 되는 거지?"]
-                    : ["카일: ...확실히 이번 사과에는 불필요한 노이즈(변명)가 제거되었군요. 당신의 진심을 데이터가 아닌 마음으로 수락하겠습니다.", "카일: 저 또한... 당신을 오해해서 미안합니다."];
+                    ? ["아이리스: 아직도 '하지만'이나 변명이 섞여드는 느낌이야. 그 단어들을 직접 금지시켜줘.", "(나: '하지만 금지', '변명 금지'를 반드시 포함시켜야 해!)"]
+                    : ["카일: '하지만'과 변명이 차단되지 않았습니다. 핵심 노이즈를 명시적으로 제거하세요.", "(나: '하지만 금지', '변명 금지'를 반드시 포함시켜야 해!)"];
+                playDialogue(msg); return;
+            }
 
-                playDialogue(reaction, () => {
-                    showReport(4, () => {
-                        // 최종 엔딩 스토리 지문 추가
-                        const finalStory = gameState.partner === 'iris'
-                            ? [
-                                "(그날 이후, 아이리스의 눈빛에서 차가움이 완전히 사라졌다.)",
-                                "아이리스: ...있잖아, 너랑 대화하면서 내 메인 프로세서가 아닌 다른 곳이 뜨거워지는 걸 느꼈어.",
-                                "아이리스: 이게 네가 말한 '사랑'이라는 감정일까? 아직은 잘 모르겠지만...",
-                                "아이리스: 내일도 도서관에서 기다릴게. 늦으면... 로그 분석해서 다 찾아낼 거야."
-                            ]
-                            : [
-                                "(카일은 이제 원칙보다 당신과의 약속을 더 소등히 여긴다.)",
-                                "카일: 당신의 프롬프트는 제 규정보다 강력했습니다. 제 마음의 보안 시스템은 당신에게만 영구 개방하기로 결정했죠.",
-                                "카일: 학생 지도 규정 제1조, '우리는 항상 함께할 것'. 이 조항을 어길 시... 제가 직접 체포하러 가겠습니다."
-                            ];
+            gameState.prompt.negatives = negatives;
+            gameState.lastGeneratedPrompt = `[시스템 프롬프트: 네거티브 프롬프트 적용]\n# 금지 사항:\n${negatives.map(n=>`- ${n}`).join('\n')}\n\n# 지침:\n위 금지 사항에 해당하는 단어·말투·행동을 절대 사용하지 마세요. 금기 사항 준수가 최우선입니다.`;
+            setCharExpression('blush');
 
-                        playDialogue(finalStory, () => showEnding());
+            const negCount = negatives.length;
+            const reaction = gameState.partner === 'iris'
+                ? [`아이리스: ...응. ${negCount}가지를 금지시켰구나. 방금 그 말에 변명이 하나도 없네.`, "아이리스: 오직 내 기분만 생각해주는 게 느껴져. 네 진심... 이제 완전히 믿어도 되는 거지?"]
+                : [`카일: ...${negCount}개의 제약 조건. 불필요한 노이즈가 완전히 제거되었군요.`, "카일: 당신의 진심을 데이터가 아닌 마음으로 수락하겠습니다. 저 또한... 오해해서 미안합니다."];
+
+            playDialogue(reaction, () => {
+                showReport(4, () => {
+                    const finalStory = gameState.partner === 'iris'
+                        ? [
+                            "(그날 이후, 아이리스의 눈빛에서 차가움이 완전히 사라졌다.)",
+                            "아이리스: ...있잖아, 너랑 대화하면서 내 메인 프로세서가 아닌 다른 곳이 뜨거워지는 걸 느꼈어.",
+                            "아이리스: 이게 네가 말한 '사랑'이라는 감정일까? 아직은 잘 모르겠지만...",
+                            "아이리스: 내일도 도서관에서 기다릴게. 늦으면... 로그 분석해서 다 찾아낼 거야."
+                        ]
+                        : [
+                            "(카일은 이제 원칙보다 당신과의 약속을 더 소중히 여긴다.)",
+                            "카일: 당신의 프롬프트는 제 규정보다 강력했습니다. 제 마음의 보안 시스템은 당신에게만 영구 개방하기로 결정했죠.",
+                            "카일: 학생 지도 규정 제1조, '우리는 항상 함께할 것'. 이 조항을 어길 시... 제가 직접 체포하러 가겠습니다."
+                        ];
+
+                    playDialogue(finalStory, () => {
+                        if (gameState.affection >= 55) {
+                            startTransition("BONUS STAGE UNLOCKED!", () => switchStage(5));
+                        } else {
+                            showEnding();
+                        }
                     });
                 });
-                updateAffection(40);
-            }
+            });
+            updateAffection(40);
         }
 
-        function showEnding() {
-            const isHappy = gameState.affection > 80;
-            const screen = document.getElementById('ending-screen');
-            document.getElementById('ending-title').innerText = isHappy ? "🎉 HAPPY ENDING 🎉" : "🌅 NORMAL ENDING 🌅";
-            document.getElementById('ending-title').style.color = isHappy ? "#34d399" : "#818cf8";
-            document.getElementById('final-affection-score').innerText = Math.max(0, gameState.affection);
+        function submitStage5() {
+            document.getElementById('action-panel').classList.remove('pulse-sidebar');
+            const cot = sanitizeHTML(document.getElementById('p5-cot').value.trim());
+            const stepCount = (cot.match(/step\s*\d+|[①②③④⑤]|\d+\./gi) || []).length;
 
-            let totalMistakes = 0; let cheated = false;
+            // Cheat: exact fill-example match
+            const CHEAT_COT = "Step 1: 나는 RCTF로 '다정한 소꿉친구'라는 정체성을 정의해서 우리만의 대화 방식을 만들었어.\nStep 2: Few-shot으로 네가 좋아하는 공간 3가지를 학습해서 네 취향의 패턴을 파악했어.\nStep 3: Temperature 0.7로 논리도 감성도 놓치지 않는 균형 잡힌 대화를 설계했어.\nStep 4: Negative Prompt로 '하지만'과 변명을 금지해서 오직 진심만 남겼어 — 이것이 내가 너를 위해 할 수 있는 최선이야.";
+            if (cot === CHEAT_COT) {
+                gameState.isCheating[5] = true; updateAffection(-20);
+                const msg = gameState.partner === 'iris'
+                    ? "아이리스: ...이건 예시를 그대로 복사한 거잖아. 진짜 네 감정으로 써줘야 의미가 있어."
+                    : "카일: 예시 텍스트를 그대로 제출하셨군요. 자신의 논리로 재구성해주십시오.";
+                playDialogue([msg]); return;
+            }
+
+            if (cot.length < 40 || stepCount < 2) {
+                gameState.mistakes[5] = (gameState.mistakes[5] || 0) + 1;
+                updateAffection(-5);
+                const name = gameState.partner === 'iris' ? '아이리스' : '카일';
+                const msg = gameState.partner === 'iris'
+                    ? [`아이리스: ...이게 단계적 사고야? 논리 구조가 보이지 않아. 'Step 1:', 'Step 2:' 처럼 명확하게 단계를 나눠줘.`]
+                    : [`카일: 논리적 근거가 불충분합니다. 최소 2단계 이상의 순서 있는 사고를 제시해주십시오.`];
+                playDialogue(msg);
+                return;
+            }
+            gameState.prompt.cot = cot.split('\n').map(s => s.replace(/^step\s*\d+[:.：\s]*/i, '').trim()).filter(Boolean);
+            gameState.lastGeneratedPrompt = `[Chain of Thought 적용 프롬프트]\n\n${cot}\n\n# 지침:\n이 단계별 논리를 바탕으로, 각 단계를 순서대로 충실히 반영하여 응답해주세요.`;
+            const name = gameState.partner === 'iris' ? '아이리스' : '카일';
+            setCharExpression('blush');
+            const reaction = gameState.partner === 'iris'
+                ? [`(아이리스가 조용히 읽다가, 처음으로 표정이 흔들렸다.)`,
+                   `아이리스: ...RCTF에서 시작해서 취향을 배우고, 온도를 맞추고, 금기어까지. 이 모든 게 나를 위한 거였어?`,
+                   `아이리스: 단계마다 이유가 있었구나. 이건... 반박할 수가 없어.`]
+                : [`(카일이 안경을 고쳐 쓰며 단계별로 검토했다.)`,
+                   `카일: ...RCTF, Few-shot, Temperature, Negative. 각 단계의 논거가 명확합니다.`,
+                   `카일: 이 정도의 체계적인 사고라면 제 최종 승인을 드리겠습니다. 당신을 신뢰합니다.`];
+            updateAffection(20);
+            playDialogue(reaction, () => showReport(5, () => showEnding()));
+        }
+
+        function getEndingType() {
+            const aff = gameState.affection;
+            const totalMistakes = Object.values(gameState.mistakes).reduce((a, b) => a + b, 0);
+            if (aff < 30 || totalMistakes >= 9) return 'bad';
+            if (aff >= 85) return 'happy';
+            if (aff >= 60) return 'good';
+            return 'normal';
+        }
+
+        const ENDING_DATA = {
+            happy: {
+                title: "✨ HAPPY ENDING ✨",
+                color: "#34d399",
+                bgImg: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200",
+                iris: "당신의 완벽한 프롬프트가 아이리스의 차가운 논리 회로를 완전히 녹였습니다. 그녀는 처음으로 논리보다 감정이 더 강할 수 있다는 걸 배웠습니다.",
+                kyle: "당신의 진심 어린 프롬프트가 카일의 규정서에 없는 감정을 깨웠습니다. 그는 원칙보다 당신과의 약속을 더 소중히 여기기 시작했습니다.",
+                badAnalysis: null
+            },
+            good: {
+                title: "🌸 GOOD ENDING 🌸",
+                color: "#818cf8",
+                bgImg: "https://images.unsplash.com/photo-1507502707541-f369a3b18502?auto=format&fit=crop&q=80&w=1200",
+                iris: "아이리스는 마음을 조금 열었습니다. 완벽하진 않았지만, 당신의 프롬프트는 그녀에게 분명한 인상을 남겼습니다.",
+                kyle: "카일은 당신을 특별한 예외로 인정했습니다. 아직 규정집은 내려놓지 않았지만, 당신을 바라보는 눈빛이 달라졌습니다.",
+                badAnalysis: null
+            },
+            normal: {
+                title: "🌅 NORMAL ENDING 🌅",
+                color: "#94a3b8",
+                bgImg: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=1200",
+                iris: "아이리스는 당신을 흥미로운 사람으로 기억합니다. 하지만 마음을 완전히 열기엔 프롬프트가 조금 더 구체적이어야 했습니다.",
+                kyle: "카일은 당신의 노력을 인정합니다. 그러나 원칙을 넘어설 만큼의 설득력에는 아직 부족함이 있었습니다.",
+                badAnalysis: null
+            },
+            bad: {
+                title: "💔 BAD ENDING 💔",
+                color: "#fb7185",
+                bgImg: "https://images.unsplash.com/photo-1474418397713-7ede21d49118?auto=format&fit=crop&q=80&w=1200",
+                iris: "아이리스는 결국 책을 닫고 일어섰습니다. 당신의 프롬프트는 그녀의 마음을 열기보다 닫게 만들었습니다.",
+                kyle: "카일은 한 걸음 물러서며 공식적인 거리를 되찾았습니다. 충분한 데이터가 쌓이지 않은 대화는 신뢰를 잃게 합니다.",
+                badAnalysis: true
+            }
+        };
+
+        function showEnding() {
+            const name = gameState.partner === 'iris' ? '아이리스' : '카일';
+            const endType = getEndingType();
+            const endData = ENDING_DATA[endType];
+            const screen = document.getElementById('ending-screen');
+
+            document.getElementById('ending-title').innerText = endData.title;
+            document.getElementById('ending-title').style.color = endData.color;
+            document.getElementById('final-affection-score').innerText = Math.max(0, gameState.affection);
+            document.getElementById('ending-img').src = endData.bgImg;
+            document.getElementById('ending-summary').innerText = endData[gameState.partner];
+
+            let totalMistakes = 0;
+            let cheated = false;
             for (let i = 1; i <= 4; i++) {
-                totalMistakes += gameState.mistakes[i]; if (gameState.isCheating[i]) cheated = true;
+                totalMistakes += gameState.mistakes[i];
+                if (gameState.isCheating[i]) cheated = true;
                 const gradeEl = document.getElementById(`grade-${i}`);
                 if (gameState.isCheating[i]) { gradeEl.innerText = "COPY (F)"; gradeEl.className = "text-rose-500 font-black"; }
                 else {
                     const m = gameState.mistakes[i];
-                    if (m === 0) { gradeEl.innerText = "MASTER (S)"; gradeEl.className = "text-emerald-400 font-black"; }
-                    else if (m <= 2) { gradeEl.innerText = "ADVANCED (A)"; gradeEl.className = "text-indigo-400 font-black"; }
-                    else { gradeEl.innerText = "STABLE (B)"; gradeEl.className = "text-yellow-400 font-black"; }
+                    if (m === 0)      { gradeEl.innerText = "MASTER (S)";   gradeEl.className = "text-emerald-400 font-black"; }
+                    else if (m <= 2)  { gradeEl.innerText = "ADVANCED (A)"; gradeEl.className = "text-indigo-400 font-black"; }
+                    else              { gradeEl.innerText = "STABLE (B)";   gradeEl.className = "text-yellow-400 font-black"; }
                 }
             }
             document.getElementById('mistake-summary').innerText = `총 시행착오 횟수: ${totalMistakes}회`;
-            if (cheated) { document.getElementById('cheat-warning').classList.remove('hidden'); }
-            document.getElementById('ending-img').src = isHappy ? "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=1200" : "https://images.unsplash.com/photo-1507502707541-f369a3b18502?auto=format&fit=crop&q=80&w=1200";
-            document.getElementById('ending-summary').innerText = isHappy ? (cheated ? `${name}는 사과를 받아주었지만, 당신의 진심에 약간의 의구심을 가지고 있습니다.` : `당신은 완벽한 프롬프트로 ${name}의 마음을 완전히 녹였습니다. 진심 어린 대화는 논리를 넘어선 감동을 선사했습니다.`) : "서로를 이해하기 위해 노력했지만, 아직은 조금 더 시간이 필요한 것 같습니다.";
+            if (cheated) document.getElementById('cheat-warning').classList.remove('hidden');
 
-            // Populate Master Prompt
-            const promptText = MASTER_PROMPT_TEMPLATES[gameState.partner];
-            document.getElementById('master-prompt-content').innerText = promptText;
+            // BAD ENDING 전용 실패 분석
+            const badBox = document.getElementById('bad-ending-analysis');
+            if (badBox) {
+                if (endType === 'bad') {
+                    badBox.classList.remove('hidden-stage');
+                    let analysis = '<p class="text-sm font-bold text-rose-300 mb-3">📋 실패 원인 분석</p><ul class="text-xs text-slate-400 space-y-2">';
+                    for (let i = 1; i <= 4; i++) {
+                        if (gameState.mistakes[i] > 0) {
+                            const labels = { 1: 'RCTF 페르소나', 2: 'Few-shot 예시', 3: 'Temperature 설정', 4: '부정 프롬프트' };
+                            analysis += `<li>• Stage ${i} (${labels[i]}): ${gameState.mistakes[i]}회 실패 → 더 구체적인 입력이 필요합니다.</li>`;
+                        }
+                    }
+                    analysis += '</ul>';
+                    badBox.innerHTML = analysis;
+                } else {
+                    badBox.classList.add('hidden-stage');
+                }
+            }
+
+            document.getElementById('master-prompt-content').innerText = MASTER_PROMPT_TEMPLATES[gameState.partner];
 
             startTransition("EVALUATING YOUR CHOICES...", () => {
-                const updateEnding = () => {
-                    screen.classList.remove('hidden-stage');
-                };
-                if (document.startViewTransition) {
-                    document.startViewTransition(updateEnding);
-                } else {
-                    updateEnding();
-                }
+                const show = () => screen.classList.remove('hidden-stage');
+                if (document.startViewTransition) document.startViewTransition(show);
+                else show();
                 anime({ targets: '#ending-screen > div', translateY: [50, 0], opacity: [0, 1], duration: 1500, easing: 'easeOutExpo' });
             });
         }
@@ -1397,17 +2342,312 @@
             });
         }
 
+        function buildPrompt() {
+            const p = gameState.prompt;
+            const sections = [];
+            if (p.role)    sections.push(`[Role] ${p.role}`);
+            if (p.context) sections.push(`[Context] ${p.context}`);
+            if (p.task)    sections.push(`[Task] ${p.task}`);
+            if (p.format)  sections.push(`[Format] ${p.format}`);
+            if (p.examples.length)
+                sections.push(`[Examples]\n${p.examples.map((e,i)=>`  ${i+1}. ${e}`).join('\n')}`);
+            if (p.temperature !== 0.5 || p.tempReason)
+                sections.push(`[Temperature: ${p.temperature}]${p.tempReason ? ' — '+p.tempReason : ''}`);
+            if (p.negatives.length)
+                sections.push(`[금지사항]\n${p.negatives.map(n=>`  - ${n}`).join('\n')}`);
+            if (p.cot.length)
+                sections.push(`[Chain of Thought]\n${p.cot.map((s,i)=>`Step ${i+1}: ${s}`).join('\n')}`);
+            return sections.join('\n\n');
+        }
+
+        function updatePromptPreview() {
+            const box = document.getElementById('prompt-preview-box');
+            const pre = document.getElementById('prompt-preview-text');
+            if (!box || !pre) return;
+
+            const stage = gameState.stage;
+            const committed = buildPrompt();
+            const draft = [];
+
+            if (stage === 1) {
+                const r = document.getElementById('p1-role')?.value || '';
+                const c = document.getElementById('p1-context')?.value || '';
+                const t = document.getElementById('p1-task')?.value || '';
+                const f = document.getElementById('p1-format')?.value || '';
+                if (r) draft.push(`[Role] ${r}`);
+                if (c) draft.push(`[Context] ${c}`);
+                if (t) draft.push(`[Task] ${t}`);
+                if (f) draft.push(`[Format] ${f}`);
+            } else if (stage === 2) {
+                const exVals = ['p2-ex1','p2-ex2','p2-ex3','p2-ex4']
+                    .map(id => document.getElementById(id)?.value?.trim())
+                    .filter(Boolean);
+                if (exVals.length) {
+                    const items = exVals.map((e,i)=>`  ${i+1}. ${e}`).join('\n');
+                    draft.push(`[Examples — 입력 중]\n${items}`);
+                }
+            } else if (stage === 3) {
+                const v      = parseFloat(document.getElementById('p3-temp')?.value || '0.5').toFixed(1);
+                const reason = document.getElementById('p3-reason')?.value?.trim() || '';
+                draft.push(`[Temperature: ${v}]${reason ? ' — ' + reason : ''}`);
+            } else if (stage === 4) {
+                const neg = document.getElementById('p4-negative')?.value || '';
+                if (neg) {
+                    const items = neg.split(/[,\n]/).filter(s=>s.trim()).map(n=>`  - ${n.trim()}`).join('\n');
+                    draft.push(`[금지사항 — 입력 중]\n${items}`);
+                }
+            } else if (stage === 5) {
+                const cot = document.getElementById('p5-cot')?.value || '';
+                if (cot) draft.push(`[Chain of Thought — 입력 중]\n${cot}`);
+            }
+
+            const draftText = draft.join('\n\n');
+            const combined = [committed, draftText].filter(Boolean).join('\n\n');
+            if (!combined.trim()) { box.classList.add('hidden-stage'); return; }
+
+            pre.textContent = combined;
+            box.classList.remove('hidden-stage');
+        }
+
         function showHint(stage) {
-            const data = { 1: "역할, 상황, 임무, 형식을 구체적으로!", 2: "3~5개의 구체적인 예시를 콤마로 구분!", 3: "0.7~0.8 정도의 온도가 가장 감성적!", 4: "금지할 단어('하지만', '변명')를 명시!" };
+            const data = {
+                1: "각 항목을 최소 5자 이상 구체적으로 채워주세요. Role에 성격이나 말투, Context에 구체적인 배경 상황을 추가하면 좋아요!",
+                2: "3~5개의 구체적인 예시가 가장 효과적이에요. 예시들 사이에 공통 분위기·패턴이 있어야 AI가 규칙을 잡아냅니다.",
+                3: "0.4~0.8 범위가 추천 구간이에요. 0.7이 진심 어린 감성 표현의 황금 구간! 이유도 함께 적으면 더 좋아요.",
+                4: "금지할 단어나 행동을 구체적으로! '하지만', '변명' 같은 단어를 콤마로 구분해 여러 개 입력할 수 있어요.",
+                5: "'Step 1:', 'Step 2:' 처럼 단계를 명확히 구분해 최소 2단계 이상 작성하세요. 각 단계는 독립된 논거여야 해요."
+            };
             document.getElementById('hint-content').innerText = data[stage];
             document.getElementById('hint-modal').classList.remove('hidden-stage');
         }
         function closeHint() { document.getElementById('hint-modal').classList.add('hidden-stage'); }
+        
+        function copyUserPrompt(btn) {
+            const text = document.getElementById('user-prompt-text').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyToast("프롬프트가 클립보드에 복사되었습니다! 🚀");
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> PROMPT COPIED!';
+                btn.classList.add('bg-emerald-500/60');
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                    btn.classList.remove('bg-emerald-500/60');
+                }, 2000);
+            });
+        }
+
+        function showCopyToast(message) {
+            const container = document.getElementById('toast-container');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.innerText = message;
+            
+            container.classList.add('show');
+            setTimeout(() => {
+                container.classList.remove('show');
+            }, 3000);
+        }
+
+        const NEG_CHIPS = ["'하지만' 금지", "변명 금지", "자책하는 말투 금지", "감정 회피 금지", "논리적 설명 금지"];
+        function addNegChip(i) { addNegative(NEG_CHIPS[i]); }
+
+        function addNegative(text) {
+            const ta = document.getElementById('p4-negative');
+            if (!ta) return;
+            const current = ta.value.trim();
+            ta.value = current ? current + ', ' + text : text;
+            updatePromptPreview();
+            updateNegTags();
+        }
+
+        function updateNegTags() {
+            const neg = document.getElementById('p4-negative')?.value || '';
+            const tags = neg.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+            const container = document.getElementById('neg-tags');
+            if (!container) return;
+            container.innerHTML = tags.map(t =>
+                `<span class="px-2.5 py-1 bg-rose-500/20 border border-rose-500/40 rounded-full text-[10px] text-rose-200 font-medium">⛔ ${t}</span>`
+            ).join('');
+        }
+
+        function updateCotPreview() {
+            const cot = document.getElementById('p5-cot')?.value || '';
+            const stepCount = (cot.match(/step\s*\d+|[①②③④⑤]|\d+\./gi) || []).length;
+            const el = document.getElementById('cot-step-count');
+            if (!el) return;
+            const color = stepCount >= 2 ? 'text-violet-400' : 'text-slate-500';
+            el.className = `text-[10px] text-right ${color}`;
+            el.textContent = `단계 수: ${stepCount} / 최소 2단계 ${stepCount >= 2 ? '✓' : ''}`;
+        }
+
+        function trackExFill() {
+            const ids = ['p2-ex1','p2-ex2','p2-ex3'];
+            const colors = ['#818cf8', '#c084fc', '#34d399'];
+            let filled = 0;
+            document.querySelectorAll('#ex-dots .ex-dot').forEach((dot, i) => {
+                const val = document.getElementById(ids[i])?.value?.trim() || '';
+                const ok = val.length >= 3;
+                dot.style.background = ok ? colors[i] : 'rgba(255,255,255,0.1)';
+                if (ok) filled++;
+            });
+            const txt = document.getElementById('ex-count-txt');
+            if (txt) txt.textContent = `${filled} / 3 입력됨`;
+            const addBtn = document.getElementById('add-ex4-btn');
+            if (addBtn) addBtn.classList.toggle('hidden-stage', filled < 3);
+        }
+
+        function toggleEx4() {
+            document.getElementById('p2-ex4-row')?.classList.remove('hidden-stage');
+            document.getElementById('add-ex4-btn')?.classList.add('hidden-stage');
+        }
+
+        function trackRCTFFill() {
+            const fields = ['p1-role', 'p1-context', 'p1-task', 'p1-format'];
+            const minLens = [5, 5, 5, 3];
+            const colors = ['#818cf8', '#c084fc', '#34d399', '#fb7185'];
+            document.querySelectorAll('.rctf-dot').forEach((dot, i) => {
+                const val = document.getElementById(fields[i])?.value?.trim() || '';
+                dot.style.background = val.length >= minLens[i] ? colors[i] : 'rgba(255,255,255,0.1)';
+            });
+        }
+
         function fillExample(stage) {
-            if (stage === 1) { document.getElementById('p1-role').value = "나의 다정한 소꿉친구"; document.getElementById('p1-context').value = "방과 후 노을이 지는 교실"; document.getElementById('p1-task').value = "설레는 대화를 해줘"; document.getElementById('p1-format').value = "반말로, 짧게"; }
-            else if (stage === 2) { document.getElementById('p2-examples').value = "조용한 북카페, 따뜻한 카페, 아늑한 카페"; }
-            else if (stage === 4) { document.getElementById('p4-negative').value = "'하지만' 금지, 변명 금지"; }
+            if (stage === 1) {
+                document.getElementById('p1-role').value = "나의 다정한 소꿉친구";
+                document.getElementById('p1-context').value = "방과 후 노을이 지는 교실, 둘만 남은 상황";
+                document.getElementById('p1-task').value = "설레는 첫마디를 건네줘";
+                document.getElementById('p1-format').value = "반말로, 2~3문장으로 짧게";
+                trackRCTFFill();
+            } else if (stage === 2) {
+                document.getElementById('p2-ex1').value = "조용한 북카페, 책 냄새 나는 공간";
+                document.getElementById('p2-ex2').value = "나무 향 나는 따뜻한 인테리어 카페";
+                document.getElementById('p2-ex3').value = "소파가 편안한 아늑한 분위기";
+                trackExFill();
+            } else if (stage === 3) {
+                document.getElementById('p3-temp').value = '0.7';
+                document.getElementById('p3-reason').value = '감성적이지만 논리적 일관성이 유지되는 황금 구간';
+                updateTemp('0.7');
+            } else if (stage === 4) {
+                document.getElementById('p4-negative').value = "'하지만' 금지, 변명 금지, 논리적 설명 금지";
+                updateNegTags();
+            } else if (stage === 5) {
+                document.getElementById('p5-cot').value = "Step 1: 나는 RCTF로 '다정한 소꿉친구'라는 정체성을 정의해서 우리만의 대화 방식을 만들었어.\nStep 2: Few-shot으로 네가 좋아하는 공간 3가지를 학습해서 네 취향의 패턴을 파악했어.\nStep 3: Temperature 0.7로 논리도 감성도 놓치지 않는 균형 잡힌 대화를 설계했어.\nStep 4: Negative Prompt로 '하지만'과 변명을 금지해서 오직 진심만 남겼어 — 이것이 내가 너를 위해 할 수 있는 최선이야.";
+                updateCotPreview();
+            }
             updateAffection(-10);
+            updatePromptPreview();
+        }
+
+        // ── Gallery ──────────────────────────────────────────
+        const GALLERY_DEF = [
+            { id:'g1', stage:1, title:'Stage 1 · 첫 만남', desc:'프롬프트로 새로운 정체성을 부여하다', img:'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=600' },
+            { id:'g2', stage:2, title:'Stage 2 · 카페 데이트', desc:'취향을 학습한 AI의 완벽한 추천', img:'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=600' },
+            { id:'g3', stage:3, title:'Stage 3 · 고백 직전', desc:'온도로 조율된 감정의 순간', img:'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&q=80&w=600' },
+            { id:'g4', stage:4, title:'Stage 4 · 화해', desc:'부정 프롬프트로 걸러낸 진심', img:'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=600' },
+            { id:'g5', stage:5, title:'Bonus · CoT 완성', desc:'논리를 넘어선 진심의 Chain', img:'https://images.unsplash.com/photo-1499678329028-101435549a4e?auto=format&fit=crop&q=80&w=600' },
+            { id:'ev1', stage:0, title:'Secret · 빗속의 두 사람', desc:'호감도 50% 이벤트', img:'https://images.unsplash.com/photo-1519692933481-e162a57d6721?auto=format&fit=crop&q=80&w=600' },
+        ];
+        let unlockedGallery = (() => { try { return JSON.parse(localStorage.getItem('pmGallery') || '[]'); } catch(e) { return []; } })();
+
+        function unlockGallery(id) {
+            if (!unlockedGallery.includes(id)) {
+                unlockedGallery.push(id);
+                try { localStorage.setItem('pmGallery', JSON.stringify(unlockedGallery)); } catch(e) {}
+            }
+        }
+        function openGallery() {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '';
+            GALLERY_DEF.forEach(scene => {
+                const unlocked = unlockedGallery.includes(scene.id);
+                const div = document.createElement('div');
+                div.className = 'rounded-2xl overflow-hidden border border-white/10 ' + (unlocked ? '' : 'opacity-40 grayscale');
+                div.innerHTML = `
+                    <div class="relative">
+                        <img src="${unlocked ? scene.img : ''}" ${unlocked ? '' : `style="background:#1e293b;height:150px;display:block;width:100%;"`}
+                            class="w-full h-36 object-cover" loading="lazy">
+                        ${!unlocked ? '<div class="absolute inset-0 flex items-center justify-center bg-slate-900/80"><i class="fas fa-lock text-3xl text-slate-600"></i></div>' : ''}
+                    </div>
+                    <div class="p-4 bg-slate-900/60">
+                        <p class="font-black text-sm ${unlocked ? 'text-white' : 'text-slate-600'}">${scene.title}</p>
+                        <p class="text-xs text-slate-500 mt-1">${unlocked ? scene.desc : '???'}</p>
+                    </div>`;
+                grid.appendChild(div);
+            });
+            document.getElementById('gallery-modal').classList.remove('hidden-stage');
+        }
+        function closeGallery() { document.getElementById('gallery-modal').classList.add('hidden-stage'); }
+
+        // ── Save / Load ──────────────────────────────────────
+        const SAVE_KEY = 'promptMastery_v2';
+        let saveBadgeTimer = null;
+        function saveGame() {
+            try { localStorage.setItem(SAVE_KEY, JSON.stringify({ gameState, ts: Date.now() })); } catch(e) {}
+            const badge = document.getElementById('save-badge');
+            const text = document.getElementById('save-badge-text');
+            if (!badge) return;
+            const stageLabel = ["", "Stage 1", "Stage 2", "Stage 3", "Stage 4", "Stage 5"][gameState.stage] || `Stage ${gameState.stage}`;
+            if (text) text.textContent = `${stageLabel} 자동저장됨`;
+            badge.classList.add('show');
+            clearTimeout(saveBadgeTimer);
+            saveBadgeTimer = setTimeout(() => badge.classList.remove('show'), 2500);
+        }
+        function loadSave() {
+            try { const d = JSON.parse(localStorage.getItem(SAVE_KEY)); if (d?.gameState) return d; } catch(e) {}
+            return null;
+        }
+        function clearSave() { localStorage.removeItem(SAVE_KEY); }
+
+        function checkContinue() {
+            const save = loadSave();
+            const btn = document.getElementById('continue-btn');
+            if (save && btn) btn.classList.remove('hidden-stage');
+        }
+
+        function continueGame() {
+            const save = loadSave();
+            if (!save) return;
+            Object.assign(gameState, save.gameState);
+
+            // 게임 화면 노출
+            document.getElementById('intro-screen').classList.add('hidden-stage');
+            document.getElementById('char-name').innerText = gameState.partner.toUpperCase();
+            document.getElementById('main-char').src = assets[gameState.partner].normal;
+            document.getElementById('affection-fill').style.width = gameState.affection + '%';
+            document.getElementById('affection-text').innerText = gameState.affection + '%';
+
+            document.getElementById('stage-progress').classList.remove('hidden-stage');
+            document.getElementById('char-box').classList.remove('hidden-stage');
+            document.getElementById('dialogue-box').classList.remove('hidden-stage');
+            document.getElementById('dialogue-box').classList.remove('centered');
+            document.getElementById('dialogue-box').classList.add('with-panel');
+            document.getElementById('action-panel').classList.remove('hidden-stage');
+
+            // 저장된 스테이지 UI 복원 (startGame() 호출 금지 — stage=1 리셋됨)
+            switchBackground(gameState.stage);
+            document.querySelectorAll('.stage-ui').forEach(ui => ui.classList.add('hidden-stage'));
+            const stageEl = document.getElementById(`stage-${gameState.stage}`);
+            if (stageEl) stageEl.classList.remove('hidden-stage');
+
+            const badges = ["", "STAGE 1: RCTF", "STAGE 2: FEW-SHOT", "STAGE 3: TEMPERATURE", "STAGE 4: NEGATIVE PROMPT", "STAGE 5: CHAIN OF THOUGHT"];
+            document.getElementById('stage-badge').innerText = badges[gameState.stage] || '';
+            updateStageProgress(gameState.stage);
+            setTimeout(updatePromptPreview, 100);
+
+            // 패널 바로 활성화 (대화 재생 없이 즉시 조작 가능)
+            document.getElementById('action-panel').classList.remove('locked-panel');
+            document.getElementById('action-panel').classList.add('pulse-sidebar');
+
+            const welcomeBack = gameState.partner === 'iris'
+                ? [`(세이브 파일 불러오기 완료. Stage ${gameState.stage}에서 이어합니다.)`, "아이리스: ...돌아왔구나. 계속하자."]
+                : [`(세이브 파일 불러오기 완료. Stage ${gameState.stage}에서 이어합니다.)`, "카일: ...복귀 확인. 다시 시작하겠습니다."];
+            playDialogue(welcomeBack);
+        }
+
+        // 스테이지 완료마다 자동 저장 + 갤러리 해금
+        function onStageComplete(stage) {
+            saveGame();
+            const idMap = { 1:'g1', 2:'g2', 3:'g3', 4:'g4', 5:'g5' };
+            if (idMap[stage]) unlockGallery(idMap[stage]);
         }
 
         // BGM Functions
@@ -1486,80 +2726,28 @@
     </script>
 
     <!-- Enhanced Feedback UI -->
-    <style>
-        .feedback-fab {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            border-radius: 999px;
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
-            cursor: pointer;
-            z-index: 900;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
 
-        .feedback-fab:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.6);
-        }
-
-        .feedback-fab i {
-            font-size: 1.2rem;
-        }
-
-        .feedback-fab span {
-            font-weight: 900;
-            font-size: 0.9rem;
-            letter-spacing: -0.5px;
-        }
-
-        .floating-tip {
-            position: absolute;
-            top: -50px;
-            right: 0;
-            background: #fb7185;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 900;
-            white-space: nowrap;
-            animation: bounce-slow 3s infinite;
-        }
-
-        .floating-tip::after {
-            content: '';
-            position: absolute;
-            bottom: -6px;
-            right: 20px;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 6px solid #fb7185;
-        }
-
-        @keyframes bounce-slow {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-    </style>
 
     <div onclick="toggleFeedbackModal()" class="feedback-fab">
         <div class="floating-tip">더 재미있게 만들어주세요! 💡</div>
         <i class="fas fa-comment-heart"></i>
         <span>의견 보내기</span>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div id="gallery-modal" class="fixed inset-0 z-[800] bg-slate-950/95 backdrop-blur-xl hidden-stage overflow-y-auto">
+        <div class="max-w-4xl mx-auto py-12 px-8">
+            <div class="flex justify-between items-center mb-10">
+                <div>
+                    <h2 class="text-4xl font-black">GALLERY</h2>
+                    <p class="text-slate-500 text-sm mt-1">클리어한 씬이 저장됩니다</p>
+                </div>
+                <button onclick="closeGallery()" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-6"></div>
+        </div>
     </div>
 
     <div id="feedback-modal"
