@@ -4,387 +4,1082 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>프롬프트 마스터 가이드: 철벽 AI의 마음을 녹여라!</title>
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="연애 시뮬레이션을 통해 배우는 실전 프롬프트 엔지니어링 기술 가이드. RCTF, Few-shot, Temperature, Negative Prompt 완벽 마스터.">
-    
-    <!-- Fonts & Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Outfit:wght@700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
         :root {
-            --bg: #0f172a;
-            --surface: rgba(30, 41, 59, 0.7);
-            --card: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(255,255,255,0.05);
+            --glass-border: rgba(255,255,255,0.1);
             --accent-primary: #818cf8;
             --accent-secondary: #c084fc;
             --accent-love: #fb7185;
-            --font-main: 'Noto Sans KR', sans-serif;
-            --font-title: 'Outfit', sans-serif;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
-            background: var(--bg);
-            color: #fff;
-            font-family: var(--font-main);
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #0f172a;
+            color: white;
             overflow: hidden;
             height: 100vh;
-            width: 100vw;
         }
 
-        /* Ambient Lighting */
-        .ambient-light {
-            position: fixed; width: 600px; height: 600px; border-radius: 50%;
-            filter: blur(80px); z-index: -1; pointer-events: none; opacity: 0.4;
+        /* ── 배경 레이어 (게임 동일) ── */
+        .bg-layer {
+            position: fixed; inset: 0;
+            background-size: cover; background-position: center;
+            transition: none; z-index: -2;
         }
-        .light-1 { top: -200px; left: -200px; background: radial-gradient(circle, var(--accent-primary) 0%, transparent 70%); }
-        .light-2 { bottom: -200px; right: -200px; background: radial-gradient(circle, var(--accent-love) 0%, transparent 70%); }
 
-        /* Navigation */
-        nav {
-            position: fixed; top: 0; left: 0; right: 0; height: 70px;
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 50px; z-index: 1000;
-            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
+        /* ── 유리 패널 (게임 동일) ── */
+        .glass-panel {
+            background: rgba(15,23,42,0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
-        .logo { font-family: var(--font-title); font-weight: 900; font-size: 1.4rem; letter-spacing: -1px; text-decoration: none; color: #fff; }
-        .logo span { color: var(--accent-love); }
-        .nav-btns { display: flex; gap: 25px; }
-        .nav-btn { color: #94a3b8; text-decoration: none; font-size: 0.9rem; font-weight: 700; transition: 0.3s; }
-        .nav-btn:hover { color: #fff; }
-        .play-btn { background: linear-gradient(135deg, var(--accent-love), var(--accent-secondary)); color: #fff; padding: 8px 20px; border-radius: 99px; font-weight: 900; box-shadow: 0 10px 20px rgba(251, 113, 133, 0.3); }
 
-        /* Slide System */
-        .slider-container {
-            width: 100%; height: 100vh;
-            display: flex; transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        /* ── 캐릭터 박스 (게임 동일) ── */
+        #char-box {
+            position: absolute; bottom: 0; left: 50%;
+            transform: translateX(-50%);
+            height: 80vh;
+            display: flex; align-items: flex-end;
+            transition: all 0.5s ease;
+            pointer-events: none;
         }
-        .slide {
-            min-width: 100%; height: 100%;
+        #guide-char {
+            height: 100%; object-fit: contain;
+            filter: drop-shadow(0 0 40px rgba(0,0,0,0.6));
+            transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        /* ── 대화 박스 (게임 동일) ── */
+        #dialogue-box {
+            position: absolute;
+            bottom: 120px;
+            left: clamp(20px, calc(50% - 620px), 140px);
+            width: min(46vw, 760px);
+            max-width: calc(100vw - 500px);
+            padding: 28px 32px;
+            z-index: 100;
+            cursor: pointer;
+        }
+        #dialogue-box.centered {
+            left: 50%;
+            width: 90%;
+            max-width: 900px;
+            transform: translateX(-50%);
+        }
+        .speaker-char  { color: var(--accent-love);    font-weight: 900; margin-right: 6px; }
+        .speaker-me    { color: var(--accent-primary);  font-weight: 900; margin-right: 6px; }
+        .speaker-narrator { color: #94a3b8; font-style: italic; }
+        #dialogue-text { font-size: 1.05rem; line-height: 1.8; min-height: 1.8em; }
+        #advance-hint  {
+            position: absolute; bottom: 14px; right: 22px;
+            font-size: 10px; color: #475569; font-weight: 700;
+            animation: blink 1.4s infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        /* ── 가이드 패널 (= 게임 action-panel) ── */
+        #guide-panel {
+            position: fixed; top: 90px; right: 40px;
+            width: 400px; max-height: calc(100vh - 130px);
+            padding: 28px; overflow-y: auto; z-index: 150;
+            transition: width 0.25s ease, transform 0.25s ease, top 0.25s ease, max-height 0.25s ease;
+        }
+        /* 패널 스크롤바 */
+        #guide-panel::-webkit-scrollbar { width: 4px; }
+        #guide-panel::-webkit-scrollbar-track { background: transparent; }
+        #guide-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+
+        /* ── 스테이지 뱃지 (게임 동일) ── */
+        #stage-badge {
+            position: fixed; top: 20px; left: 20px;
+            background: rgba(129,140,248,0.15);
+            border: 1px solid rgba(129,140,248,0.3);
+            border-radius: 99px; padding: 6px 16px;
+            font-size: 11px; font-weight: 900;
+            letter-spacing: 2px; color: #818cf8; z-index: 300;
+        }
+
+        /* ── 진행 점 (게임 동일) ── */
+        #stage-progress {
+            position: fixed; top: 28px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 8px; align-items: center; z-index: 300;
+        }
+        .s-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            transition: all 0.4s;
+        }
+        .s-dot.active { background: var(--accent-primary); width: 20px; border-radius: 4px; }
+        .s-dot.done   { background: #34d399; }
+        .s-dot.bonus  { background: #a78bfa; width: 20px; border-radius: 4px; }
+
+        /* ── 상단 우측 버튼 ── */
+        #top-right {
+            position: fixed; top: 20px; right: 20px;
+            display: flex; gap: 10px; z-index: 300;
+        }
+        .top-btn {
+            padding: 6px 14px; border-radius: 99px; font-size: 11px; font-weight: 900;
+            letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+        }
+        .play-btn-sm {
+            background: linear-gradient(135deg, var(--accent-love), var(--accent-secondary));
+            color: white; box-shadow: 0 6px 15px rgba(251,113,133,0.3);
+        }
+        .play-btn-sm:hover { transform: translateY(-1px); }
+
+        /* ── 하단 내비게이션 ── */
+        #nav-bar {
+            position: fixed; bottom: 28px; left: 50%;
+            transform: translateX(-50%) translateX(-200px);
+            display: flex; align-items: center; gap: 16px; z-index: 300;
+        }
+        .nav-btn-ctrl {
+            width: 52px; height: 52px; border-radius: 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: white; font-size: 1.1rem; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            padding: 100px 50px 50px;
+            transition: all 0.2s;
+        }
+        .nav-btn-ctrl:hover { background: rgba(129,140,248,0.2); border-color: rgba(129,140,248,0.5); }
+        #nav-counter {
+            font-size: 11px; color: #475569; font-weight: 700; letter-spacing: 1px;
         }
 
-        /* Bento Grid */
-        .bento-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(4, 1fr);
-            gap: 25px;
-            width: 100%; max-width: 1300px; height: 100%; max-height: 800px;
+        /* ── 패널 내 읽기전용 필드 (게임 input 스타일) ── */
+        .field-display {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 16px; padding: 14px 18px;
+            font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        .field-label {
+            font-size: 9px; font-weight: 900; letter-spacing: 2px;
+            text-transform: uppercase; margin-bottom: 5px; display: block;
         }
 
-        .bento-card {
-            background: var(--card);
-            backdrop-filter: blur(25px);
-            border: 1px solid var(--border);
-            border-radius: 32px;
-            padding: 40px;
+        /* ── 온도 바 ── */
+        .temp-bar {
+            height: 10px; border-radius: 99px;
+            background: linear-gradient(to right,#60a5fa 0%,#818cf8 35%,#a78bfa 60%,#f97316 88%,#ef4444 100%);
+            position: relative; margin: 10px 0;
+        }
+        .temp-cursor {
+            position: absolute; top: -4px;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: white; border: 3px solid #818cf8;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(129,140,248,0.6);
+            transition: left 0.3s;
+        }
+
+        /* ── CoT 스텝 ── */
+        .cot-step {
+            padding: 10px 14px; border-radius: 14px; margin-bottom: 8px;
+            border-left: 3px solid;
+        }
+
+        /* ── 엔딩 카드 ── */
+        .ending-card {
+            padding: 12px 16px; border-radius: 16px; margin-bottom: 8px;
+            border: 1px solid; display: flex; align-items: center; gap: 12px;
+        }
+
+        /* ── 인트로 전체화면 ── */
+        #intro-overlay {
+            position: fixed; inset: 0; z-index: 400;
             display: flex; flex-direction: column;
-            box-shadow: 0 15px 45px rgba(0,0,0,0.3);
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative; overflow: hidden;
+            align-items: center; justify-content: center;
+            background: rgba(15,23,42,0.5);
         }
-        .bento-card:hover { border-color: var(--accent-love); transform: scale(1.02); }
-        
-        .card-label { font-size: 0.8rem; font-weight: 900; color: var(--accent-love); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 15px; }
-        .card-title { font-family: var(--font-title); font-size: 1.8rem; font-weight: 900; margin-bottom: 20px; line-height: 1.2; }
-        .card-text { font-size: 1.2rem; line-height: 1.8; color: #cbd5e1; }
-        .card-icon { font-size: 3.5rem; color: var(--accent-love); margin-bottom: 30px; opacity: 0.9; }
-
-        /* Content Blocks */
-        .prompt-example { background: rgba(0,0,0,0.3); border-radius: 20px; padding: 25px; border-left: 5px solid var(--accent-primary); margin-top: 25px; font-size: 1rem; color: #94a3b8; line-height: 1.6; }
-        .highlight { color: var(--accent-secondary); font-weight: 900; }
-        .love-highlight { color: var(--accent-love); font-weight: 900; }
-
-        /* Slide Specific Layouts */
-        .intro-hero { grid-column: 1 / 4; grid-row: 1 / 4; justify-content: center; }
-        .intro-hero h1 { font-family: var(--font-title); font-size: 4.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 30px; letter-spacing: -3px; }
-        .intro-char { grid-column: 4 / 5; grid-row: 1 / 5; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(251, 113, 133, 0.1) 0%, transparent 80%); }
-        .intro-char .heart-ai { font-size: 10rem; animation: pulse 2s infinite ease-in-out; }
-        
-        .quest-main { grid-column: 1 / 3; grid-row: 1 / 5; }
-        .quest-sub-1 { grid-column: 3 / 5; grid-row: 1 / 3; }
-        .quest-sub-2 { grid-column: 3 / 5; grid-row: 3 / 5; }
-
-        /* Controls */
-        .controls {
-            position: fixed; bottom: 50px; right: 50px;
-            display: flex; gap: 20px; z-index: 1000;
+        .intro-card {
+            width: min(920px, 92vw);
+            padding: 48px 44px;
+            text-align: center;
         }
-        .ctrl-btn {
-            width: 65px; height: 65px; border-radius: 20px;
-            background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid var(--border);
-            color: #fff; font-size: 1.4rem; cursor: pointer; transition: 0.3s;
-            display: flex; align-items: center; justify-content: center;
+        .intro-kicker {
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: #818cf8;
+            font-weight: 900;
+            text-transform: uppercase;
         }
-        .ctrl-btn:hover { background: var(--accent-love); border-color: var(--accent-love); box-shadow: 0 10px 30px rgba(251, 113, 133, 0.4); }
-        .progress-bar {
-            position: fixed; bottom: 0; left: 0; height: 5px;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-love)); 
-            width: 0%; transition: 0.4s; z-index: 1001;
-            box-shadow: 0 0 20px var(--accent-love);
+        .intro-title {
+            font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.8rem);
+            font-weight: 900;
+            line-height: 1.15;
+            margin-top: 10px;
+        }
+        .intro-sub {
+            margin-top: 16px;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+        .intro-actions {
+            margin-top: 28px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #e2e8f0;
+            font-weight: 800;
+            padding: 14px 24px;
+            border-radius: 14px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            text-decoration: none;
         }
 
-        @keyframes pulse { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(251, 113, 133, 0.2)); } 50% { transform: scale(1.1); filter: drop-shadow(0 0 50px rgba(251, 113, 133, 0.5)); } }
+        /* ── 페이드 트랜지션 ── */
+        .fade-out { animation: fadeOut 0.3s forwards; }
+        .fade-in  { animation: fadeIn  0.3s forwards; }
+        @keyframes fadeOut { to { opacity: 0; } }
+        @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
 
-        @media (max-width: 1100px) {
-            .bento-grid { grid-template-columns: 1fr; grid-template-rows: auto; overflow-y: auto; display: block; }
-            .bento-card { margin-bottom: 25px; }
-            .intro-hero h1 { font-size: 3rem; }
+        /* ── 앰비언트 라이트 ── */
+        .ambient-light {
+            position: fixed; width: 500px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(129,140,248,0.12) 0%, transparent 70%);
+            z-index: -1; pointer-events: none;
+        }
+
+        /* ── 버튼 primary ── */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            color: white; font-weight: 900; padding: 16px 32px;
+            border-radius: 16px; letter-spacing: 1px; text-transform: uppercase;
+            box-shadow: 0 10px 20px -10px rgba(129,140,248,0.5);
+            transition: all 0.3s; display: inline-block; cursor: pointer;
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+
+        /* ── RCTF 포커스 모드 (stage 1) ── */
+        body.rctf-focus #guide-panel {
+            width: 500px;
+            top: 76px;
+            max-height: calc(100vh - 100px);
+            transform: scale(1.03);
+            transform-origin: top right;
+        }
+        .rctf-detail {
+            margin-top: 10px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.03);
+        }
+        .rctf-detail .k {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .rctf-detail .d {
+            font-size: 11px;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        /* ── 모바일 겹침 방지 ── */
+        @media (max-width: 900px) {
+            #dialogue-box {
+                left: 50%;
+                width: calc(100% - 24px);
+                max-width: none;
+                bottom: 100px;
+                padding: 20px 18px;
+                transform: translateX(-50%);
+            }
+            #dialogue-box.centered {
+                width: calc(100% - 24px);
+            }
+            #nav-bar {
+                bottom: 20px;
+                transform: translateX(-50%);
+            }
+            .nav-btn-ctrl {
+                width: 44px;
+                height: 44px;
+                border-radius: 14px;
+            }
+        }
+
+        @media (max-width: 1400px) and (min-width: 901px) {
+            #dialogue-box {
+                left: 24px;
+                width: min(48vw, 640px);
+                max-width: calc(100vw - 460px);
+                bottom: 100px;
+            }
+        }
+        @media (max-width: 1280px) {
+            body.rctf-focus #guide-panel {
+                width: 440px;
+                transform: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="ambient-light light-1"></div>
-    <div class="ambient-light light-2"></div>
+    <!-- 배경 레이어 -->
+    <div id="bg-a" class="bg-layer"></div>
+    <div id="bg-b" class="bg-layer" style="z-index:-1; opacity:0; transition: opacity 1s ease;"></div>
+    <div class="ambient-light" style="top:-100px; left:-100px;"></div>
+    <div class="ambient-light" style="bottom:-100px; right:-100px; background: radial-gradient(circle, rgba(192,132,252,0.1) 0%, transparent 70%);"></div>
 
-    <nav>
-        <a href="../../index.html" class="logo">PROMPT <span>MASTERY</span></a>
-        <div class="nav-btns">
-            <a href="prompt_practice.html" class="nav-btn">SIMULATOR</a>
-            <a href="prompt_practice.html" class="nav-btn play-btn">TRY TO MELT</a>
-        </div>
-    </nav>
-
-    <div class="progress-bar" id="progress"></div>
-
-    <div class="slider-container" id="slider">
-        <!-- Slide 1: Intro -->
-        <section class="slide">
-            <div class="bento-grid">
-                <div class="bento-card intro-hero">
-                    <div class="card-label">ACADEMY COURSE</div>
-                    <h1>Melt The<br>AI's Heart</h1>
-                    <div class="card-text">AI의 차가운 논리를 당신만의 감성 프롬프트로 녹여보세요. 4단계의 핵심 엔지니어링 기술을 연애 시뮬레이션으로 마스터합니다.</div>
-                </div>
-                <div class="bento-card intro-char">
-                    <div class="heart-ai">💖</div>
-                    <div style="font-family: var(--font-title); font-weight: 900; margin-top: 30px; color: var(--accent-love); letter-spacing: 2px;">PROMPT ROMANCE</div>
-                </div>
-                <div class="bento-card" style="grid-column: 1 / 4; grid-row: 4 / 5; display: flex; flex-direction: row; align-items: center; justify-content: space-around; padding: 0 60px;">
-                    <div style="text-align: center;"><span style="display: block; font-size: 2.2rem; font-weight: 900; color: var(--accent-primary);">4</span><span style="font-size: 0.8rem; color: #64748b; font-weight: 800;">MISSIONS</span></div>
-                    <div style="text-align: center;"><span style="display: block; font-size: 2.2rem; font-weight: 900; color: var(--accent-secondary);">2</span><span style="font-size: 0.8rem; color: #64748b; font-weight: 800;">PARTNERS</span></div>
-                    <div style="text-align: center;"><span style="display: block; font-size: 2.2rem; font-weight: 900; color: var(--accent-love);">100%</span><span style="font-size: 0.8rem; color: #64748b; font-weight: 800;">AFFECTION</span></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 2: Game Goal -->
-        <section class="slide">
-            <div class="bento-grid">
-                <div class="bento-card" style="grid-column: 1 / 3; grid-row: 1 / 3;">
-                    <i class="fas fa-heart-circle-check card-icon"></i>
-                    <div class="card-label">GOAL</div>
-                    <div class="card-title">사랑은 프롬프트를 타고</div>
-                    <div class="card-text">아이리스(논리형) 또는 카일(원칙형) 중 한 명을 선택해 100%의 호감도를 달성하세요. 매 단계마다 <span class="love-highlight">최적의 프롬프트</span>를 설계해야 합니다.</div>
-                </div>
-                <div class="bento-card" style="grid-column: 3 / 5; grid-row: 1 / 3;">
-                    <i class="fas fa-wand-magic-sparkles card-icon" style="color: var(--accent-secondary);"></i>
-                    <div class="card-label">TECHNOLOGY</div>
-                    <div class="card-title">학습 포인트</div>
-                    <div class="card-text">
-                        • <strong>RCTF:</strong> 정체성과 페르소나 구축<br>
-                        • <strong>Few-shot:</strong> 패턴과 취향 학습<br>
-                        • <strong>Temp:</strong> 감정의 온도와 창의성 조절<br>
-                        • <strong>Negative:</strong> 오해 방지를 위한 금기어
-                    </div>
-                </div>
-                <div class="bento-card" style="grid-column: 1 / 5; grid-row: 3 / 5; background: rgba(251, 113, 133, 0.05);">
-                    <div class="card-label">AFFECTION SYSTEM</div>
-                    <div class="card-text" style="display: flex; justify-content: space-around; align-items: center; height: 100%; text-align: center;">
-                        <div><i class="fas fa-user-tag" style="font-size: 2rem; margin-bottom: 10px;"></i><br>Identity</div>
-                        <i class="fas fa-plus" style="opacity: 0.3;"></i>
-                        <div><i class="fas fa-brain" style="font-size: 2rem; margin-bottom: 10px;"></i><br>Learning</div>
-                        <i class="fas fa-plus" style="opacity: 0.3;"></i>
-                        <div><i class="fas fa-thermometer-half" style="font-size: 2rem; margin-bottom: 10px;"></i><br>Emotion</div>
-                        <i class="fas fa-equals" style="opacity: 0.3;"></i>
-                        <div class="love-highlight"><i class="fas fa-heart" style="font-size: 2.5rem; margin-bottom: 10px;"></i><br>HAPPY ENDING</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 3: RCTF Persona -->
-        <section class="slide">
-            <div class="bento-grid">
-                <div class="bento-card quest-main">
-                    <i class="fas fa-id-card card-icon" style="color: var(--accent-primary);"></i>
-                    <div class="card-label">STAGE 01: RCTF</div>
-                    <div class="card-title">정체성 주입하기</div>
-                    <div class="card-text">
-                        AI에게 당신이 원하는 <span class="highlight">페르소나</span>를 입히는 첫 단계입니다. 4가지 요소가 결합될 때 AI는 완벽하게 몰입합니다.
-                    </div>
-                    <div class="prompt-example">
-                        "너는 나의 <span class="love-highlight">다정한 소꿉친구</span>야(Role). 지금 우리는 <span class="love-highlight">노을 지는 교실</span>에 있어(Context)..."
-                    </div>
-                </div>
-                <div class="bento-card quest-sub-1">
-                    <div class="card-label">CORE ELEMENTS</div>
-                    <div class="card-text">
-                        • <strong>Role:</strong> AI의 역할<br>
-                        • <strong>Context:</strong> 대화 배경<br>
-                        • <strong>Task:</strong> 수행할 임무<br>
-                        • <strong>Format:</strong> 답변의 형식
-                    </div>
-                </div>
-                <div class="bento-card quest-sub-2">
-                    <div class="card-label">PRO TIP</div>
-                    <div class="card-title">구체성이 생명</div>
-                    <div class="card-text">단순히 "친절하게 말해줘" 보다는 "10년 된 단짝처럼 친근한 말투로 반말을 써줘"가 훨씬 효과적입니다.</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 4: Few-shot Learning -->
-        <section class="slide">
-            <div class="bento-grid">
-                <div class="bento-card quest-main">
-                    <i class="fas fa-graduation-cap card-icon" style="color: var(--accent-secondary);"></i>
-                    <div class="card-label">STAGE 02: FEW-SHOT</div>
-                    <div class="card-title">취향 데이터 학습</div>
-                    <div class="card-text">
-                        말하지 않아도 아는 사이가 되려면 <span class="highlight">예시 데이터</span>를 주어야 합니다. AI는 몇 가지 예시만으로도 당신의 패턴을 파악합니다.
-                    </div>
-                    <div class="prompt-example">
-                        "나는 이런 곳을 좋아해: <span class="love-highlight">[조용한 북카페, 나무 향 나는 카페, 소파가 편한 카페]</span>. 이 예시들을 참고해서 데이트 장소를 골라줘."
-                    </div>
-                </div>
-                <div class="bento-card quest-sub-1">
-                    <div class="card-label">WHY FEW-SHOT?</div>
-                    <div class="card-title">맥락의 힘</div>
-                    <div class="card-text">예시(Shot)를 많이 줄수록 AI의 답변은 당신의 의도와 가까워집니다. 최소 3개 이상의 예시를 권장합니다.</div>
-                </div>
-                <div class="bento-card quest-sub-2">
-                    <div class="card-label">RESULT</div>
-                    <div class="card-title">패턴 일치</div>
-                    <div class="card-text">학습된 데이터를 바탕으로 AI는 당신이 좋아할 만한 새로운 제안을 스스로 창조해냅니다.</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 5: Temperature -->
-        <section class="slide">
-            <div class="bento-grid">
-                <div class="bento-card quest-main">
-                    <i class="fas fa-temperature-high card-icon" style="color: var(--accent-love);"></i>
-                    <div class="card-label">STAGE 03: TEMP</div>
-                    <div class="card-title">감정의 온도 조절</div>
-                    <div class="card-text">
-                        <b>Temperature</b>는 답변의 <span class="highlight">창의성</span>을 조절하는 수치입니다. 논리적인 답변(0.1)과 감성적인 답변(1.0) 사이의 황금 밸런스를 찾으세요.
-                    </div>
-                    <div class="prompt-example">
-                        🌡️ <strong>Temp 0.1:</strong> "안녕하세요. 반갑습니다." (딱딱함)<br>
-                        🌡️ <strong>Temp 0.8:</strong> "안녕! 오늘 날씨 정말 좋지 않니?" (자연스러움)
-                    </div>
-                </div>
-                <div class="bento-card quest-sub-1">
-                    <div class="card-label">LOGIC VS CREATIVE</div>
-                    <div class="card-title">무작위성 제어</div>
-                    <div class="card-text">수치가 낮으면 일관되고 정확한 답변을, 수치가 높으면 예상치 못한 창의적이고 감성적인 답변을 내놓습니다.</div>
-                </div>
-                <div class="bento-card quest-sub-2">
-                    <div class="card-label">GOLDEN RATIO</div>
-                    <div class="card-title">0.7의 마법</div>
-                    <div class="card-text">연애 시뮬레이션에서는 0.7~0.8 정도의 온도가 가장 자연스럽고 설레는 대화를 만들어냅니다.</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 6: Negative Prompt -->
-        <section class="slide">
-            <div class="bento-grid">
-                <div class="bento-card quest-main">
-                    <i class="fas fa-ban card-icon" style="color: #64748b;"></i>
-                    <div class="card-label">STAGE 04: NEGATIVE</div>
-                    <div class="card-title">금기어와 오해 방지</div>
-                    <div class="card-text">
-                        절대 하지 말아야 할 행동을 정의하는 <span class="highlight">부정 프롬프트</span>입니다. 오해를 풀고 관계를 회복하는 데 필수적인 기술입니다.
-                    </div>
-                    <div class="prompt-example">
-                        "나에게 사과해줘. 단, <span class="love-highlight">'하지만'이나 '변명'</span> 같은 단어는 절대 사용하지 마."
-                    </div>
-                </div>
-                <div class="bento-card quest-sub-1">
-                    <div class="card-label">CONSTRAINTS</div>
-                    <div class="card-title">제약 조건 설정</div>
-                    <div class="card-text">AI가 답변에서 반드시 제외해야 할 키워드나 태도를 명시하여 불필요한 마찰을 방지합니다.</div>
-                </div>
-                <div class="bento-card quest-sub-2">
-                    <div class="card-label">CLARITY</div>
-                    <div class="card-title">명확한 경계</div>
-                    <div class="card-text">"기분 나쁘게 하지 마" 보다는 "부정적인 단어 사용 금지"가 AI에게는 훨씬 명확한 지시가 됩니다.</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 7: Evaluation -->
-        <section class="slide">
-            <div class="bento-grid">
-                <div class="bento-card intro-hero" style="grid-column: 1 / 5; text-align: center; align-items: center; background: linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(251, 113, 133, 0.1));">
-                    <i class="fas fa-award card-icon" style="font-size: 5rem; color: var(--accent-secondary);"></i>
-                    <h1>프롬프트 마스터의 증명</h1>
-                    <p style="max-width: 750px; margin-top: 20px;">각 단계의 입력값 품질에 따라 S등급부터 F등급까지 산출됩니다. 시행착오를 줄이고 단번에 S등급을 획득하여 최고 점수의 엔딩을 확인하세요.</p>
-                    <div style="margin-top: 50px; display: flex; gap: 30px;">
-                        <span class="play-btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--accent-primary);">Identity Grade: S</span>
-                        <span class="play-btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--accent-secondary);">Logic Grade: S</span>
-                        <span class="play-btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--accent-love);">Affection: 100%</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 8: Start -->
-        <section class="slide">
-            <div class="bento-grid">
-                <div class="bento-card intro-hero" style="grid-column: 1 / 5; text-align: center; align-items: center; border: 2px solid var(--accent-love); box-shadow: 0 0 50px rgba(251, 113, 133, 0.2);">
-                    <div class="card-label">FINAL DESTINATION</div>
-                    <h1>지금 그녀의 마음을<br>녹이러 갈까요?</h1>
-                    <p style="margin-top: 25px; color: #94a3b8; font-size: 1.3rem;">당신이 배운 프롬프트 기술이 진심을 전하는 강력한 언어가 될 것입니다.</p>
-                    <a href="prompt_practice.html" class="play-btn" style="margin-top: 50px; padding: 25px 80px; font-size: 1.4rem; text-decoration: none;">START SIMULATION</a>
-                </div>
-            </div>
-        </section>
+    <!-- 상단 UI -->
+    <div id="stage-badge">GUIDE</div>
+    <div id="stage-progress">
+        <div class="s-dot" id="dot-1"></div>
+        <div class="s-dot" id="dot-2"></div>
+        <div class="s-dot" id="dot-3"></div>
+        <div class="s-dot" id="dot-4"></div>
+        <div class="s-dot" id="dot-5"></div>
+    </div>
+    <div id="top-right">
+        <a href="prompt_practice.html" class="top-btn play-btn-sm" style="text-decoration:none;">▶ PLAY NOW</a>
     </div>
 
-    <div class="controls">
-        <button class="ctrl-btn" onclick="moveSlide(-1)"><i class="fas fa-chevron-left"></i></button>
-        <button class="ctrl-btn" onclick="moveSlide(1)"><i class="fas fa-chevron-right"></i></button>
+    <!-- 캐릭터 -->
+    <div id="char-box">
+        <img id="guide-char" src="./assets/iris_smile_1777880569830.png" alt="">
+    </div>
+
+    <!-- 대화 박스 -->
+    <div id="dialogue-box" class="glass-panel" onclick="advanceDialogue()">
+        <div id="speaker-name" style="font-size:1.1rem; font-weight:900; margin-bottom:10px;"></div>
+        <div id="dialogue-text"></div>
+        <div id="advance-hint">▼ 클릭 또는 SPACE</div>
+    </div>
+
+    <!-- 가이드 패널 (우측) -->
+    <div id="guide-panel" class="glass-panel">
+        <div id="panel-content"></div>
+    </div>
+
+    <!-- 하단 내비게이션 -->
+    <div id="nav-bar">
+        <button class="nav-btn-ctrl" onclick="goPrev()"><i class="fas fa-chevron-left"></i></button>
+        <span id="nav-counter">1 / 8</span>
+        <button class="nav-btn-ctrl" onclick="goNext()"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <!-- 인트로 타이틀 페이지 -->
+    <div id="intro-overlay">
+        <div class="intro-card glass-panel">
+            <div class="intro-kicker">Prompt Practice Guide</div>
+            <h1 class="intro-title">프롬프트 마스터 가이드</h1>
+            <p class="intro-sub">
+                RCTF · Few-shot · Temperature · Negative Prompt · Chain of Thought<br>
+                5가지 핵심 기법을 슬라이드로 빠르게 익히고 시뮬레이션으로 넘어가세요.
+            </p>
+            <div class="intro-actions">
+                <button class="btn-primary" onclick="startGuide()">가이드 시작</button>
+                <a href="prompt_practice.html" class="btn-secondary">바로 플레이</a>
+            </div>
+        </div>
     </div>
 
     <script>
-        let currentSlide = 0;
-        const totalSlides = document.querySelectorAll('.slide').length;
-        const slider = document.getElementById('slider');
-        const progress = document.getElementById('progress');
+        // ── 슬라이드 데이터 ─────────────────────────────────────────
+        const SLIDES = [
+            // 0: 인트로 / 개요
+            {
+                badge: "PROMPT MASTERY · GUIDE",
+                bg: './assets/bg_library_sunset_1777880660629.png',
+                bgTint: 'rgba(15,23,42,0.50)',
+                char: './assets/iris_smile_1777880569830.png',
+                dots: [],
+                dialogues: [
+                    "(도서관 구석, 안내 모드의 아이리스가 책을 읽다 고개를 든다...)",
+                    "아이리스: ...가이드를 찾아왔구나. 좋아.",
+                    "아이리스: 프롬프트 엔지니어링의 5가지 기술을 순서대로 알려줄게. RCTF부터 Chain of Thought까지.",
+                    "아이리스: 각 기술을 제대로 이해해야 실제 시뮬레이션에서 나의 마음을 녹일 수 있어. 준비됐어?",
+                ],
+                panel: `
+                    <div class="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block"></span>학습 로드맵
+                    </div>
+                    <div class="space-y-2.5">
+                        <div class="flex items-center gap-3 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
+                            <span class="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs font-black text-indigo-400 shrink-0">1</span>
+                            <div><div class="text-xs font-black text-white">RCTF</div><div class="text-[10px] text-slate-500">Role · Context · Task · Format — 모든 기법의 기반</div></div>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-2xl">
+                            <span class="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center text-xs font-black text-purple-400 shrink-0">2</span>
+                            <div><div class="text-xs font-black text-white">Few-shot</div><div class="text-[10px] text-slate-500">예시 학습 · 패턴 인식 · Zero→One→Few</div></div>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                            <span class="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-black text-amber-400 shrink-0">3</span>
+                            <div><div class="text-xs font-black text-white">Temperature</div><div class="text-[10px] text-slate-500">창의성 온도 · 0.0~1.0 · 황금 구간 0.6~0.8</div></div>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl">
+                            <span class="w-7 h-7 rounded-full bg-rose-500/20 flex items-center justify-center text-xs font-black text-rose-400 shrink-0">4</span>
+                            <div><div class="text-xs font-black text-white">Negative Prompt</div><div class="text-[10px] text-slate-500">금기어 · 제약 조건 · 진심 필터링</div></div>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-violet-500/10 border border-violet-500/20 rounded-2xl">
+                            <span class="w-7 h-7 rounded-full bg-violet-500/20 flex items-center justify-center text-xs font-black text-violet-400 shrink-0">✨</span>
+                            <div><div class="text-xs font-black text-violet-300">Chain of Thought (Bonus)</div><div class="text-[10px] text-slate-500">단계별 논리 · 5기법 총정리 · 호감도 55%+ 해금</div></div>
+                        </div>
+                    </div>
+                    <div class="mt-5 pt-4 border-t border-white/10 text-[10px] text-slate-500 text-center">SPACE · 클릭 · →키로 대화 진행 &nbsp;|&nbsp; ←키로 이전</div>
+                `
+            },
 
-        function moveSlide(dir) {
-            currentSlide = (currentSlide + dir + totalSlides) % totalSlides;
-            updateUI();
+            // 1: RCTF
+            {
+                badge: "STAGE 1: RCTF",
+                bg: './assets/bg_library_sunset_1777880660629.png',
+                bgTint: 'rgba(15,23,42,0.42)',
+                char: './assets/iris_smile_1777880569830.png',
+                dots: ['active'],
+                dialogues: [
+                    "아이리스: 첫 번째. RCTF — 이건 모든 프롬프트의 뼈대야.",
+                    "아이리스: Role(역할), Context(상황), Task(임무), Format(형식). 이 4요소가 있어야 AI가 정확히 이해해.",
+                    "아이리스: '친절하게 말해줘'가 아니라 구체적인 역할과 배경을 줘야 해. 오른쪽 패널에서 확인해봐.",
+                    "(나: RCTF 4요소를 채워서 AI에게 정체성을 부여하자! 이게 앞으로 모든 기법의 기반이 돼.)",
+                ],
+                panel: `
+                    <div class="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse inline-block"></span>RCTF 완성 예시
+                    </div>
+                    <div class="space-y-2">
+                        <div>
+                            <span class="field-label" style="color:#818cf8;">R — Role (역할)</span>
+                            <div class="field-display">나의 다정하고 솔직한 소꿉친구</div>
+                        </div>
+                        <div>
+                            <span class="field-label" style="color:#c084fc;">C — Context (상황)</span>
+                            <div class="field-display">방과 후 노을이 지는 교실, 우리 둘만 남은 상황</div>
+                        </div>
+                        <div>
+                            <span class="field-label" style="color:#34d399;">T — Task (임무)</span>
+                            <div class="field-display">설레는 첫마디를 건네줘</div>
+                        </div>
+                        <div>
+                            <span class="field-label" style="color:#fb7185;">F — Format (형식)</span>
+                            <div class="field-display">반말로, 2~3문장으로 짧게</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
+                        <div class="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-2">완성된 프롬프트 미리보기</div>
+                        <pre class="text-[11px] text-emerald-300/80 font-mono whitespace-pre-wrap leading-relaxed">[Role] 나의 다정하고 솔직한 소꿉친구
+[Context] 방과 후 노을이 지는 교실, 우리 둘만 남은 상황
+[Task] 설레는 첫마디를 건네줘
+[Format] 반말로, 2~3문장으로 짧게</pre>
+                    </div>
+                    <div class="mt-4 p-3 bg-white/3 rounded-xl border border-white/8">
+                        <div class="text-[10px] font-black text-white mb-2">🔍 RCTF 요소 상세 설명</div>
+                        <div class="rctf-detail">
+                            <div class="k" style="color:#818cf8;">R · Role</div>
+                            <div class="d">AI의 인격/관점을 고정합니다. 직업·관계·말투까지 넣어야 톤이 흔들리지 않습니다. 예: "친절한 상담사"보다 "솔직하지만 다정한 소꿉친구".</div>
+                        </div>
+                        <div class="rctf-detail">
+                            <div class="k" style="color:#c084fc;">C · Context</div>
+                            <div class="d">언제·어디서·무슨 분위기인지 지정합니다. 상황이 구체적일수록 감정선과 디테일이 맞습니다. 예: "교실"보다 "방과 후 노을 지는 교실".</div>
+                        </div>
+                        <div class="rctf-detail">
+                            <div class="k" style="color:#34d399;">T · Task</div>
+                            <div class="d">AI가 실제로 해야 할 행동을 한 문장으로 명확히 씁니다. "좋게 말해줘" 대신 "상대가 안심하도록 첫마디 1개 제안".</div>
+                        </div>
+                        <div class="rctf-detail">
+                            <div class="k" style="color:#fb7185;">F · Format</div>
+                            <div class="d">출력 형태를 제한합니다. 문장 수·존댓말/반말·목록 형식까지 고정하면 결과 재현성이 올라갑니다.</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-white/3 rounded-xl border border-white/8">
+                        <div class="text-[10px] font-black text-white mb-1">💡 PRO TIP</div>
+                        <div class="text-[11px] text-slate-400">각 요소가 구체적일수록 AI 답변 품질이 올라갑니다. 역할에 성격·말투를, 상황에 구체적 배경을 추가해보세요.</div>
+                    </div>
+                `
+            },
+
+            // 2: Few-shot
+            {
+                badge: "STAGE 2: FEW-SHOT",
+                bg: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=75&w=1280',
+                bgTint: 'rgba(10,8,20,0.52)',
+                char: './assets/iris_smile_1777880569830.png',
+                dots: ['done', 'active'],
+                dialogues: [
+                    "아이리스: RCTF 기반 위에 예시를 추가해. Few-shot Learning이야.",
+                    "아이리스: Zero-shot은 예시 없이, One-shot은 1개, Few-shot은 3개 이상. 예시가 많을수록 AI가 패턴을 더 정확히 파악해.",
+                    "아이리스: 일관성 있는 3개의 예시가 무작위 10개보다 효과적이야. 예시들 사이에 공통 규칙이 있어야 해.",
+                    "(나: 내가 좋아하는 공간 3가지를 예시로 들어서 AI에게 취향 패턴을 학습시키자!)",
+                ],
+                panel: `
+                    <div class="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse inline-block"></span>Few-shot 학습 비교
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5 mb-4 text-center">
+                        <div class="p-2 bg-white/5 border border-white/10 rounded-xl">
+                            <div class="text-[9px] font-black text-slate-500 mb-1">ZERO-SHOT</div>
+                            <div class="text-[10px] text-slate-400">예시 0개<br>"적당한 카페 알려줘"</div>
+                            <div class="mt-1 text-[9px] text-red-400">❌ 취향 반영 불가</div>
+                        </div>
+                        <div class="p-2 bg-white/5 border border-white/10 rounded-xl">
+                            <div class="text-[9px] font-black text-slate-500 mb-1">ONE-SHOT</div>
+                            <div class="text-[10px] text-slate-400">예시 1개<br>"북카페 같은 곳"</div>
+                            <div class="mt-1 text-[9px] text-yellow-400">△ 패턴 불완전</div>
+                        </div>
+                        <div class="p-2 bg-purple-500/10 border border-purple-500/30 rounded-xl">
+                            <div class="text-[9px] font-black text-purple-400 mb-1">FEW-SHOT ✓</div>
+                            <div class="text-[10px] text-slate-300">예시 3개+<br>일관된 패턴</div>
+                            <div class="mt-1 text-[9px] text-emerald-400">✓ 취향 정확 파악</div>
+                        </div>
+                    </div>
+                    <div class="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-2">예시 입력 (3개 이상)</div>
+                    <div class="space-y-1.5">
+                        <div class="flex gap-2 items-center">
+                            <span class="text-[10px] text-purple-400 font-black w-4 shrink-0">1.</span>
+                            <div class="field-display flex-1 py-2.5 px-3 text-sm">조용한 북카페, 책 냄새 나는 공간</div>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <span class="text-[10px] text-purple-400 font-black w-4 shrink-0">2.</span>
+                            <div class="field-display flex-1 py-2.5 px-3 text-sm">나무 향 나는 따뜻한 인테리어 카페</div>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <span class="text-[10px] text-purple-400 font-black w-4 shrink-0">3.</span>
+                            <div class="field-display flex-1 py-2.5 px-3 text-sm">소파가 편안한 아늑한 분위기</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-2xl">
+                        <div class="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-2">누적 프롬프트에 추가됨</div>
+                        <pre class="text-[11px] text-emerald-300/80 font-mono whitespace-pre-wrap leading-relaxed">[Examples]
+  1. 조용한 북카페, 책 냄새 나는 공간
+  2. 나무 향 나는 따뜻한 인테리어 카페
+  3. 소파가 편안한 아늑한 분위기</pre>
+                    </div>
+                `
+            },
+
+            // 3: Temperature
+            {
+                badge: "STAGE 3: TEMPERATURE",
+                bg: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&q=75&w=1280',
+                bgTint: 'rgba(25,15,5,0.50)',
+                char: './assets/iris_blush_1777880536398.png',
+                dots: ['done', 'done', 'active'],
+                dialogues: [
+                    "아이리스: 온도... 창의성의 수치야. 낮을수록 차갑고 논리적이고, 높을수록 따뜻하고 창의적이야.",
+                    "아이리스: 0.3 이하는 로봇처럼 딱딱해. 0.9 이상은 횡설수설이야.",
+                    "아이리스: 감성 대화의 황금 구간은 0.6~0.8이야. 0.7 정도가... 내 취향에도 맞는 것 같아.",
+                    "(나: 오른쪽 패널의 온도 바를 보면서 적절한 구간을 이해해보자!)",
+                ],
+                panel: `
+                    <div class="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block"></span>Temperature 구간 가이드
+                    </div>
+                    <!-- 온도 바 -->
+                    <div class="mb-1 flex justify-between text-[9px] text-slate-500 font-bold">
+                        <span>0.0</span><span>0.5</span><span>1.0</span>
+                    </div>
+                    <div class="temp-bar mb-3">
+                        <div class="temp-cursor" style="left: 70%"></div>
+                    </div>
+                    <!-- 구간 설명 -->
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                            <div class="text-base mb-1">🔵</div>
+                            <div class="text-[10px] font-black text-blue-300">0.0 ~ 0.3</div>
+                            <div class="text-[10px] text-slate-500">논리 구간<br>정확·일관·딱딱함</div>
+                        </div>
+                        <div class="p-2.5 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                            <div class="text-base mb-1">💜</div>
+                            <div class="text-[10px] font-black text-purple-300">0.3 ~ 0.6</div>
+                            <div class="text-[10px] text-slate-500">균형 구간<br>논리와 감성의 조화</div>
+                        </div>
+                        <div class="p-2.5 bg-pink-500/10 border border-pink-500/30 rounded-xl col-span-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-base">💗</span>
+                                <div>
+                                    <div class="text-[10px] font-black text-pink-300">0.6 ~ 0.8 ← 황금 구간 ✓</div>
+                                    <div class="text-[10px] text-slate-400">감성·자연스러움·설레는 대화 (유효 범위)</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl col-span-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-base">🔥</span>
+                                <div>
+                                    <div class="text-[10px] font-black text-red-400">0.9+ — 주의!</div>
+                                    <div class="text-[10px] text-slate-500">창의성 과잉 → 횡설수설 위험 (유효 범위 초과)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                        <div class="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-2">누적 프롬프트에 추가됨</div>
+                        <pre class="text-[11px] text-emerald-300/80 font-mono">[Temperature: 0.7] — 감성적이지만 논리적 일관성이 유지되는 황금 구간</pre>
+                    </div>
+                    <div class="mt-4 p-3 bg-white/3 rounded-xl border border-white/8">
+                        <div class="text-[10px] font-black text-white mb-2">🧭 Temperature 실전 사용법</div>
+                        <div class="text-[11px] text-slate-400 leading-relaxed space-y-2">
+                            <div><span class="text-blue-300 font-bold">정보 전달/요약</span>: 0.2~0.4 권장. 사실 왜곡을 줄이고 문장 일관성을 유지.</div>
+                            <div><span class="text-purple-300 font-bold">일반 대화/상담</span>: 0.5~0.7 권장. 안정성과 자연스러움의 균형.</div>
+                            <div><span class="text-pink-300 font-bold">감성 멘트/카피 초안</span>: 0.7~0.85 권장. 표현 다양성 증가.</div>
+                            <div><span class="text-red-300 font-bold">0.9 이상</span>: 아이디어 발산용으로만 제한적으로 사용. 최종 답변 전에는 0.6~0.8로 다시 검증.</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                        <div class="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-2">문제 발생 시 조정 규칙</div>
+                        <div class="text-[11px] text-slate-400 leading-relaxed">
+                            답변이 딱딱하면 <span class="text-amber-300 font-bold">+0.1</span>, 산만하면 <span class="text-amber-300 font-bold">-0.1</span>씩 조정하세요.
+                            한 번에 크게 바꾸지 말고 2~3회 미세 조정하면 원하는 톤에 빠르게 수렴합니다.
+                        </div>
+                    </div>
+                `
+            },
+
+            // 4: Negative Prompt
+            {
+                badge: "STAGE 4: NEGATIVE PROMPT",
+                bg: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=75&w=1280',
+                bgTint: 'rgba(5,5,20,0.65)',
+                char: './assets/iris_angry_1777880552712.png',
+                dots: ['done', 'done', 'done', 'active'],
+                dialogues: [
+                    "아이리스: (눈빛이 순식간에 차갑게 식으며) ...데이터? 방금 '데이터'라고 했어?",
+                    "아이리스: 내가 느낀 감정들이 고작 숫자 몇 개로 이루어진 데이터에 불과하다고 생각하는 거야?",
+                    "아이리스: 사과를 할 거면 제대로 해. '하지만'이나 변명 같은 단어는 절대 쓰지 마. Negative Prompt로 금기어를 정의해.",
+                    "(나: 원하지 않는 말투·단어를 명시적으로 제외하면 진심만 남아. 오른쪽 패널을 확인해봐!)",
+                ],
+                panel: `
+                    <div class="text-[9px] font-black text-rose-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse inline-block"></span>Negative Prompt 원리
+                    </div>
+                    <!-- Before/After -->
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="p-3 bg-black/20 border border-white/10 rounded-xl">
+                            <div class="text-[9px] font-black text-slate-500 mb-2">제약 없이 사과 ❌</div>
+                            <div class="text-[10px] text-slate-500 italic">"미안해. 하지만 나도 그 상황에서는..."</div>
+                            <div class="mt-2 text-[9px] text-red-400">→ 변명이 섞여들어옴</div>
+                        </div>
+                        <div class="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                            <div class="text-[9px] font-black text-emerald-400 mb-2">Negative 설정 ✓</div>
+                            <div class="text-[10px] text-slate-300 italic">"정말 미안해. 네 감정이 얼마나 상처받았을지..."</div>
+                            <div class="mt-2 text-[9px] text-emerald-400">→ 진심만 남음</div>
+                        </div>
+                    </div>
+                    <!-- 빠른 추가 칩 -->
+                    <div class="text-[9px] text-slate-500 mb-2 font-bold">빠른 추가 칩 (게임 내 버튼)</div>
+                    <div class="flex flex-wrap gap-1.5 mb-4">
+                        <span class="px-2.5 py-1 bg-rose-500/15 border border-rose-500/30 rounded-full text-[10px] text-rose-300">'하지만' 금지</span>
+                        <span class="px-2.5 py-1 bg-rose-500/15 border border-rose-500/30 rounded-full text-[10px] text-rose-300">변명 금지</span>
+                        <span class="px-2.5 py-1 bg-rose-500/15 border border-rose-500/30 rounded-full text-[10px] text-rose-300">자책 금지</span>
+                        <span class="px-2.5 py-1 bg-rose-500/15 border border-rose-500/30 rounded-full text-[10px] text-rose-300">감정 회피 금지</span>
+                    </div>
+                    <!-- 태그 미리보기 -->
+                    <div class="flex flex-wrap gap-1.5 mb-4">
+                        <span class="px-2.5 py-1 bg-rose-500/20 border border-rose-500/40 rounded-full text-[10px] text-rose-200 font-medium">⛔ '하지만' 금지</span>
+                        <span class="px-2.5 py-1 bg-rose-500/20 border border-rose-500/40 rounded-full text-[10px] text-rose-200 font-medium">⛔ 변명 금지</span>
+                        <span class="px-2.5 py-1 bg-rose-500/20 border border-rose-500/40 rounded-full text-[10px] text-rose-200 font-medium">⛔ 논리적 설명 금지</span>
+                    </div>
+                    <div class="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl">
+                        <div class="text-[9px] font-black text-rose-400 uppercase tracking-widest mb-2">누적 프롬프트에 추가됨</div>
+                        <pre class="text-[11px] text-emerald-300/80 font-mono whitespace-pre-wrap leading-relaxed">[금지사항]
+  - '하지만' 금지
+  - 변명 금지
+  - 논리적 설명 금지</pre>
+                    </div>
+                `
+            },
+
+            // 5: Chain of Thought (Bonus)
+            {
+                badge: "✨ BONUS: CHAIN OF THOUGHT",
+                bg: 'https://images.unsplash.com/photo-1499678329028-101435549a4e?auto=format&fit=crop&q=75&w=1280',
+                bgTint: 'rgba(5,15,10,0.55)',
+                char: './assets/iris_blush_1777880536398.png',
+                dots: ['done', 'done', 'done', 'done', 'bonus'],
+                dialogues: [
+                    "아이리스: ...좋아. 화해는 됐어. 근데 진짜로 나를 이해한다면 하나만 더 증명해줘.",
+                    "아이리스: RCTF로 정체성을 줬고, 취향을 학습했고, 온도를 맞췄고, 금기어로 진심을 걸러냈잖아.",
+                    "아이리스: 그 모든 과정이 왜 의미 있었는지 단계별로 설명해봐. Chain of Thought야.",
+                    "(나: 지금까지 배운 모든 기법을 Step 1부터 순서대로 연결해서 최종 설득을 완성하자!)",
+                ],
+                panel: `
+                    <div class="text-[9px] font-black text-violet-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse inline-block"></span>Chain of Thought — 5기법 총정리
+                    </div>
+                    <!-- 비교 -->
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="p-2.5 bg-black/20 border border-white/10 rounded-xl">
+                            <div class="text-[9px] font-black text-slate-500 mb-1">단순 요청 ❌</div>
+                            <div class="text-[10px] text-slate-500">"나를 설득해줘"<br>→ 두루뭉술한 대답</div>
+                        </div>
+                        <div class="p-2.5 bg-violet-500/10 border border-violet-500/30 rounded-xl">
+                            <div class="text-[9px] font-black text-violet-400 mb-1">CoT 적용 ✓</div>
+                            <div class="text-[10px] text-slate-300">단계별 논리 제시<br>→ 명확한 설득력</div>
+                        </div>
+                    </div>
+                    <!-- CoT 스텝 예시 -->
+                    <div class="space-y-2 mb-4">
+                        <div class="cot-step" style="background:rgba(129,140,248,0.08); border-color:#818cf8;">
+                            <div class="text-[9px] font-black text-indigo-400 mb-1">Step 1 · RCTF</div>
+                            <div class="text-[10px] text-slate-400">'다정한 소꿉친구' 정체성을 정의해서 우리만의 대화 방식을 만들었어.</div>
+                        </div>
+                        <div class="cot-step" style="background:rgba(192,132,252,0.08); border-color:#c084fc;">
+                            <div class="text-[9px] font-black text-purple-400 mb-1">Step 2 · Few-shot</div>
+                            <div class="text-[10px] text-slate-400">네가 좋아하는 공간 3가지를 학습해서 취향 패턴을 파악했어.</div>
+                        </div>
+                        <div class="cot-step" style="background:rgba(251,191,36,0.08); border-color:#fbbf24;">
+                            <div class="text-[9px] font-black text-amber-400 mb-1">Step 3 · Temperature</div>
+                            <div class="text-[10px] text-slate-400">0.7로 논리도 감성도 놓치지 않는 균형 잡힌 대화를 설계했어.</div>
+                        </div>
+                        <div class="cot-step" style="background:rgba(251,113,133,0.08); border-color:#fb7185;">
+                            <div class="text-[9px] font-black text-rose-400 mb-1">Step 4 · Negative Prompt</div>
+                            <div class="text-[10px] text-slate-400">'하지만'과 변명을 금지해서 진심만 남겼어 — 이것이 나의 최선이야.</div>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-violet-500/10 border border-violet-500/20 rounded-2xl">
+                        <div class="text-[9px] font-black text-violet-400 uppercase tracking-widest mb-1">해금 조건</div>
+                        <div class="text-[10px] text-slate-400">Stage 4 클리어 후 호감도 <span class="text-violet-300 font-bold">55% 이상</span>이면 자동 해금됩니다.</div>
+                    </div>
+                    <div class="mt-4 p-3 bg-white/3 rounded-xl border border-white/8">
+                        <div class="text-[10px] font-black text-white mb-2">🧠 CoT를 더 잘 쓰는 법</div>
+                        <div class="space-y-2 text-[11px] text-slate-400 leading-relaxed">
+                            <div><span class="text-indigo-300 font-bold">1) 근거 고정</span>: 각 Step에 "왜 이 선택을 했는지"를 1문장으로 붙입니다. (목표/감정/제약)</div>
+                            <div><span class="text-purple-300 font-bold">2) 연결 문장</span>: Step 끝마다 "그래서 다음 단계는 ..." 형태로 이어서 흐름을 끊지 않습니다.</div>
+                            <div><span class="text-amber-300 font-bold">3) 검증 추가</span>: 마지막에 "금지어 위반 없음, 톤 일치, 형식 준수" 체크 3가지를 붙이면 품질이 안정됩니다.</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 p-3 bg-violet-500/10 border border-violet-500/20 rounded-2xl">
+                        <div class="text-[9px] font-black text-violet-400 uppercase tracking-widest mb-2">CoT 출력 예시 템플릿</div>
+                        <pre class="text-[10px] text-emerald-300/80 font-mono whitespace-pre-wrap leading-relaxed">Step 1(RCTF): 관계/상황/형식을 고정해 대화 프레임을 맞춘다.
+Step 2(Few-shot): 취향 예시 3개로 선호 패턴을 학습시킨다.
+Step 3(Temp): 0.7로 감성과 일관성의 균형을 맞춘다.
+Step 4(Negative): 금지어를 제외해 진심만 남긴다.
+Final Check: 금지어 없음 · 반말 2~3문장 · 감정선 자연스러움 확인.</pre>
+                    </div>
+                `
+            },
+
+            // 6: 엔딩 & 저장
+            {
+                badge: "ENDING GUIDE",
+                bg: './assets/bg_library_sunset_1777880660629.png',
+                bgTint: 'rgba(15,23,42,0.60)',
+                char: './assets/iris_smile_1777880569830.png',
+                dots: ['done', 'done', 'done', 'done', 'done'],
+                dialogues: [
+                    "아이리스: 엔딩은 최종 호감도와 실수 횟수에 따라 4가지로 나뉘어.",
+                    "아이리스: 실수를 줄이고, 구체적으로 입력하고, 예시를 그대로 복사하지 않는 게 중요해.",
+                    "아이리스: 보너스 스테이지(CoT)까지 클리어하면 엔딩 점수에 추가 보너스가 붙어.",
+                    "아이리스: ...참고로, 85% 이상이어야 해피엔딩이야. 기대해도 좋아.",
+                ],
+                panel: `
+                    <div class="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block"></span>4종 엔딩 조건
+                    </div>
+                    <div class="space-y-2 mb-5">
+                        <div class="ending-card" style="background:rgba(52,211,153,0.08); border-color:rgba(52,211,153,0.3);">
+                            <span style="font-size:1.4rem;">✨</span>
+                            <div><div class="text-xs font-black text-emerald-400">HAPPY ENDING</div><div class="text-[10px] text-slate-400">호감도 85% 이상 · 실수 최소</div></div>
+                        </div>
+                        <div class="ending-card" style="background:rgba(129,140,248,0.08); border-color:rgba(129,140,248,0.3);">
+                            <span style="font-size:1.4rem;">🌸</span>
+                            <div><div class="text-xs font-black text-indigo-400">GOOD ENDING</div><div class="text-[10px] text-slate-400">호감도 60% 이상</div></div>
+                        </div>
+                        <div class="ending-card" style="background:rgba(251,191,36,0.08); border-color:rgba(251,191,36,0.3);">
+                            <span style="font-size:1.4rem;">📖</span>
+                            <div><div class="text-xs font-black text-amber-400">NORMAL ENDING</div><div class="text-[10px] text-slate-400">호감도 30% 이상</div></div>
+                        </div>
+                        <div class="ending-card" style="background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.3);">
+                            <span style="font-size:1.4rem;">💔</span>
+                            <div><div class="text-xs font-black text-red-400">BAD ENDING</div><div class="text-[10px] text-slate-400">호감도 30% 미만 또는 실수 9회+</div></div>
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-white/10">
+                        <div class="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-3">💾 자동 저장 시스템</div>
+                        <div class="space-y-2 text-[11px] text-slate-400">
+                            <div>• 스테이지 진입 시 자동 저장</div>
+                            <div>• 우상단 <span class="text-emerald-400 font-bold">💾 Stage N 자동저장됨</span> 배지로 확인</div>
+                            <div>• 인트로의 <span class="text-white font-bold">"이어하기"</span>로 해당 스테이지부터 재개</div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // 7: 플레이 CTA
+            {
+                badge: "START SIMULATION",
+                bg: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&q=75&w=1280',
+                bgTint: 'rgba(10,5,20,0.60)',
+                char: './assets/iris_smile_1777880569830.png',
+                dots: ['done', 'done', 'done', 'done', 'done'],
+                dialogues: [
+                    "아이리스: ...이제 직접 해볼 시간이야.",
+                    "아이리스: RCTF, Few-shot, Temperature, Negative, Chain of Thought. 이 순서를 기억해.",
+                    "아이리스: 내가 도서관에서 기다리고 있을게. 늦으면... 로그 분석해서 다 찾아낼 거야.",
+                    "(클릭하면 시뮬레이션을 시작합니다.)",
+                ],
+                panel: `
+                    <div class="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-5 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse inline-block"></span>최종 체크리스트
+                    </div>
+                    <div class="space-y-2.5 mb-6">
+                        <div class="flex items-center gap-3 text-sm">
+                            <i class="fas fa-check-circle text-emerald-400 w-4 shrink-0"></i>
+                            <span class="text-slate-300"><b>RCTF</b> 4요소를 구체적으로 채운다</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm">
+                            <i class="fas fa-check-circle text-emerald-400 w-4 shrink-0"></i>
+                            <span class="text-slate-300"><b>Few-shot</b> 예시 3개 이상 입력</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm">
+                            <i class="fas fa-check-circle text-emerald-400 w-4 shrink-0"></i>
+                            <span class="text-slate-300"><b>Temperature</b> 0.4~0.8 유효 구간 유지</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm">
+                            <i class="fas fa-check-circle text-emerald-400 w-4 shrink-0"></i>
+                            <span class="text-slate-300"><b>Negative</b> '하지만'·변명 금지 포함</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm">
+                            <i class="fas fa-check-circle text-violet-400 w-4 shrink-0"></i>
+                            <span class="text-slate-300"><b>CoT</b> 4단계로 모든 기법 연결 (보너스)</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm">
+                            <i class="fas fa-xmark text-red-400 w-4 shrink-0"></i>
+                            <span class="text-slate-400">'예시 채우기' 그대로 복붙 금지 (-20%)</span>
+                        </div>
+                    </div>
+                    <a href="prompt_practice.html" class="btn-primary w-full text-center block" style="text-decoration:none;">
+                        START SIMULATION →
+                    </a>
+                    <div class="mt-3 text-center text-[10px] text-slate-500">아이리스 또는 카일 중 선택 · 2명의 파트너</div>
+                `
+            },
+        ];
+
+        // ── 상태 ─────────────────────────────────────────────
+        let slideIdx = 0;
+        let diaIdx   = 0;
+        let isTyping = false;
+        let typingTimer = null;
+        let activeBg = 'a';
+        let introVisible = true;
+
+        // ── 초기화 ───────────────────────────────────────────
+        function init() {
+            preloadImages();
+            renderSlide(0, true);
         }
 
-        function updateUI() {
-            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-            progress.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+        function startGuide() {
+            if (!introVisible) return;
+            const intro = document.getElementById('intro-overlay');
+            intro.classList.add('fade-out');
+            setTimeout(() => {
+                intro.style.display = 'none';
+                introVisible = false;
+            }, 300);
         }
 
+        function preloadImages() {
+            SLIDES.forEach(s => {
+                const img = new Image();
+                img.src = s.bg;
+            });
+        }
+
+        // ── 슬라이드 렌더링 ──────────────────────────────────
+        function renderSlide(idx, firstLoad) {
+            const s = SLIDES[idx];
+
+            // 배경
+            switchBackground(s.bg, s.bgTint, firstLoad);
+
+            // 캐릭터
+            const charEl = document.getElementById('guide-char');
+            charEl.style.opacity = '0';
+            setTimeout(() => {
+                charEl.src = s.char;
+                charEl.style.opacity = '1';
+            }, firstLoad ? 100 : 400);
+
+            // 뱃지
+            document.getElementById('stage-badge').textContent = s.badge;
+
+            // 진행 점
+            const ids = ['dot-1','dot-2','dot-3','dot-4','dot-5'];
+            ids.forEach((id, i) => {
+                const el = document.getElementById(id);
+                el.className = 's-dot';
+                const state = s.dots[i];
+                if (state) el.classList.add(state);
+            });
+
+            // 패널 내용
+            document.getElementById('panel-content').innerHTML = s.panel;
+            document.body.classList.toggle('rctf-focus', idx === 1);
+
+            // 마지막 슬라이드엔 패널에서 직접 플레이 가능
+            const panel = document.getElementById('guide-panel');
+            if (idx === SLIDES.length - 1) {
+                document.getElementById('dialogue-box').classList.add('centered');
+            } else {
+                document.getElementById('dialogue-box').classList.remove('centered');
+            }
+
+            // 네비 카운터
+            document.getElementById('nav-counter').textContent = `${idx + 1} / ${SLIDES.length}`;
+
+            // 대화 초기화
+            diaIdx = 0;
+            showDialogue(s.dialogues[0]);
+        }
+
+        // ── 배경 전환 ────────────────────────────────────────
+        function switchBackground(url, tint, instant) {
+            const next = activeBg === 'a' ? 'b' : 'a';
+            const layerNext = document.getElementById(`bg-${next}`);
+            const layerCurr = document.getElementById(`bg-${activeBg}`);
+            layerNext.style.backgroundImage = `linear-gradient(${tint}, ${tint}), url('${url}')`;
+            layerNext.style.backgroundSize = 'cover';
+            layerNext.style.backgroundPosition = 'center';
+            if (instant) {
+                layerNext.style.transition = 'none';
+                layerNext.style.opacity = '1';
+                layerCurr.style.opacity = '0';
+            } else {
+                layerNext.style.transition = 'opacity 1s ease';
+                layerNext.style.opacity = '1';
+                layerCurr.style.transition = 'opacity 1s ease';
+                layerCurr.style.opacity = '0';
+            }
+            activeBg = next;
+        }
+
+        // ── 대화 출력 ────────────────────────────────────────
+        function showDialogue(text) {
+            clearTimeout(typingTimer);
+            isTyping = true;
+
+            const nameEl = document.getElementById('speaker-name');
+            const textEl = document.getElementById('dialogue-text');
+
+            let displayName = '';
+            let content = text;
+
+            if (text.startsWith('(')) {
+                nameEl.style.display = 'none';
+                nameEl.textContent = '';
+                textEl.className = 'speaker-narrator';
+            } else if (text.includes(': ')) {
+                const sep = text.indexOf(': ');
+                displayName = text.substring(0, sep);
+                content = text.substring(sep + 2);
+                nameEl.style.display = 'block';
+                nameEl.textContent = displayName;
+                if (displayName === '아이리스' || displayName === '카일') {
+                    nameEl.className = 'speaker-char';
+                } else {
+                    nameEl.className = 'speaker-me';
+                }
+                textEl.className = '';
+            } else {
+                nameEl.style.display = 'none';
+                textEl.className = '';
+            }
+
+            // 타이핑 효과
+            let i = 0;
+            textEl.textContent = '';
+            (function type() {
+                if (i < content.length) {
+                    textEl.textContent += content[i++];
+                    typingTimer = setTimeout(type, 22);
+                } else {
+                    isTyping = false;
+                }
+            })();
+        }
+
+        function skipTyping() {
+            clearTimeout(typingTimer);
+            isTyping = false;
+            const s = SLIDES[slideIdx];
+            const text = s.dialogues[diaIdx];
+            let content = text;
+            if (!text.startsWith('(') && text.includes(': ')) {
+                content = text.substring(text.indexOf(': ') + 2);
+            }
+            document.getElementById('dialogue-text').textContent = content;
+        }
+
+        // ── 대화 진행 ────────────────────────────────────────
+        function advanceDialogue() {
+            if (isTyping) { skipTyping(); return; }
+            const s = SLIDES[slideIdx];
+            diaIdx++;
+            if (diaIdx < s.dialogues.length) {
+                showDialogue(s.dialogues[diaIdx]);
+            } else {
+                // 마지막 대화 → 다음 슬라이드 힌트
+                document.getElementById('advance-hint').textContent = '▶ 다음 슬라이드';
+            }
+        }
+
+        // ── 슬라이드 이동 ────────────────────────────────────
+        function goNext() {
+            if (slideIdx < SLIDES.length - 1) {
+                slideIdx++;
+                renderSlide(slideIdx, false);
+                document.getElementById('advance-hint').textContent = '▼ 클릭 또는 SPACE';
+            }
+        }
+
+        function goPrev() {
+            if (slideIdx > 0) {
+                slideIdx--;
+                renderSlide(slideIdx, false);
+                document.getElementById('advance-hint').textContent = '▼ 클릭 또는 SPACE';
+            }
+        }
+
+        // ── 키보드 ───────────────────────────────────────────
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight') moveSlide(1);
-            if (e.key === 'ArrowLeft') moveSlide(-1);
+            if (introVisible) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    startGuide();
+                }
+                return;
+            }
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                if (isTyping) { skipTyping(); return; }
+                const s = SLIDES[slideIdx];
+                if (diaIdx < s.dialogues.length - 1) {
+                    advanceDialogue();
+                } else {
+                    goNext();
+                }
+            }
+            if (e.key === 'ArrowLeft') goPrev();
         });
 
-        let startX = 0;
-        document.addEventListener('touchstart', (e) => startX = e.touches[0].clientX);
-        document.addEventListener('touchend', (e) => {
-            let diff = startX - e.changedTouches[0].clientX;
-            if (Math.abs(diff) > 50) moveSlide(diff > 0 ? 1 : -1);
-        });
-
-        updateUI();
+        // ── 실행 ─────────────────────────────────────────────
+        init();
     </script>
 </body>
 </html>
