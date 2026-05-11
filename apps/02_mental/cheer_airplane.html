@@ -155,10 +155,10 @@
         initClouds();
 
         const planeImages = [
-            'pure_paper_plane_heart_1777705196503.png',
-            'pure_paper_plane_star_1777705211375.png',
-            'pure_paper_plane_stripe_1777705230537.png',
-            'pure_paper_plane_dot_1777705244865.png'
+            'assets/pure_paper_plane_heart_1777705196503.png',
+            'assets/pure_paper_plane_star_1777705211375.png',
+            'assets/pure_paper_plane_stripe_1777705230537.png',
+            'assets/pure_paper_plane_dot_1777705244865.png'
         ];
 
         const loadedImages = [];
@@ -249,10 +249,18 @@
             const input = document.getElementById('messageInput');
             if(!input.value) return;
 
-            const newPlane = new PaperPlane(-50, height * (0.3 + Math.random() * 0.4), input.value, true);
+            const textValue = input.value;
+            const newPlane = new PaperPlane(-50, height * (0.3 + Math.random() * 0.4), textValue, true);
             newPlane.baseVx = 5; 
             newPlane.vx = 5;
             planes.push(newPlane);
+
+            // --- 데이터 저장 연동 ---
+            let localData = JSON.parse(localStorage.getItem('vcep_cheer_airplane')) || [];
+            const newRecord = { text: textValue, timestamp: new Date().toISOString() };
+            localData.push(newRecord);
+            localStorage.setItem('vcep_cheer_airplane', JSON.stringify(localData));
+            // ---------------------
 
             const form = document.getElementById('inputForm');
             form.style.transform = 'translateY(100px) scale(0.8)';

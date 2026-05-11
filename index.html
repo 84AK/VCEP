@@ -251,6 +251,15 @@
             <h2>감정 및 정신건강</h2>
         </div>
         <div class="app-grid">
+            <div class="app-card wide featured" onclick="openModal('mental_wellness')" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">
+                <div class="badge">ALL-IN-ONE</div>
+                <div class="app-icon" style="background: rgba(255,255,255,0.2); color: white;">💖</div>
+                <div class="app-info">
+                    <h3>멘탈 웰니스 마스터</h3>
+                    <p>9개의 감정 케어 기능을 하나로! 우리 팀이 완성한 통합 멘탈 웰니스 대시보드를 체험해 보세요.</p>
+                    <span class="app-status ready">통합 완료</span>
+                </div>
+            </div>
             <div class="app-card" onclick="openModal('emotion_weather')">
                 <div class="app-icon">🔥</div>
                 <h3>비밀 잉크와 불꽃</h3>
@@ -569,6 +578,12 @@
             path: 'apps/01_smartphone/smartphone_wellness_master.html',
             gasPath: 'Docs/GAS/01_Smartphone/Unified_Wellness_Master_GAS.js',
             desc: '8개의 기능을 하나로! 우리 팀이 완성한 통합 웰니스 플랫폼을 직접 체험해 보세요. 모든 앱의 데이터를 클라우드(GAS)로 동기화하여 안전하게 보관할 수 있습니다.'
+        },
+        'mental_wellness': {
+            title: '멘탈 웰니스 마스터',
+            path: 'apps/02_mental/mental_wellness_master.html',
+            gasPath: 'Docs/GAS/02_Mental/Unified_Mental_Wellness_GAS.js',
+            desc: '9개의 감정 및 정신건강 기능을 하나로! 우리 팀이 완성한 통합 멘탈 웰니스 플랫폼을 직접 체험해 보세요. 모든 앱의 데이터를 클라우드(GAS)로 동기화하여 안전하게 보관할 수 있습니다.'
         },
         'empathy_practice': {
             title: '다정한 마음 배달부: 공감 챌린지',

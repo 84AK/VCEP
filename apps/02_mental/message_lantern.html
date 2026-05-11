@@ -248,9 +248,17 @@
             const input = document.getElementById('messageInput');
             if(!input.value) return;
 
-            const newLantern = new Lantern(width/2, height*0.7, input.value, true);
+            const textValue = input.value;
+            const newLantern = new Lantern(width/2, height*0.7, textValue, true);
             lanterns.push(newLantern);
-            addHistoryItem(input.value);
+            addHistoryItem(textValue);
+
+            // --- 데이터 저장 연동 ---
+            let localData = JSON.parse(localStorage.getItem('vcep_message_lantern')) || [];
+            const newRecord = { text: textValue, timestamp: new Date().toISOString() };
+            localData.push(newRecord);
+            localStorage.setItem('vcep_message_lantern', JSON.stringify(localData));
+            // ---------------------
 
             const card = document.getElementById('inputCard');
             card.style.opacity = '0';
