@@ -298,8 +298,56 @@
             line-height: 1.6;
         }
 
+        /* ── 중앙 포커스 카드 (동적 설명용) ── */
+        #center-focus-card {
+            position: absolute;
+            top: 38%;
+            left: 32%;
+            transform: translate(-50%, -50%) scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 250;
+            transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+            background: rgba(15,23,42,0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 28px;
+            padding: 40px 30px;
+            text-align: center;
+            width: min(340px, 80vw);
+        }
+        #center-focus-card.active {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        .cf-letter {
+            font-size: 5rem;
+            font-weight: 900;
+            font-family: 'Outfit', sans-serif;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+        .cf-title {
+            font-size: 1.3rem;
+            font-weight: 900;
+            margin-bottom: 16px;
+            color: white;
+            letter-spacing: 1px;
+        }
+        .cf-desc {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            line-height: 1.6;
+            word-break: keep-all;
+        }
+
         /* ── 모바일 겹침 방지 ── */
         @media (max-width: 900px) {
+            #center-focus-card {
+                left: 50%;
+                top: 40%;
+            }
             #dialogue-box {
                 left: 50%;
                 width: calc(100% - 24px);
@@ -370,6 +418,13 @@
         <div id="advance-hint">▼ 클릭 또는 SPACE</div>
     </div>
 
+    <!-- 중앙 포커스 카드 -->
+    <div id="center-focus-card">
+        <div id="cf-letter" class="cf-letter">R</div>
+        <div id="cf-title" class="cf-title">Role (역할)</div>
+        <div id="cf-desc" class="cf-desc">AI의 인격과 관점을 고정합니다.</div>
+    </div>
+
     <!-- 가이드 패널 (우측) -->
     <div id="guide-panel" class="glass-panel">
         <div id="panel-content"></div>
@@ -377,9 +432,9 @@
 
     <!-- 하단 내비게이션 -->
     <div id="nav-bar">
-        <button class="nav-btn-ctrl" onclick="goPrev()"><i class="fas fa-chevron-left"></i></button>
+        <button id="btn-prev" class="nav-btn-ctrl" onclick="goPrev()"><i class="fas fa-chevron-left"></i></button>
         <span id="nav-counter">1 / 8</span>
-        <button class="nav-btn-ctrl" onclick="goNext()"><i class="fas fa-chevron-right"></i></button>
+        <button id="btn-next" class="nav-btn-ctrl" onclick="goNext()"><i class="fas fa-chevron-right"></i></button>
     </div>
 
     <!-- 인트로 타이틀 페이지 -->
@@ -453,8 +508,11 @@
                 dots: ['active'],
                 dialogues: [
                     "아이리스: 첫 번째. RCTF — 이건 모든 프롬프트의 뼈대야.",
-                    "아이리스: Role(역할), Context(상황), Task(임무), Format(형식). 이 4요소가 있어야 AI가 정확히 이해해.",
-                    "아이리스: '친절하게 말해줘'가 아니라 구체적인 역할과 배경을 줘야 해. 오른쪽 패널에서 확인해봐.",
+                    "아이리스: 먼저, Role(역할). AI의 인격이나 관점을 고정하는 거야.",
+                    "아이리스: 다음은 Context(상황). 언제, 어디서, 어떤 분위기인지 상황을 구체적으로 알려줘.",
+                    "아이리스: 세 번째는 Task(임무). AI가 실제로 해야 할 행동을 명확히 지시하는 거지.",
+                    "아이리스: 마지막으로 Format(형식). 반말인지, 분량은 얼마나 되는지 출력 형태를 제한해.",
+                    "아이리스: 이 4요소가 있어야 AI가 내 의도를 정확히 이해해. 오른쪽 패널에서 전체 예시를 확인해봐.",
                     "(나: RCTF 4요소를 채워서 AI에게 정체성을 부여하자! 이게 앞으로 모든 기법의 기반이 돼.)",
                 ],
                 panel: `
@@ -946,6 +1004,7 @@ Final Check: 금지어 없음 · 반말 2~3문장 · 감정선 자연스러움 �
             // 대화 초기화
             diaIdx = 0;
             showDialogue(s.dialogues[0]);
+            updateNavButtons();
         }
 
         // ── 배경 전환 ────────────────────────────────────────
@@ -1012,6 +1071,51 @@ Final Check: 금지어 없음 · 반말 2~3문장 · 감정선 자연스러움 �
                     isTyping = false;
                 }
             })();
+
+            // 특수 중앙 팝업 연동
+            updateCenterFocusCard(slideIdx, diaIdx);
+        }
+
+        // ── 중앙 포커스 카드 제어 ─────────────────────────────
+        function updateCenterFocusCard(sIdx, dIdx) {
+            const card = document.getElementById('center-focus-card');
+            if (!card) return;
+            
+            if (sIdx === 1) { // RCTF 슬라이드
+                if (dIdx === 1) {
+                    showCenterCard('R', 'Role (역할)', 'AI의 인격이나 관점을 고정합니다.<br><br><span style="color:#818cf8; font-weight:bold;">예: "다정하고 솔직한 소꿉친구"</span>', '#818cf8');
+                } else if (dIdx === 2) {
+                    showCenterCard('C', 'Context (상황)', '언제, 어디서, 어떤 분위기인지 상황을 구체적으로 알려줍니다.<br><br><span style="color:#c084fc; font-weight:bold;">예: "방과 후 노을 지는 교실"</span>', '#c084fc');
+                } else if (dIdx === 3) {
+                    showCenterCard('T', 'Task (임무)', 'AI가 실제로 해야 할 행동을 명확히 지시합니다.<br><br><span style="color:#34d399; font-weight:bold;">예: "설레는 첫마디를 건네줘"</span>', '#34d399');
+                } else if (dIdx === 4) {
+                    showCenterCard('F', 'Format (형식)', '출력 형태나 조건을 명확하게 제한합니다.<br><br><span style="color:#fb7185; font-weight:bold;">예: "반말로 2~3문장 짧게"</span>', '#fb7185');
+                } else {
+                    card.classList.remove('active');
+                }
+            } else {
+                card.classList.remove('active');
+            }
+        }
+
+        function showCenterCard(letter, title, desc, color) {
+            const card = document.getElementById('center-focus-card');
+            const lEl = document.getElementById('cf-letter');
+            const tEl = document.getElementById('cf-title');
+            const dEl = document.getElementById('cf-desc');
+            
+            lEl.textContent = letter;
+            lEl.style.color = color;
+            lEl.style.textShadow = `0 0 30px ${color}80`;
+            tEl.textContent = title;
+            dEl.innerHTML = desc;
+            
+            // 애니메이션 재시작
+            card.classList.remove('active');
+            void card.offsetWidth; 
+            card.classList.add('active');
+            card.style.borderColor = color;
+            card.style.boxShadow = `0 20px 40px rgba(0,0,0,0.5), 0 0 50px ${color}30`;
         }
 
         function skipTyping() {
@@ -1033,14 +1137,50 @@ Final Check: 금지어 없음 · 반말 2~3문장 · 감정선 자연스러움 �
             diaIdx++;
             if (diaIdx < s.dialogues.length) {
                 showDialogue(s.dialogues[diaIdx]);
-            } else {
-                // 마지막 대화 → 다음 슬라이드 힌트
-                document.getElementById('advance-hint').textContent = '▶ 다음 슬라이드';
+            } else if (diaIdx === s.dialogues.length) {
+                if (slideIdx < SLIDES.length - 1) {
+                    showDialogue("(대화가 모두 끝났습니다. 하단의 다음 슬라이드 버튼을 클릭하세요.)");
+                }
+                document.getElementById('advance-hint').textContent = '▶ 다음 슬라이드 이동 가능';
+            }
+            updateNavButtons();
+        }
+
+        // ── 하단 버튼 상태 업데이트 ────────────────────────────
+        function updateNavButtons() {
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const s = SLIDES[slideIdx];
+            
+            if (btnPrev) {
+                if (slideIdx === 0) {
+                    btnPrev.style.opacity = '0.3';
+                    btnPrev.style.pointerEvents = 'none';
+                } else {
+                    btnPrev.style.opacity = '1';
+                    btnPrev.style.pointerEvents = 'auto';
+                }
+            }
+            
+            if (btnNext) {
+                if (slideIdx === SLIDES.length - 1) {
+                    btnNext.style.opacity = '0.3';
+                    btnNext.style.pointerEvents = 'none';
+                } else if (diaIdx < s.dialogues.length) {
+                    btnNext.style.opacity = '0.3';
+                    btnNext.style.pointerEvents = 'none';
+                } else {
+                    btnNext.style.opacity = '1';
+                    btnNext.style.pointerEvents = 'auto';
+                }
             }
         }
 
         // ── 슬라이드 이동 ────────────────────────────────────
         function goNext() {
+            const s = SLIDES[slideIdx];
+            if (diaIdx < s.dialogues.length) return; // 대화 진행 중일 때는 넘어갈 수 없음
+
             if (slideIdx < SLIDES.length - 1) {
                 slideIdx++;
                 renderSlide(slideIdx, false);
@@ -1069,10 +1209,12 @@ Final Check: 금지어 없음 · 반말 2~3문장 · 감정선 자연스러움 �
                 e.preventDefault();
                 if (isTyping) { skipTyping(); return; }
                 const s = SLIDES[slideIdx];
-                if (diaIdx < s.dialogues.length - 1) {
+                if (diaIdx < s.dialogues.length) {
                     advanceDialogue();
                 } else {
-                    goNext();
+                    if (slideIdx < SLIDES.length - 1) {
+                        goNext();
+                    }
                 }
             }
             if (e.key === 'ArrowLeft') goPrev();
