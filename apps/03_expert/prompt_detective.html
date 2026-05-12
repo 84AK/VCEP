@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프롬프트 탐정: 그림자의 흔적 - Prompt Mastery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Outfit:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --accent-primary: #10b981;
+            --accent-secondary: #059669;
+            --accent-alert: #f59e0b;
+            --bg-dark: #020617;
+        }
+        body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg-dark); color: white; overflow: hidden; height: 100vh; }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+        }
+        #intro-overlay {
+            position: fixed; inset: 0; z-index: 1000;
+            background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('../../assets/museum_heist_intro_bg.png');
+            background-size: cover; background-position: center;
+            display: flex; align-items: center; justify-content: center; padding: 40px; cursor: pointer;
+        }
+        #hud {
+            position: fixed; top: 92px; left: 32px; right: 32px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            z-index: 800; pointer-events: none;
+        }
+        .hud-badge {
+            background: rgba(15,23,42,0.8); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1); padding: 12px 24px;
+            border-radius: 100px; font-weight: 900; display: flex; align-items: center; gap: 12px;
+        }
+
+        /* Stage overlay — dims game scene behind action panel */
+        #stage-overlay {
+            position: fixed; inset: 0; z-index: 295;
+            background: rgba(0, 0, 0, 0.85);
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #stage-overlay.active { opacity: 1; pointer-events: none; }
+
+        /* Action Panel — fills space between left edge and prompt builder */
+        #action-panel {
+            position: fixed;
+            top: 88px;
+            left: 20px;
+            right: 292px; /* 252px prompt-builder + 20px its margin + 20px gap */
+            max-height: calc(100vh - 108px);
+            overflow-y: auto; padding: 36px 40px; z-index: 300;
+            background: rgba(10, 18, 42, 0.99); border: 2px solid var(--accent-primary);
+            border-radius: 32px; box-shadow: 0 20px 60px rgba(0,0,0,0.95);
+        }
+        textarea {
+            background: rgba(0,0,0,0.4) !important; border: 2px solid rgba(16,185,129,0.3) !important;
+            border-radius: 24px !important; color: white !important; padding: 20px 28px !important;
+            font-size: 1.1rem !important; outline: none !important; transition: all 0.3s !important;
+            line-height: 1.6 !important; width: 100% !important; min-height: 110px !important;
+            box-sizing: border-box !important; display: block !important; resize: none !important;
+        }
+        textarea:focus { border-color: var(--accent-primary); background: rgba(16,185,129,0.05) !important; }
+
+        .suggestion-chip {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 16px; border-radius: 100px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .suggestion-chip:hover { background: rgba(16,185,129,0.2); border-color: var(--accent-primary); }
+
+        .suspect-select-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px; border-radius: 32px; cursor: pointer; transition: all 0.4s; text-align: center; position: relative;
+        }
+        .suspect-select-card:hover { transform: translateY(-10px); background: rgba(16,185,129,0.1); border-color: var(--accent-primary); }
+        .suspect-select-card img { height: 200px; width: 100%; object-fit: cover; border-radius: 20px; margin-bottom: 15px; }
+        .interrogated-badge {
+            position: absolute; top: 12px; right: 12px; background: rgba(16,185,129,0.9);
+            color: white; font-size: 0.65rem; font-weight: 900; padding: 4px 10px;
+            border-radius: 100px; letter-spacing: 0.05em;
+        }
+
+        #game-modal {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(2,6,23,0.98); display: flex; align-items: center; justify-content: center;
+            padding: 40px; opacity: 0; pointer-events: none; transition: all 0.5s;
+        }
+        #game-modal.active { opacity: 1; pointer-events: auto; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            color: white; font-weight: 900; padding: 18px 40px; border-radius: 20px;
+            transition: all 0.3s; text-transform: uppercase; cursor: pointer; border: none;
+        }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(16,185,129,0.4); }
+        .hidden-stage { display: none !important; }
+
+        #back-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.45); padding: 8px 18px; border-radius: 12px;
+            font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+        }
+        #back-btn:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.06); }
+
+        #dialogue-box {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 65%; max-width: 700px; padding: 28px 36px; z-index: 600;
+            transition: all 0.5s ease; border-left: 4px solid var(--accent-primary);
+        }
+        .dialogue-speaker {
+            font-size: 0.72rem; font-weight: 900; letter-spacing: 0.15em;
+            text-transform: uppercase; margin-bottom: 8px;
+        }
+        .speaker-detective { color: #10b981; }
+        .speaker-suspect   { color: #f59e0b; }
+
+        .game-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .game-cell {
+            background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+            aspect-ratio: 1; border-radius: 12px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 2rem;
+        }
+        .quiz-option {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            padding: 18px 28px; border-radius: 20px; cursor: pointer; transition: 0.3s; text-align: left; width: 100%;
+        }
+        .quiz-option:hover:not(.no-hover) { background: rgba(16,185,129,0.1); border-color: var(--accent-primary); transform: translateX(8px); }
+        .quiz-option.wrong   { border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.07); cursor: not-allowed; }
+        .quiz-option.correct { border-color: rgba(16,185,129,0.8); background: rgba(16,185,129,0.12); cursor: not-allowed; }
+
+        #quiz-hint {
+            margin-top: 14px; padding: 14px 20px;
+            background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 14px; color: #fcd34d; font-size: 0.88rem; line-height: 1.6;
+        }
+
+        /* ── Prompt Builder ── */
+        #prompt-builder {
+            position: fixed; right: 20px; top: 88px; width: 252px; z-index: 400;
+            background: rgba(8,15,36,0.96); backdrop-filter: blur(16px);
+            border: 1px solid rgba(16,185,129,0.22); border-radius: 18px;
+            padding: 16px 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        .pb-title {
+            font-size: 0.67rem; font-weight: 900; letter-spacing: 0.16em;
+            color: #10b981; text-transform: uppercase; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .prompt-slot {
+            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
+            padding: 7px 11px; border-radius: 9px; margin-bottom: 5px; transition: all 0.45s ease;
+        }
+        .prompt-slot.filled { border-color: rgba(16,185,129,0.38); background: rgba(16,185,129,0.07); }
+        .slot-label { font-size: 0.58rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1px; }
+        .slot-value { font-size: 0.76rem; color: rgba(255,255,255,0.28); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .prompt-slot.filled .slot-value { color: rgba(255,255,255,0.88); }
+        #pb-progress { font-size: 0.65rem; color: rgba(255,255,255,0.3); text-align: center; margin: 10px 0 8px; }
+        #pb-progress span { color: #10b981; font-weight: 900; }
+        #copy-prompt-btn {
+            width: 100%; padding: 10px; border-radius: 10px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white; font-weight: 900; font-size: 0.78rem;
+            border: none; cursor: pointer; transition: all 0.3s; letter-spacing: 0.04em;
+        }
+        #copy-prompt-btn:disabled { opacity: 0.28; cursor: not-allowed; filter: grayscale(1); }
+        #copy-prompt-btn:not(:disabled):hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(16,185,129,0.4); }
+
+        /* ── AI Preview Panel ── */
+        .ai-preview-box {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 20px;
+            padding: 24px;
+            margin-top: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .ai-preview-header {
+            font-size: 0.65rem;
+            font-weight: 900;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ai-preview-content {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.85);
+            min-height: 80px;
+        }
+        .ai-preview-status {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            font-size: 0.6rem;
+            color: rgba(16, 185, 129, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-primary);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .typing-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.2em;
+            background: var(--accent-primary);
+            margin-left: 4px;
+            vertical-align: middle;
+            animation: blink 0.8s infinite;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        .preview-label-badge {
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+}
+        .badge-optimized { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge-default   { background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); }
+
+        /* ── Phase 2: Visual Enhancements ── */
+        #scene-bg {
+            position: fixed; inset: 0; z-index: -1;
+            background-size: cover; background-position: center;
+            transition: filter 1s, opacity 1s, transform 2s;
+            filter: brightness(0.4);
+        }
+        .scene-transitioning { filter: brightness(0) blur(20px); opacity: 0; }
+
+        #progress-timeline {
+            position: fixed; top: 100px; left: 30px; width: 200px; z-index: 500;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .timeline-step {
+            height: 4px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; position: relative;
+        }
+        .timeline-fill {
+            position: absolute; left: 0; top: 0; height: 100%; width: 0%;
+            background: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary);
+            transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        #evidence-board {
+            position: fixed; bottom: 30px; left: 30px; z-index: 450;
+            display: flex; gap: 12px;
+        }
+        .evidence-pin {
+            width: 60px; height: 60px; background: rgba(15,23,42,0.8);
+            border: 1px solid rgba(16,185,129,0.3); border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; color: var(--accent-primary);
+            transform: rotate(-10deg) scale(0); opacity: 0;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        /* Animations */
+        @keyframes suspectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-1deg); }
+            75% { transform: translateX(5px) rotate(1deg); }
+        }
+        .suspect-talking { animation: suspectShake 0.4s infinite; filter: drop-shadow(0 0 20px rgba(245,158,11,0.4)); }
+        .detective-thinking { filter: drop-shadow(0 0 20px rgba(16,185,129,0.4)); }
+
+        /* ── Back to Vibe Button ── */
+        #back-to-vibe {
+            position: fixed; top: 32px; left: 32px; z-index: 2600;
+            background: rgba(15,23,42,0.8); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1); padding: 12px 24px;
+            border-radius: 100px; font-weight: 900; color: white;
+            display: flex; align-items: center; gap: 12px; cursor: pointer;
+            text-decoration: none; transition: 0.3s; font-size: 0.85rem;
+        }
+        #back-to-vibe:hover { background: rgba(16,185,129,0.2); border-color: var(--accent-primary); color: var(--accent-primary); }
+
+        #title-screen { padding-top: 0; }
+        #visual-stage { padding-top: 40px; }
+
+        /* ── Phase 3: Finale Enhancements ── */
+        #confrontation-overlay {
+            position: fixed; inset: 0; z-index: 2000;
+            background: black; opacity: 0; pointer-events: none;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spotlight {
+            width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            border-radius: 50%; filter: blur(20px); animation: pulse 2s infinite;
+        }
+
+        #newspaper-overlay {
+            position: fixed; inset: 0; z-index: 2100;
+            background: #e5e5e5; color: #1a1a1a; padding: 60px;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'Noto Sans KR', serif; overflow-y: auto;
+        }
+        .newspaper-inner {
+            max-width: 800px; border: 2px solid #333; padding: 40px; background: #fff;
+            box-shadow: 10px 10px 0 rgba(0,0,0,0.1); transform: rotate(-1deg);
+        }
+        .newspaper-header { border-bottom: 4px double #333; margin-bottom: 24px; padding-bottom: 12px; text-align: center; }
+        .newspaper-title { font-size: 4rem; font-weight: 900; line-height: 1.1; margin: 20px 0; letter-spacing: -2px; }
+        
+        .failure-hint-box {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px; padding: 20px; color: #f87171; text-align: left; margin-top: 24px;
+        }
+
+        .fleeing { transition: transform 0.8s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.5s !important; transform: translateX(1000px) rotate(20deg) !important; opacity: 0 !important; }
+
+        /* ── Final Report Card ── */
+        .rank-stamp {
+            font-size: 8rem; font-weight: 900; line-height: 1;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg);
+            opacity: 0; pointer-events: none; text-shadow: 0 0 40px currentColor;
+        }
+        .rank-s { color: #fcd34d; }
+        .rank-a { color: #34d399; }
+        .rank-b { color: #60a5fa; }
+        .rank-c { color: #94a3b8; }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px; padding: 20px; text-align: left;
+            transition: all 0.3s;
+        }
+        .summary-card:hover { background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.3); }
+        .summary-card i { font-size: 1.4rem; margin-bottom: 12px; display: block; }
+
+        .step-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: 0.3s; }
+        .step-dot.active { background: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); width: 24px; border-radius: 10px; }
+
+        /* ── Concept Card ── */
+        #concept-overlay {
+            position: fixed; inset: 0; z-index: 1500;
+            background: rgba(2,6,23,0.92); backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: 0.5s;
+        }
+        #game-modal {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(2,6,23,0.85); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: 0.4s;
+        }
+        #game-modal.active { display: flex; opacity: 1; pointer-events: auto; }
+        #concept-overlay.active { opacity: 1; pointer-events: auto; }
+        .concept-card {
+            background: linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95));
+            border: 2px solid var(--accent-primary); border-radius: 40px;
+            width: 90%; max-width: 500px; padding: 48px; text-align: center;
+            box-shadow: 0 30px 100px rgba(16,185,129,0.3);
+            transform: translateY(-100px); transition: 0.6s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        #concept-overlay.active .concept-card { transform: translateY(0); }
+        .concept-card i { font-size: 3.5rem; margin-bottom: 24px; color: var(--accent-primary); }
+        .concept-title { font-size: 2.2rem; font-weight: 900; margin-bottom: 16px; letter-spacing: -0.02em; }
+        .concept-body { font-size: 1.1rem; color: rgba(255,255,255,0.7); line-height: 1.7; margin-bottom: 32px; word-break: keep-all; }
+        .concept-footer { font-size: 0.75rem; color: rgba(255,255,255,0.3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+    </style>
+</head>
+<body>
+    
+    <!-- Navigation Back Button -->
+    <a href="./vibecoding.html" id="back-to-vibe">
+        <i class="fas fa-chevron-left"></i> 바이브코딩 퀘스트로 돌아가기
+    </a>
+
+<!-- 0. Scene Background -->
+<div id="scene-bg" style="background-image: url('../../assets/detective_interrogation_bg.png');"></div>
+
+<!-- 1. Intro -->
+<div id="intro-overlay" onclick="skipIntro()">
+    <div id="intro-text" class="text-3xl font-bold leading-relaxed max-w-4xl text-emerald-400"></div>
+</div>
+
+<!-- 2. HUD -->
+<div id="hud" class="hidden-stage">
+    <div class="hud-badge text-emerald-400 border-emerald-500/30">
+        <i class="fas fa-search"></i><span id="hud-stage">심문 준비 중</span>
+    </div>
+    <div class="hud-badge text-amber-400 border-amber-500/30">
+        <i class="fas fa-star"></i><span id="hud-score">SCORE: 0</span>
+    </div>
+    <!-- Progress Timeline -->
+    <div id="progress-timeline">
+        <div class="text-[0.6rem] font-black text-white/30 uppercase tracking-widest mb-1">Investigation Progress</div>
+        <div class="timeline-step"><div id="timeline-fill" class="timeline-fill"></div></div>
+    </div>
+</div>
+
+<!-- 3. Title Screen -->
+<div id="title-screen" style="position:fixed;inset:0;z-index:900;background:radial-gradient(circle at center,#0f172a 0%,#020617 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;">
+    <h1 class="text-9xl font-black text-emerald-500 mb-4 tracking-tighter">PROMPT</h1>
+    <h1 class="text-7xl font-black text-white/80 mb-12">DETECTIVE</h1>
+    <button onclick="startGame()" class="btn-primary text-2xl px-16 py-8">사건 수사 시작</button>
+</div>
+
+<!-- 4. Game Container -->
+<div id="game-container" style="opacity:0;transition:1s;">
+    <div id="visual-stage" class="relative flex items-center justify-center pt-24">
+        <div id="suspect-grid" class="grid grid-cols-4 gap-8 max-w-5xl w-full hidden-stage">
+            <div onclick="pickCulprit('liam')"   class="glass-panel p-4 text-center cursor-pointer hover:border-emerald-500 border-2 border-transparent transition-all"><img src="../../assets/suspect_liam_guard.png"       class="h-64 w-full object-cover rounded-2xl mb-4"><h3 class="font-bold text-emerald-400">Liam</h3></div>
+            <div onclick="pickCulprit('sophia')" class="glass-panel p-4 text-center cursor-pointer hover:border-emerald-500 border-2 border-transparent transition-all"><img src="../../assets/suspect_sophia_researcher.png" class="h-64 w-full object-cover rounded-2xl mb-4"><h3 class="font-bold text-emerald-400">Sophia</h3></div>
+            <div onclick="pickCulprit('lucas')"  class="glass-panel p-4 text-center cursor-pointer hover:border-emerald-500 border-2 border-transparent transition-all"><img src="../../assets/suspect_lucas_cleaner.png"    class="h-64 w-full object-cover rounded-2xl mb-4"><h3 class="font-bold text-emerald-400">Lucas</h3></div>
+            <div onclick="pickCulprit('shadow')" class="glass-panel p-4 text-center cursor-pointer hover:border-rose-500  border-2 border-transparent transition-all"><img src="../../assets/suspect_shadow_culprit.png"   class="h-64 w-full object-cover rounded-2xl mb-4"><h3 class="font-bold text-rose-500">Shadow</h3></div>
+        </div>
+        <img id="main-visual" src="../../assets/detective_interrogation_bg.png" class="max-h-[60vh] rounded-3xl shadow-2xl border border-white/10">
+    </div>
+    <div id="dialogue-box" class="glass-panel" onclick="advanceDialogue()">
+        <div id="dialogue-speaker" class="dialogue-speaker"></div>
+        <div id="dialogue-text" class="text-xl leading-relaxed min-h-[3em]"></div>
+        <div id="next-indicator" class="absolute bottom-4 right-8 text-white/30 animate-bounce hidden-stage"><i class="fas fa-chevron-down"></i></div>
+    </div>
+</div>
+
+<!-- 5. Stage Overlay + Action Panel -->
+<div id="stage-overlay"></div>
+<div id="action-panel" class="hidden-stage">
+    <div class="flex justify-between items-center mb-8">
+        <div class="flex items-center gap-4">
+            <button id="back-btn" onclick="goBackStage()" class="hidden-stage">
+                <i class="fas fa-chevron-left text-xs"></i> 이전 단계
+            </button>
+            <h4 id="stage-title" class="text-3xl font-black text-white"></h4>
+        </div>
+        <div id="stage-badge" class="px-6 py-2 bg-emerald-500/20 text-emerald-400 text-sm font-black rounded-full"></div>
+    </div>
+    <div id="stage-ui-container">
+        <div id="stage-1" class="stage-ui grid grid-cols-2 gap-6">
+            <div class="flex flex-col gap-3"><label class="text-sm font-bold text-emerald-300">ROLE — AI의 전문가 정체성</label><textarea id="p1-role" placeholder="예: 냉철한 사이버 프로파일러"></textarea><div class="flex gap-2 flex-wrap" id="opt-p1-role"></div></div>
+            <div class="flex flex-col gap-3"><label class="text-sm font-bold text-purple-300">CONTEXT — 수사 배경과 상황</label><textarea id="p1-context" placeholder="예: 박물관 도난 사건 현장"></textarea><div class="flex gap-2 flex-wrap" id="opt-p1-context"></div></div>
+            <div class="flex flex-col gap-3"><label class="text-sm font-bold text-amber-300">TASK — AI에게 맡길 임무</label><textarea id="p1-task" placeholder="예: 범인의 행동 패턴 분석"></textarea><div class="flex gap-2 flex-wrap" id="opt-p1-task"></div></div>
+            <div class="flex flex-col gap-3"><label class="text-sm font-bold text-rose-300">FORMAT — 출력 형식 지정</label><textarea id="p1-format" placeholder="예: 증거 기반 추론 보고서"></textarea><div class="flex gap-2 flex-wrap" id="opt-p1-format"></div></div>
+            <div class="col-span-2 flex justify-end"><button onclick="submitStage(1)" class="btn-primary">분석 개시 →</button></div>
+        </div>
+        <div id="stage-2" class="stage-ui hidden-stage flex flex-col gap-8">
+            <div class="grid grid-cols-3 gap-6">
+                <div class="flex flex-col gap-3"><label class="text-sm font-bold text-emerald-300">단서 1 (Liam 심문)</label><textarea id="p2-ex1" placeholder="Liam의 진술에서 확보한 단서" oninput="updateAIPreview(2)"></textarea><div class="flex gap-2 flex-wrap" id="opt-p2-ex1"></div></div>
+                <div class="flex flex-col gap-3"><label class="text-sm font-bold text-emerald-300">단서 2 (Sophia 심문)</label><textarea id="p2-ex2" placeholder="Sophia의 진술에서 확보한 단서" oninput="updateAIPreview(2)"></textarea><div class="flex gap-2 flex-wrap" id="opt-p2-ex2"></div></div>
+                <div class="flex flex-col gap-3"><label class="text-sm font-bold text-emerald-300">단서 3 (Lucas 심문)</label><textarea id="p2-ex3" placeholder="Lucas의 진술에서 확보한 단서" oninput="updateAIPreview(2)"></textarea><div class="flex gap-2 flex-wrap" id="opt-p2-ex3"></div></div>
+            </div>
+            <button onclick="submitStage(2)" class="btn-primary ml-auto">추리 통합 →</button>
+        </div>
+        <div id="stage-3" class="stage-ui hidden-stage flex flex-col gap-8">
+            <div class="flex items-center gap-12">
+                <div class="w-1/3 flex flex-col gap-6">
+                    <input type="range" id="p3-temp" min="0.1" max="1.0" step="0.1" value="0.5" class="w-full" oninput="updateTemp(this.value); updateAIPreview(3);">
+                    <div class="flex justify-between text-sm font-bold"><span class="text-blue-300">엄격 (0.1)</span><span id="temp-val" class="text-2xl font-black text-white">0.5</span><span class="text-orange-300">직관 (1.0)</span></div>
+                </div>
+                <div class="flex-1 p-8 bg-white/5 rounded-3xl border border-white/5" id="temp-preview">증거 사이의 연결고리를 직관적으로 파악합니다.</div>
+            </div>
+            <div class="flex gap-2 flex-wrap" id="opt-p3-temp"></div>
+            <button onclick="submitStage(3)" class="btn-primary ml-auto">설정 완료 →</button>
+        </div>
+        <div id="stage-4" class="stage-ui hidden-stage flex flex-col gap-8">
+            <textarea id="p4-negative" style="min-height:180px;" placeholder="AI가 절대 하지 말아야 할 것들을 입력하세요. 예: 인상착의로 편견 갖지 말 것, 증거 없는 추측 금지" oninput="updateAIPreview(4)"></textarea>
+            <div class="flex gap-2 flex-wrap" id="opt-p4-negative"></div>
+            <button onclick="submitStage(4)" class="btn-primary ml-auto">필터 적용 →</button>
+        </div>
+        <div id="stage-5" class="stage-ui hidden-stage flex flex-col gap-8">
+            <textarea id="p5-cot" style="min-height:180px;" placeholder="단계적 추론 사슬을 입력하세요. 예: Step 1: 물리 증거 대조 → Step 2: 진술 모순점 발견 → Step 3: 범인 특정" oninput="updateAIPreview(5)"></textarea>
+            <div class="flex gap-2 flex-wrap" id="opt-p5-cot"></div>
+            <button onclick="submitStage(5)" class="btn-primary ml-auto">최종 보고 →</button>
+        </div>
+    </div>
+
+    <!-- AI Detective Preview Panel -->
+    <div id="ai-preview-panel" class="ai-preview-box">
+        <div class="ai-preview-status"><div class="status-dot"></div> ANALYZING...</div>
+        <div class="ai-preview-header"><i class="fas fa-brain"></i> AI 탐정 실시간 분석기</div>
+        <div id="ai-preview-content" class="ai-preview-content">
+            분석을 시작하기 위해 프롬프트 입력을 기다리는 중입니다...
+        </div>
+    </div>
+</div>
+
+<!-- Evidence Board -->
+<div id="evidence-board"></div>
+
+<!-- 6. Game Modal -->
+<div id="game-modal">
+    <div id="modal-content" class="glass-panel max-w-3xl w-full p-12 text-center">
+        <h2 id="modal-title" class="text-4xl font-black mb-6 text-emerald-400"></h2>
+        <p id="modal-desc" class="text-lg text-slate-300 mb-8 leading-relaxed"></p>
+        <div id="modal-body" class="flex flex-wrap justify-center gap-4"></div>
+        <div id="quiz-hint" class="hidden-stage"></div>
+    </div>
+</div>
+
+<!-- 7. Prompt Builder -->
+<div id="prompt-builder" class="hidden-stage">
+    <div class="pb-title"><i class="fas fa-file-alt"></i> 내 수사 프롬프트</div>
+    <div class="prompt-slot" id="pb-role">  <div class="slot-label text-purple-300">ROLE</div>  <div class="slot-value">미설정</div></div>
+    <div class="prompt-slot" id="pb-ctx">   <div class="slot-label text-indigo-300">CONTEXT</div><div class="slot-value">미설정</div></div>
+    <div class="prompt-slot" id="pb-task">  <div class="slot-label text-amber-300">TASK</div>   <div class="slot-value">미설정</div></div>
+    <div class="prompt-slot" id="pb-fmt">   <div class="slot-label text-rose-300">FORMAT</div>  <div class="slot-value">미설정</div></div>
+    <div class="prompt-slot" id="pb-ex1">   <div class="slot-label text-emerald-300">EXAMPLE 1</div><div class="slot-value">미수집</div></div>
+    <div class="prompt-slot" id="pb-ex2">   <div class="slot-label text-emerald-300">EXAMPLE 2</div><div class="slot-value">미수집</div></div>
+    <div class="prompt-slot" id="pb-ex3">   <div class="slot-label text-emerald-300">EXAMPLE 3</div><div class="slot-value">미수집</div></div>
+    <div class="prompt-slot" id="pb-temp">  <div class="slot-label text-cyan-300">TEMPERATURE</div><div class="slot-value">미설정</div></div>
+    <div class="prompt-slot" id="pb-neg">   <div class="slot-label text-orange-300">NEGATIVE</div><div class="slot-value">미설정</div></div>
+    <div class="prompt-slot" id="pb-cot">   <div class="slot-label text-pink-300">CHAIN-OF-THOUGHT</div><div class="slot-value">미설정</div></div>
+    <div id="pb-progress">완성도 <span id="pb-count">0</span>/10</div>
+    <button id="copy-prompt-btn" disabled>📋 프롬프트 복사 (실제 AI에 사용 가능)</button>
+</div>
+
+<!-- 9. Concept Card Overlay -->
+<div id="concept-overlay">
+    <div class="concept-card">
+        <i id="concept-icon" class="fas fa-brain"></i>
+        <h3 id="concept-title" class="concept-title"></h3>
+        <p id="concept-body" class="concept-body"></p>
+        <button onclick="closeConceptCard()" class="btn-primary w-full py-5 text-lg">수사 시작 (Start) →</button>
+        <div class="concept-footer mt-6">4초 후 자동으로 수사 도구함이 열립니다</div>
+    </div>
+</div>
+
+<!-- 11. Finale Overlays -->
+<div id="confrontation-overlay">
+    <div class="spotlight"></div>
+    <h2 id="confrontation-text" class="text-4xl font-black text-white mt-12 opacity-0">진실은 언제나 하나!</h2>
+</div>
+
+<div id="newspaper-overlay">
+    <div class="newspaper-inner">
+        <div class="newspaper-header">
+            <div class="text-sm font-bold border-b border-black/10 pb-2">THE METROPOLITAN TIMES • VOL. 2026</div>
+            <div class="flex justify-between mt-2 font-black text-xs"><span>EDITION: EXPERT</span><span>PRICE: 0.00$</span></div>
+        </div>
+        <h1 class="newspaper-title">V-GEM 사건 해결!<br><span class="text-emerald-600">천재 탐정</span>의 탄생</h1>
+        <div class="grid grid-cols-2 gap-8 items-start">
+            <img src="../../assets/suspect_shadow_culprit.png" class="w-full border-2 border-black/10 p-1 grayscale">
+            <div class="text-sm leading-relaxed space-y-4">
+                <p>박물관의 국보 'V-GEM'이 무사히 회수되었습니다. 범인은 의문의 해커 'Shadow'로 밝혀졌습니다.</p>
+                <p>이번 사건은 단순한 수사가 아닌, 고도의 AI 프롬프트 엔지니어링 기법을 통해 해결되었다는 점에서 전 세계의 주목을 받고 있습니다.</p>
+                <p class="font-bold">"그의 프롬프트는 완벽한 체계를 갖추고 있었습니다." - 박물관 보안 책임자</p>
+            </div>
+        </div>
+        <button onclick="document.getElementById('newspaper-overlay').style.display='none'; showFinalReport(1);" class="mt-12 w-full py-4 bg-black text-white font-black text-xl hover:bg-emerald-600 transition-all">사건 종결 보고서 확인 →</button>
+    </div>
+</div>
+
+<!-- 10. Toast Container -->
+<div id="toast-container"></div>
+
+<script>
+const INTRO_TEXT = "박물관의 보물 'V-GEM'이 사라졌다.\n세 명의 용의자, 그리고 의문의 그림자.\nAI 탐정을 설계하여 진실을 밝혀라.";
+let gameState = { stage: 1, score: 0, isTyping: false, dialogueQueue: [], dialogueIdx: 0, dialogueCallback: null, interrogated: [], maxStage: 1, earnedStages: [] };
+const promptData = {};
+
+const SUSPECTS = {
+    liam:   { name: "Liam",   role: "경비원", img: "../../assets/suspect_liam_guard.png",       clue: "제 말 좀 들어보세요! 전 03:00 정각에 분명히 서쪽 복도를 순찰 중이었습니다. 그런데 나중에 보안 로그를 보니 그 시간의 데이터가 통째로 '정상'으로 덮어쓰여 있더군요. 누군가 미리 시스템에 백도어를 심어놓은 게 분명합니다!" },
+    sophia: { name: "Sophia", role: "연구원", img: "../../assets/suspect_sophia_researcher.png", clue: "마스터키요? 그건 제 생체 인식 정보가 있어야만 꺼낼 수 있어요. 하지만 사건 직후 제 사물함 근처에서 알 수 없는 전자기파 교란 장치가 발견됐죠. 범인은 제 생체 신호를 복제하거나 무력화할 수 있는 고도의 기술자일 거예요." },
+    lucas:  { name: "Lucas",  role: "청소부", img: "../../assets/suspect_lucas_cleaner.png",    clue: "서버실 옆 환풍구에서 떨어진 이 장갑 조각을 보세요. 일반적인 라텍스가 아니라 정전기 방지 처리가 된 특수 잠입용 장갑입니다. 그리고 그 틈새로 본 형체는 인간이라기엔 너무나 빠르고... 마치 그림자처럼 소리 없이 움직였어요." }
+};
+
+const QUIZ_DATA = {
+    1: {
+        q: "RCTF에서 'Role'의 역할은?",
+        options: ["배경 설정 (Context)", "AI에게 전문가 페르소나 부여", "출력 형식 지정 (Format)"],
+        correct: 1,
+        hint: "Role은 AI에게 '어떤 전문가로 행동할 것인가'를 알려주는 역할입니다. 배경 설정은 Context(C), 형식 지정은 Format(F)이 담당해요. 역할이 명확할수록 AI의 답변 품질이 높아집니다."
+    },
+    2: {
+        q: "Few-shot 프롬프팅의 목적은?",
+        options: ["예시를 제공해 AI가 패턴을 학습하게 함", "응답 속도를 높임", "보안을 강화함"],
+        correct: 0,
+        hint: "Few-shot은 '몇 가지 예시(shots)를 주어' AI가 원하는 출력 패턴을 학습하도록 만드는 기법입니다. 예시가 많을수록 AI가 내 의도를 더 정확히 파악합니다."
+    },
+    3: {
+        q: "Temperature 0.1로 설정했을 때 AI의 특징은?",
+        options: ["더 창의적이고 예상치 못한 답변", "논리적이고 일관성 있는 답변", "답변이 더 길어짐"],
+        correct: 1,
+        hint: "Temperature가 낮을수록 AI는 확률이 가장 높은 단어만 선택해 예측 가능하고 일관된 결과를 냅니다. 수사처럼 논리가 중요한 상황엔 낮은 값이, 창의적 글쓰기엔 높은 값이 적합해요."
+    },
+    4: {
+        q: "Negative Prompt의 핵심 효과는?",
+        options: ["AI의 창의성을 높임", "AI가 하지 말아야 할 것을 명시해 결과를 정제함", "항상 정답을 도출함"],
+        correct: 1,
+        hint: "Negative Prompt는 '~하지 말 것'을 지정해 불필요하거나 편향된 내용을 걸러내는 필터입니다. 없으면 AI가 선입견이나 추측에 기반한 답변을 낼 수 있어요."
+    }
+};
+
+const STAGE_OPTIONS = {
+    1: {
+        role:    ["냉철한 사이버 프로파일러", "행동 분석 전문가", "천재 해킹 수사관", "현장 증거 감식관", "AI 알고리즘 분석가", "전설적인 1급 탐정"],
+        context: ["박물관 도난 사건 현장", "로그 조작 정황 포착 상황", "고도의 보안 시스템 무력화 현장", "V-GEM 유실 직후의 긴박한 상황"],
+        task:    ["범인의 행동 패턴 분석", "디지털 로그 조작 흔적 탐색", "용의자 진술의 모순점 발견", "범행 도구와 침입 경로 재구성"],
+        format:  ["증거 기반 추론 보고서", "범인 확률 통계 리포트", "용의자별 알리바이 대조표", "핵심 단서 중심의 요약서"]
+    },
+    2: {
+        ex1: ["로그 조작 흔적", "창문 개방 흔적", "구두 자국", "향수 냄새"],
+        ex2: ["전자기파 교란 흔적", "마스터키 오사용", "CCTV 가려짐", "문 강제 개방"],
+        ex3: ["특수 잠입 장갑", "그림자 형체 목격", "정밀 해킹 흔적", "지문 발견"]
+    },
+    3: { temp: ["0.1", "0.3", "0.5", "0.7", "0.9"] },
+    4: { negative: ["인상착의 편견 배제", "개인적 감정 제외", "증거 없는 추측 차단", "직업적 선입견 무시", "추측성 알리바이 배제"] },
+    5: { cot: ["Step 1: 증거 대조 → Step 2: 범인 특정", "Step 1: 로그 분석 → Step 2: 조력자 확인", "Step 1: 진술 교차 검증 → Step 2: 모순점 발견 → Step 3: 범행 재구성"] }
+};
+
+const SCENE_CONFIG = {
+    start: '../../assets/detective_interrogation_bg.png',
+    interrogation: '../../assets/detective_interrogation_bg.png',
+    crime_scene: '../../assets/museum_heist_intro_bg.png',
+    lab: '../../assets/detective_interrogation_bg.png',
+    finale: '../../assets/detective_interrogation_bg.png'
+};
+
+function changeScene(sceneKey) {
+    const bg = document.getElementById('scene-bg');
+    bg.classList.add('scene-transitioning');
+    setTimeout(() => {
+        bg.style.backgroundImage = `url('${SCENE_CONFIG[sceneKey]}')`;
+        bg.classList.remove('scene-transitioning');
+        anime({ targets: bg, scale: [1.1, 1], duration: 3000, easing: 'easeOutQuad' });
+    }, 1000);
+}
+
+function updateTimeline() {
+    const fill = document.getElementById('timeline-fill');
+    const percent = (gameState.stage / 5) * 100;
+    fill.style.width = `${percent}%`;
+}
+
+function pinEvidence(icon) {
+    const board = document.getElementById('evidence-board');
+    const pin = document.createElement('div');
+    pin.className = 'evidence-pin';
+    pin.innerHTML = `<i class="fas ${icon}"></i>`;
+    board.appendChild(pin);
+    anime({
+        targets: pin,
+        scale: [0, 1.2, 1],
+        rotate: [-30, -10],
+        opacity: [0, 1],
+        duration: 800,
+        easing: 'easeOutBack'
+    });
+}
+
+const AI_SIM_DATA = {
+    1: {
+        default: "범인은 박물관 내부를 잘 아는 사람일 가능성이 있습니다. 보안 시스템이 정교하게 무력화된 것으로 보아 전문가의 소행으로 추정됩니다. 추가 조사가 필요합니다.",
+        optimized: "분석 완료. 현장 로그 분석 결과, 외부 침입 흔적은 '0'에 수렴함. 내부 프로토콜을 우회한 3건의 조작 흔적 포착. 이는 고도의 기술력을 가진 내부 조력자 혹은 시스템 설계자급의 소행임을 시사함. 정밀 프로파일링을 개시함."
+    },
+    2: {
+        default: "몇 가지 단서가 발견되었습니다. CCTV가 가려졌고 창문이 열려있었습니다. 누가 그랬는지는 아직 확실하지 않습니다.",
+        optimized: "확보된 3대 핵심 단서(로그 조작, 전자기파 교란, 특수 잠입 장갑)를 패턴 매칭한 결과: 범인은 단순히 문을 연 것이 아니라 시스템 자체를 속였음. 이 기법은 'Shadow'라는 이름의 전설적 해커의 시그니처와 94% 일치함."
+    },
+    3: {
+        low: "논리적 인과관계에 따라 확실한 증거만을 연결합니다. 감정적 요소를 배제하고 물리적 로그에 기반한 결론을 도출함: 범인은 보안 취약점을 이용한 기술직군일 확률이 압도적임.",
+        high: "사건 이면의 보이지 않는 가능성을 직관적으로 유치합니다. 범인은 마치 '유령'처럼 존재하지 않는 곳에서 나타났을 수도 있습니다. 그림자 그 자체가 움직인 것 같은 초현실적 접근도 배제할 수 없습니다."
+    },
+    4: {
+        default: "청소부 루카스는 평소 행동이 수상했고, 경비원 리암은 금전적 문제가 있었습니다. 소피아는 마스터키 접근권이 있으니 가장 의심스럽습니다.",
+        optimized: "[편향 차단 필터 작동 중...] 인적 사항에 기반한 선입견을 배제함. 오직 '물리 증거'와 '시간대별 알리바이'만을 대조한 결과, 세 명 모두 알리바이가 성립함. 즉, 범인은 용의자 명단 외의 '제4의 인물'일 가능성이 농후함."
+    },
+    5: {
+        default: "Shadow가 범인입니다. 그는 고도의 해킹 기술을 사용했습니다.",
+        optimized: "사고 사슬(CoT) 분석 개시:\n1. 단계: 증거실 로그와 리암의 진술 대조 → 시간차 모순 발견.\n2. 단계: 소피아 근처의 교란 장치 분석 → 리모트 해킹 흔적 확인.\n3. 단계: 루카스의 장갑 조각 분석 → 비인간적 속도 유추.\n최종 결론: 범인은 실체가 없는 '디지털 그림자(Shadow)'임."
+    }
+};
+
+// ── Toast ──
+function showToast(msg, type = 'info', duration = 2800) {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-exclamation-circle' };
+    t.innerHTML = `<i class="fas ${icons[type]}"></i> ${msg}`;
+    c.appendChild(t);
+    setTimeout(() => {
+        t.style.opacity = '0'; t.style.transform = 'translateY(8px)'; t.style.transition = 'all 0.3s';
+        setTimeout(() => t.remove(), 300);
+    }, duration);
+}
+
+// ── Prompt Builder ──
+const PB_KEYS = ['role','ctx','task','fmt','ex1','ex2','ex3','temp','neg','cot'];
+function updatePromptBuilder(key, value) {
+    promptData[key] = value;
+    const slot = document.getElementById(`pb-${key}`);
+    if (!slot) return;
+    slot.querySelector('.slot-value').textContent = value.length > 28 ? value.slice(0, 26) + '…' : value;
+    slot.classList.add('filled');
+    anime({ targets: slot, scale: [1, 1.045, 1], duration: 500, easing: 'easeOutElastic(1,.5)' });
+    const filled = PB_KEYS.filter(k => promptData[k]).length;
+    document.getElementById('pb-count').textContent = filled;
+    if (filled === PB_KEYS.length) {
+        const btn = document.getElementById('copy-prompt-btn');
+        btn.disabled = false;
+        anime({ targets: '#copy-prompt-btn', scale: [1, 1.06, 1], duration: 700, easing: 'easeOutElastic' });
+        showToast('프롬프트 완성! 복사 버튼이 활성화되었습니다.', 'success', 4000);
+    }
+}
+function copyPrompt() {
+    const text =
+`[수사 AI 탐정 프롬프트 — Prompt Detective]
+
+ROLE: ${promptData.role}
+CONTEXT: ${promptData.ctx}
+TASK: ${promptData.task}
+FORMAT: ${promptData.fmt}
+
+[Few-shot 예시]
+예시 1: ${promptData.ex1}
+예시 2: ${promptData.ex2}
+예시 3: ${promptData.ex3}
+
+[파라미터]
+Temperature: ${promptData.temp}
+Negative Prompt: ${promptData.neg}
+
+[Chain-of-Thought]
+${promptData.cot}`;
+    navigator.clipboard.writeText(text)
+        .then(() => showToast('클립보드에 복사됐습니다! Claude나 ChatGPT에 붙여넣어 보세요.', 'success', 5000))
+        .catch(() => showToast('복사 실패. 브라우저 권한을 확인해주세요.', 'error'));
+}
+
+// ── Intro ──
+let introInterval, introFinished = false;
+window.onload = () => {
+    document.getElementById('copy-prompt-btn').onclick = copyPrompt;
+    let i = 0;
+    const tick = () => {
+        if (introFinished) return;
+        if (i < INTRO_TEXT.length) { document.getElementById('intro-text').innerHTML += INTRO_TEXT[i++] === '\n' ? '<br>' : INTRO_TEXT[i-1]; introInterval = setTimeout(tick, 40); }
+        else { setTimeout(finishIntro, 1000); }
+    };
+    tick();
+};
+function finishIntro() {
+    if (introFinished) return;
+    introFinished = true;
+    if (introInterval) clearTimeout(introInterval);
+    anime({ targets: '#intro-overlay', opacity: 0, duration: 1000, complete: () => {
+        document.getElementById('intro-overlay').style.display = 'none';
+        document.getElementById('title-screen').style.opacity = 1;
+        document.getElementById('title-screen').style.pointerEvents = 'auto';
+    }});
+}
+function skipIntro() { finishIntro(); }
+
+function startGame() {
+    anime({ targets: '#title-screen', opacity: 0, duration: 500, complete: () => {
+        document.getElementById('title-screen').style.display = 'none';
+        document.getElementById('game-container').style.opacity = 1;
+        document.getElementById('hud').classList.remove('hidden-stage');
+        document.getElementById('prompt-builder').classList.remove('hidden-stage');
+        anime({ targets: '#prompt-builder', opacity: [0,1], translateX: [30,0], duration: 800, easing: 'easeOutQuad' });
+        gameState.stage = 0; updateHUD();
+        playDialogue(["수사관: 좋아. 우선 탐정 설계를 위한 검증부터 시작하지."], () => showQuiz(1));
+    }});
+}
+
+const CONCEPT_DATA = {
+    1: {
+        icon: 'fa-user-tie',
+        title: 'RCTF 기법',
+        body: 'Role(역할) + Context(배경) + Task(임무) + Format(형식). 이 4가지를 명확히 할수록 AI 탐정의 분석력이 날카로워집니다.'
+    },
+    2: {
+        icon: 'fa-images',
+        title: 'Few-shot 기법',
+        body: '백 마디 설명보다 3개의 단서 예시가 강력합니다. AI에게 수사 패턴을 직접 보여주어 추론 방향을 가이드하세요.'
+    },
+    3: {
+        icon: 'fa-thermometer-three-quarters',
+        title: 'Temperature',
+        body: '추리의 온도를 조절하세요. 낮은 온도는 냉철한 증거 중심의 답변을, 높은 온도는 직관적인 상상력을 자극합니다.'
+    },
+    4: {
+        icon: 'fa-hand-paper',
+        title: 'Negative Prompt',
+        body: 'AI가 가지 말아야 할 길을 지정하세요. 선입견이나 근거 없는 추측을 차단하여 수사의 객관성을 확보합니다.'
+    },
+    5: {
+        icon: 'fa-brain',
+        title: 'Chain-of-Thought',
+        body: '결론만 내지 말고 "단계별"로 생각하게 만드세요. 사고의 사슬은 논리적 비약을 막고 진실에 도달하게 돕습니다.'
+    }
+};
+
+let conceptCallback = null;
+let conceptTimer = null;
+
+function showConceptCard(s, cb) {
+    const data = CONCEPT_DATA[s];
+    if (!data || gameState.earnedStages.includes(s)) { cb(); return; } // 첫 진입일 때만 노출
+
+    conceptCallback = cb;
+    document.getElementById('concept-icon').className = `fas ${data.icon}`;
+    document.getElementById('concept-title').textContent = data.title;
+    document.getElementById('concept-body').innerHTML = data.body;
+    document.getElementById('concept-overlay').classList.add('active');
+
+    anime({ targets: '.concept-card', scale: [0.8, 1], opacity: [0, 1], duration: 800, easing: 'easeOutBack' });
+    
+    if (conceptTimer) clearTimeout(conceptTimer);
+    conceptTimer = setTimeout(closeConceptCard, 4500);
+}
+
+function closeConceptCard() {
+    if (conceptTimer) clearTimeout(conceptTimer);
+    document.getElementById('concept-overlay').classList.remove('active');
+    if (conceptCallback) {
+        const cb = conceptCallback;
+        conceptCallback = null;
+        setTimeout(cb, 400);
+    }
+}
+
+// ── Quiz ──
+function showQuiz(s) {
+    const data = QUIZ_DATA[s];
+    if (!data) { showActionPanel(s); return; }
+    const modal = document.getElementById('game-modal');
+    const body  = document.getElementById('modal-body');
+    const hint  = document.getElementById('quiz-hint');
+    body.innerHTML = ''; hint.classList.add('hidden-stage'); hint.innerHTML = '';
+    document.getElementById('modal-title').textContent = '수사 지식 검증';
+    document.getElementById('modal-desc').textContent  = data.q;
+    modal.classList.add('active');
+    modal.style.pointerEvents = 'auto';
+
+    data.options.forEach((opt, idx) => {
+        const b = document.createElement('div');
+        b.className = 'quiz-option'; b.textContent = opt;
+        b.onclick = () => handleQuizAnswer(s, idx, b, data);
+        body.appendChild(b);
+    });
+}
+function handleQuizAnswer(s, idx, btn, data) {
+    if (idx === data.correct) {
+        document.querySelectorAll('.quiz-option').forEach(o => { o.style.pointerEvents = 'none'; o.classList.add('no-hover'); });
+        btn.classList.add('correct');
+        gameState.score += 100; updateHUD();
+        showToast('정답! +100점', 'success');
+        
+        setTimeout(() => {
+            document.getElementById('game-modal').classList.remove('active');
+            document.getElementById('dialogue-box').style.opacity = '1';
+            
+            if (s === 1) {
+                playDialogue([
+                    "수사관: 퀴즈 통과. 기초 지식은 합격이다.",
+                    "수사관: 박물관은 지금 혼란 그 자체야. 고도의 보안이 단숨에 뚫렸다는 건 분명 전문가의 소행이고.",
+                    "수사관: 이제 AI 탐정의 페르소나를 설계해. 역할(Role)을 명확히 할수록 AI의 수사 정확도가 올라간다."
+                ], () => showActionPanel(1));
+            } else {
+                showActionPanel(s);
+            }
+        }, 600);
+    } else {
+        btn.classList.add('wrong');
+        btn.style.pointerEvents = 'none';
+        const hint = document.getElementById('quiz-hint');
+        hint.innerHTML = `<i class="fas fa-lightbulb mr-2"></i><strong>힌트:</strong> ${data.hint}`;
+        hint.classList.remove('hidden-stage');
+        anime({ targets: '#quiz-hint', opacity: [0,1], translateY: [6,0], duration: 400 });
+        showToast('틀렸습니다. 힌트를 읽고 다시 선택하세요.', 'error');
+    }
+}
+
+// ── Stage UI ──
+function goBackStage() {
+    if (gameState.stage <= 1) return;
+    showActionPanel(gameState.stage - 1);
+}
+
+function showActionPanel(s) {
+    showConceptCard(s, () => {
+        gameState.stage = s;
+        if (s > gameState.maxStage) gameState.maxStage = s;
+        // back button: visible only from stage 2 onward
+        const backBtn = document.getElementById('back-btn');
+        if (s > 1) backBtn.classList.remove('hidden-stage');
+        else backBtn.classList.add('hidden-stage');
+        document.getElementById('stage-overlay').classList.add('active');
+        document.getElementById('dialogue-box').style.opacity = '0';
+        document.getElementById('action-panel').classList.remove('hidden-stage');
+        document.querySelectorAll('.stage-ui').forEach(el => el.classList.add('hidden-stage'));
+        const div = document.getElementById(`stage-${s}`);
+        if (div) div.classList.remove('hidden-stage');
+        const titles = ["","탐정 프로필 설계 (RCTF)","핵심 단서 통합 (Few-shot)","추리 감도 설정 (Temperature)","편향 차단 필터 (Negative)","사고 사슬 구성 (Chain-of-Thought)"];
+        const badges = ["","RCTF","FEW-SHOT","TEMPERATURE","NEGATIVE","CHAIN-OF-THOUGHT"];
+        document.getElementById('stage-title').textContent = titles[s];
+        document.getElementById('stage-badge').textContent = `STAGE ${s}: ${badges[s]}`;
+        renderOptions(s); updateHUD();
+        updateAIPreview(s);
+        anime({ targets: '#action-panel', opacity: [0,1], scale: [0.97,1], duration: 380, easing: 'easeOutQuad' });
+    });
+}
+function updateHUD() {
+    const names = ["","프로필 설계","단서 통합","추리 감도","편향 차단","사고 사슬"];
+    const n = names[gameState.stage] || "현장 수사 중";
+    document.getElementById('hud-stage').textContent = gameState.stage > 0 ? `STAGE ${gameState.stage}: ${n}` : n;
+    document.getElementById('hud-score').textContent = `SCORE: ${gameState.score}`;
+}
+function renderOptions(s) {
+    const opts = STAGE_OPTIONS[s]; if (!opts) return;
+    for (let key in opts) {
+        const c = document.getElementById(`opt-p${s}-${key}`); if (!c) continue; c.innerHTML = '';
+        opts[key].forEach(val => {
+            const chip = document.createElement('div'); chip.className = 'suggestion-chip'; chip.textContent = val;
+            chip.onclick = () => {
+                if (key === 'temp') { const v = parseFloat(val); document.getElementById('p3-temp').value = v; updateTemp(v); updateAIPreview(3); }
+                else { 
+                    document.getElementById(`p${s}-${key}`).value = val;
+                    updateAIPreview(s);
+                }
+            };
+            c.appendChild(chip);
+        });
+    }
+}
+
+// ── AI Preview System ──
+let previewTypingTimeout = null;
+function updateAIPreview(s) {
+    const container = document.getElementById('ai-preview-content');
+    const statusText = document.querySelector('.ai-preview-status');
+    let text = "";
+    let isOptimized = false;
+
+    if (s === 1) {
+        const role = document.getElementById('p1-role').value.trim();
+        const ctx  = document.getElementById('p1-context').value.trim();
+        const task = document.getElementById('p1-task').value.trim();
+        const fmt  = document.getElementById('p1-format').value.trim();
+        isOptimized = (role && ctx && task && fmt);
+        
+        if (isOptimized) {
+            text = `[${role} 분석 모드 작동]\n현장 배경(${ctx}) 분석 결과: 외부 침입 흔적은 '0'에 수렴함. ${task}을 수행한 결과, 내부 조력자의 소행임이 98% 확률로 추정됨. ${fmt} 형태로 정밀 분석을 개시함.`;
+        } else {
+            text = AI_SIM_DATA[1].default;
+        }
+    } else if (s === 2) {
+        const role = promptData.role || "탐정";
+        const c1 = document.getElementById('p2-ex1').value.trim();
+        const c2 = document.getElementById('p2-ex2').value.trim();
+        const c3 = document.getElementById('p2-ex3').value.trim();
+        isOptimized = (c1 && c2 && c3);
+        if (isOptimized) {
+            text = `${role}의 Few-shot 학습 완료. 확보된 3대 단서(로그 조작, 전자기파 교란, 특수 장갑)를 패턴 매칭한 결과: 범인은 'Shadow'라는 전설적 해커의 시그니처와 일치함.`;
+        } else {
+            text = AI_SIM_DATA[2].default;
+        }
+    } else if (s === 3) {
+        const role = promptData.role || "탐정";
+        const temp = parseFloat(document.getElementById('p3-temp').value);
+        isOptimized = temp > 0.6;
+        let base = temp < 0.4 ? AI_SIM_DATA[3].low : (temp > 0.7 ? AI_SIM_DATA[3].high : "증거와 직관을 균형 있게 활용하여 분석 중입니다.");
+        text = `[${role} 추론 온도: ${temp}]\n${base}`;
+    } else if (s === 4) {
+        const neg = document.getElementById('p4-negative').value.trim();
+        isOptimized = neg.length > 0;
+        text = isOptimized ? `[네거티브 필터: ${neg} 적용]\n${AI_SIM_DATA[4].optimized}` : AI_SIM_DATA[4].default;
+    } else if (s === 5) {
+        const cot = document.getElementById('p5-cot').value.trim();
+        isOptimized = cot.length > 0;
+        text = isOptimized ? `[사고 사슬 분석 중...]\n${AI_SIM_DATA[5].optimized}` : AI_SIM_DATA[5].default;
+    }
+
+    const badge = `<span class="preview-label-badge ${isOptimized ? 'badge-optimized' : 'badge-default'}">${isOptimized ? 'OPTIMIZED' : 'DEFAULT'}</span>`;
+    
+    if (previewTypingTimeout) clearTimeout(previewTypingTimeout);
+    
+    // Simple typing effect for the preview
+    container.innerHTML = badge + '<span class="typing-cursor"></span>';
+    let i = 0;
+    const type = () => {
+        if (i < text.length) {
+            container.innerHTML = badge + text.substring(0, i+1).replace(/\n/g, '<br>') + '<span class="typing-cursor"></span>';
+            i++;
+            previewTypingTimeout = setTimeout(type, 10);
+        } else {
+            container.innerHTML = badge + text.replace(/\n/g, '<br>');
+        }
+    };
+    type();
+}
+
+// ── Submit Stage ──
+function submitStage(s) {
+    const isRevisit = s < gameState.maxStage;
+
+    // ── 유효성 검사 + 프롬프트 빌더 업데이트 ──
+    if (s === 1) {
+        const role = document.getElementById('p1-role').value.trim();
+        const ctx  = document.getElementById('p1-context').value.trim();
+        const task = document.getElementById('p1-task').value.trim();
+        const fmt  = document.getElementById('p1-format').value.trim();
+        if (!role || !ctx || !task || !fmt) { showToast('RCTF 네 항목을 모두 입력해주세요.', 'error'); return; }
+        updatePromptBuilder('role', role);
+        updatePromptBuilder('ctx',  ctx);
+        updatePromptBuilder('task', task);
+        updatePromptBuilder('fmt',  fmt);
+    } else if (s === 2) {
+        const validClues = ["로그 조작 흔적","전자기파 교란 흔적","특수 잠입 장갑"];
+        const c1 = document.getElementById('p2-ex1').value.trim();
+        const c2 = document.getElementById('p2-ex2').value.trim();
+        const c3 = document.getElementById('p2-ex3').value.trim();
+        if (!c1 || !c2 || !c3) { showToast('단서 3개를 모두 입력해주세요.', 'error'); return; }
+        if (![c1,c2,c3].every(v => validClues.includes(v)) || new Set([c1,c2,c3]).size !== 3) {
+            showToast('심문에서 확보한 핵심 단서 3가지를 정확히 입력해야 합니다.', 'error', 4000); return;
+        }
+        updatePromptBuilder('ex1', c1);
+        updatePromptBuilder('ex2', c2);
+        updatePromptBuilder('ex3', c3);
+    } else if (s === 3) {
+        updatePromptBuilder('temp', document.getElementById('temp-val').textContent);
+    } else if (s === 4) {
+        const neg = document.getElementById('p4-negative').value.trim();
+        if (!neg) { showToast('편향 필터 내용을 입력해주세요.', 'error'); return; }
+        updatePromptBuilder('neg', neg);
+    } else if (s === 5) {
+        const cot = document.getElementById('p5-cot').value.trim();
+        if (!cot) { showToast('추론 사슬을 입력해주세요.', 'error'); return; }
+        updatePromptBuilder('cot', cot);
+    }
+
+    // ── 점수: 첫 제출만 가산 ──
+    if (!gameState.earnedStages.includes(s)) {
+        gameState.score += 50;
+        gameState.earnedStages.push(s);
+    }
+    updateHUD();
+    updateTimeline();
+
+    // ── 패널 닫기 ──
+    document.getElementById('stage-overlay').classList.remove('active');
+    document.getElementById('dialogue-box').style.opacity = '1';
+    document.getElementById('action-panel').classList.add('hidden-stage');
+    document.getElementById(`stage-${s}`).classList.add('hidden-stage');
+
+    // ── 재방문(이전 단계 수정): 현재 최대 스테이지로 바로 복귀 ──
+    if (isRevisit) {
+        showToast('수정 완료! 프롬프트가 업데이트됐습니다.', 'success');
+        setTimeout(() => showActionPanel(gameState.maxStage), 350);
+        return;
+    }
+
+    // ── 일반 진행: 게임 플로우 ──
+    const stageMessages = {
+        1: ['수사관: RCTF 설계 완료. 오른쪽 프롬프트 빌더에 4개 항목이 채워졌다.', '수사관: 이제 현장으로 이동해 물리적 증거를 확보하게.'],
+        2: ['수사관: 단서 3개가 AI 학습 예시로 등록됐다. Few-shot은 AI에게 "이런 패턴으로 분석하라"는 지침이야.'],
+        3: ['수사관: 논리 체계가 잡혔다. Temperature는 AI의 답변 다양성을 조절하는 핵심 파라미터지. 다음은 편향 차단 단계다.'],
+        4: ['수사관: 편향 필터 장착 완료. 이 프롬프트가 있어야 AI가 선입견 없이 증거만으로 판단한다.'],
+        5: ['수사관: 모든 분석 사슬이 완성됐다. 이제 당신이 설계한 AI 탐정으로 진범을 지목하라.']
+    };
+
+    // Phase 2: Evidence pinning
+    const stageIcons = ["","fa-user-tag","fa-microchip","fa-thermometer-half","fa-filter","fa-project-diagram"];
+    if (!isRevisit) pinEvidence(stageIcons[s]);
+
+    playDialogue(stageMessages[s], () => {
+        if (s === 1) { 
+            gameState.stage = 0; updateHUD(); 
+            changeScene('crime_scene');
+            showMiniGame(); 
+        }
+        else if (s === 2) { 
+            changeScene('interrogation');
+            showSuspectDeduction(); 
+        }
+        else if (s === 3) { gameState.stage = 4; showQuiz(4); }
+        else if (s === 4) { showActionPanel(5); }
+        else if (s === 5) {
+            document.getElementById('main-visual').classList.add('hidden-stage');
+            document.getElementById('suspect-grid').classList.remove('hidden-stage');
+            gameState.stage = 0; updateHUD();
+        }
+    });
+}
+
+// ── Mini Game ──
+function showMiniGame() {
+    const modal = document.getElementById('game-modal');
+    const body  = document.getElementById('modal-body');
+    body.innerHTML = '';
+    document.getElementById('quiz-hint').classList.add('hidden-stage');
+    document.getElementById('modal-title').textContent = '현장 증거 확보';
+    document.getElementById('modal-desc').textContent  = '사건 현장에 숨겨진 3개의 고밀도 에너지를 스캔하세요.';
+    modal.classList.add('active');
+    modal.style.pointerEvents = 'auto';
+    const g = document.createElement('div'); g.className = 'game-grid'; let found = 0;
+    const targets = [3, 6, 12];
+    for (let i = 0; i < 16; i++) {
+        const c = document.createElement('div');
+        c.className = 'game-cell border-2 border-emerald-500/20 hover:bg-emerald-500/20 transition-all';
+        c.innerHTML = '<i class="fas fa-microchip opacity-10"></i>';
+        c.onclick = () => {
+            if (targets.includes(i)) {
+                c.innerHTML = '<i class="fas fa-search-plus text-emerald-400"></i>';
+                c.classList.add('bg-emerald-500/30', 'border-emerald-500');
+                anime({ targets: c, scale: [1, 1.2, 1], rotate: '1turn', duration: 400 });
+                found++;
+                showToast(`단서 발견! (${found}/3)`, 'success', 1400);
+                if (found === 3) setTimeout(() => { modal.classList.remove('active'); showInterrogationSelection(); }, 600);
+            } else {
+                c.innerHTML = '<i class="fas fa-times text-rose-500"></i>';
+                anime({ targets: c, translateX: [-10, 10, 0], duration: 200 });
+            }
+        };
+        g.appendChild(c);
+    }
+    body.appendChild(g);
+    anime({ targets: '.game-cell', opacity: [0,1], delay: anime.stagger(50), scale: [0.5,1] });
+}
+
+// ── Interrogation ──
+function showInterrogationSelection() {
+    const modal = document.getElementById('game-modal');
+    const body  = document.getElementById('modal-body');
+    body.innerHTML = '';
+    document.getElementById('quiz-hint').classList.add('hidden-stage');
+    document.getElementById('modal-title').textContent = '용의자 심문';
+    const left = Object.keys(SUSPECTS).filter(k => !gameState.interrogated.includes(k)).length;
+    document.getElementById('modal-desc').textContent = left > 0 ? `심문할 용의자를 선택하세요. (${gameState.interrogated.length}/3 완료)` : '모든 심문이 완료되었습니다.';
+    modal.classList.add('active');
+    modal.style.pointerEvents = 'auto';
+
+    for (let key in SUSPECTS) {
+        const s = SUSPECTS[key];
+        const card = document.createElement('div');
+        const done = gameState.interrogated.includes(key);
+        card.className = 'suspect-select-card w-56';
+        if (done) card.style.opacity = '0.5';
+        card.innerHTML = `
+            <img src="${s.img}">
+            <h3 class="font-bold">${s.name}</h3>
+            <p class="text-white/40 text-sm">${s.role}</p>
+            ${done ? '<div class="interrogated-badge">✓ 심문 완료</div>' : ''}
+        `;
+        card.onclick = () => { modal.classList.remove('active'); startInterrogation(key); };
+        body.appendChild(card);
+    }
+}
+function startInterrogation(who) {
+    const s = SUSPECTS[who];
+    if (!gameState.interrogated.includes(who)) gameState.interrogated.push(who);
+    document.getElementById('main-visual').src = s.img;
+    playDialogue([`${s.name} (${s.role}): ${s.clue}`], () => {
+        if (gameState.interrogated.length < 3) showInterrogationSelection();
+        else {
+            document.getElementById('main-visual').src = '../../assets/detective_interrogation_bg.png';
+            playDialogue([
+                "수사관: 3명 심문 완료.",
+                "수사관: 각 용의자의 진술에서 핵심 단서를 뽑아냈지. 이제 이 단서들을 Few-shot 예시로 AI에게 주입한다.",
+                "수사관: Few-shot이란 '이런 패턴의 증거가 있었다'는 예시를 AI에게 보여줘 추론을 훈련시키는 기법이야."
+            ], () => showQuiz(2));
+        }
+    });
+}
+
+// ── Suspect Deduction ──
+function showSuspectDeduction() {
+    const modal = document.getElementById('game-modal');
+    const body  = document.getElementById('modal-body');
+    body.innerHTML = '';
+    document.getElementById('quiz-hint').classList.add('hidden-stage');
+    document.getElementById('modal-title').textContent = '잠정 용의자 압축';
+    document.getElementById('modal-desc').textContent  = '수집한 단서를 바탕으로 가장 의심되는 인물을 선택하세요.';
+    modal.classList.add('active');
+
+    const DEDUCTIONS = {
+        liam:   "수사관: 로그 조작 흔적이 발견된 시점, 리암은 서쪽 복도에 있었다. 그의 알리바이는 시스템적으로 조작된 것일 수 있어.",
+        sophia: "수사관: 전자기파 교란 장치가 소피아 사물함 근처에서 발견됐다. 기술적 역량이 있는 그녀가 연루됐을 수도 있어.",
+        lucas:  "수사관: 특수 잠입 장갑... 루카스는 청소부로서 접근권이 있었지. 하지만 그 형체는 평범한 인간이 아니었다고?"
+    };
+    for (let key in SUSPECTS) {
+        const s = SUSPECTS[key];
+        const card = document.createElement('div');
+        card.className = 'suspect-select-card w-56';
+        card.innerHTML = `<img src="${s.img}"><h3 class="font-bold">${s.name}</h3><p class="text-white/40 text-sm">${s.role}</p>`;
+        card.onclick = () => {
+            modal.classList.remove('active');
+            playDialogue([DEDUCTIONS[key]], () => { gameState.stage = 3; showQuiz(3); });
+        };
+        body.appendChild(card);
+    }
+}
+
+// ── Culprit Reveal (Learning Layer 5) ──
+// ── Culprit Reveal (Phase 3 Finale) ──
+function pickCulprit(who) {
+    const modal = document.getElementById('game-modal');
+    const body  = document.getElementById('modal-body');
+    document.getElementById('quiz-hint').classList.add('hidden-stage');
+    
+    if (who === 'shadow') {
+        startConfrontation();
+    } else {
+        const cards = document.querySelectorAll('.suspect-select-card');
+        let targetCard;
+        cards.forEach(c => { if (c.textContent.includes(SUSPECTS[who].name)) targetCard = c; });
+        
+        if (targetCard) {
+            targetCard.classList.add('fleeing');
+            showToast(`${SUSPECTS[who].name}이(가) 도망쳤습니다! 그는 진범이 아닙니다.`, 'error');
+            setTimeout(() => {
+                showFailureScreen(who);
+            }, 800);
+        }
+    }
+}
+
+function startConfrontation() {
+    const overlay = document.getElementById('confrontation-overlay');
+    const text = document.getElementById('confrontation-text');
+    overlay.style.display = 'flex';
+    setTimeout(() => {
+        overlay.style.opacity = '1';
+        overlay.style.pointerEvents = 'auto';
+    }, 10);
+    
+    anime({
+        targets: '#confrontation-overlay',
+        background: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.95)'],
+        duration: 500,
+        easing: 'easeOutQuad'
+    });
+
+    setTimeout(() => {
+        text.style.opacity = '1';
+        anime({ targets: text, scale: [0.5, 1], rotate: ['-5deg', '0deg'], duration: 800, easing: 'easeOutBack' });
+        
+        setTimeout(() => {
+            anime({
+                targets: '#confrontation-overlay',
+                opacity: 0,
+                duration: 800,
+                easing: 'easeInQuad',
+                complete: () => {
+                    overlay.style.display = 'none';
+                    showNewspaper();
+                }
+            });
+        }, 1500);
+    }, 600);
+}
+
+function showNewspaper() {
+    const newspaper = document.getElementById('newspaper-overlay');
+    newspaper.style.display = 'flex';
+    anime({
+        targets: '.newspaper-inner',
+        scale: [0.5, 1],
+        rotate: ['10deg', '-1deg'],
+        duration: 1200,
+        easing: 'easeOutExpo'
+    });
+}
+
+function showFailureScreen(who) {
+    const modal = document.getElementById('game-modal');
+    const body  = document.getElementById('modal-body');
+    const title = document.getElementById('modal-title');
+    const desc = document.getElementById('modal-desc');
+    
+    modal.classList.add('active');
+    modal.style.pointerEvents = 'auto';
+    body.innerHTML = '';
+    title.textContent = '수사망 이탈';
+    title.className = 'text-4xl font-black mb-6 text-rose-500';
+    desc.textContent = `${SUSPECTS[who].name}은(는) 무고했습니다. 진범은 아직 어둠 속에 있습니다.`;
+
+    // Analyze weak points
+    let hint = "용의자들의 진술을 다시 대조해보고, 시스템 로그에 남은 기술적인 흔적에 집중하세요.";
+    if (!promptData.neg) hint = "Negative 프롬프트를 보강하여 선입견 없이 증거만 분석하도록 AI를 재설계해야 합니다.";
+    if (!promptData.cot) hint = "Chain-of-Thought(사고 사슬)를 명확히 하여 증거 간의 논리적 연결 고리를 다시 확인하세요.";
+    if (parseFloat(promptData.temp) > 0.8) hint = "Temperature가 너무 높습니다. 창의적인 추측보다는 논리적이고 일관된 분석이 필요합니다.";
+
+    body.innerHTML = `
+        <div class="w-full text-center">
+            <div class="failure-hint-box">
+                <h4 class="font-bold mb-2"><i class="fas fa-search-minus mr-2"></i> 수사관의 조언</h4>
+                <p class="text-sm leading-relaxed">${hint}</p>
+            </div>
+            <div class="mt-12 flex gap-4 justify-center">
+                <button onclick="location.reload()" class="px-8 py-4 rounded-xl border border-white/10 hover:bg-white/5 transition-all">수사 포기</button>
+                <button onclick="document.getElementById('game-modal').classList.remove('active'); document.getElementById('suspect-grid').classList.remove('hidden-stage');" class="btn-primary flex-1">재수사 개시</button>
+            </div>
+        </div>
+    `;
+}
+
+function showFinalReport(step) {
+    const body = document.getElementById('modal-body');
+    const title = document.getElementById('modal-title');
+    const desc = document.getElementById('modal-desc');
+    body.innerHTML = '';
+
+    // Step Indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'flex justify-center gap-2 mb-8';
+    for (let i=1; i<=3; i++) {
+        const dot = document.createElement('div');
+        dot.className = `step-dot ${i === step ? 'active' : ''}`;
+        indicator.appendChild(dot);
+    }
+    body.appendChild(indicator);
+
+    if (step === 1) {
+        // Phase 1: Case Resolution & Rank
+        title.textContent = '최종 수사 결과 보고서';
+        title.className = 'text-3xl font-black text-white/50 mb-2';
+        desc.innerHTML = `<span class="text-5xl font-black text-emerald-400">사건 해결 (CASE CLOSED)</span>`;
+        
+        let rank = 'C';
+        if (gameState.score >= 1000) rank = 'S';
+        else if (gameState.score >= 800) rank = 'A';
+        else if (gameState.score >= 500) rank = 'B';
+
+        const rankNames = { S: '전설적인 탐정', A: '베테랑 수사관', B: '유능한 분석가', C: '수습 탐정' };
+
+        body.innerHTML += `
+            <div class="w-full relative py-12">
+                <div class="rank-stamp rank-${rank.toLowerCase()}" id="rank-stamp">${rank}</div>
+                <div class="text-center mb-12">
+                    <img src="../../assets/suspect_shadow_culprit.png" id="reveal-img" class="h-56 mx-auto rounded-3xl mb-6 grayscale blur-sm opacity-50 border-4 border-white/10">
+                    <p class="text-2xl font-bold mb-2">최종 수사 점수: <span id="count-score">0</span>점</p>
+                    <p class="text-emerald-400 font-bold tracking-widest uppercase">CLASS: ${rankNames[rank]}</p>
+                </div>
+                <button onclick="showFinalReport(2)" class="btn-primary w-full max-w-sm mx-auto block">수사 복기하기 (Review) →</button>
+            </div>
+        `;
+
+        // Animation
+        setTimeout(() => {
+            anime({ targets: '#count-score', innerHTML: [0, gameState.score], round: 1, easing: 'easeOutExpo', duration: 2000 });
+            anime({
+                targets: '#reveal-img',
+                filter: ['grayscale(100%) blur(10px)', 'grayscale(0%) blur(0px)'],
+                opacity: [0.5, 1],
+                borderColor: ['rgba(255,255,255,0.1)', 'rgba(16,185,129,0.5)'],
+                duration: 1500,
+                easing: 'easeInOutQuad'
+            });
+            setTimeout(() => {
+                const stamp = document.getElementById('rank-stamp');
+                stamp.style.opacity = '1';
+                anime({ targets: stamp, scale: [4, 1], rotate: [-45, -15], opacity: [0, 0.7], duration: 800, easing: 'easeOutBack' });
+                showToast(`수사 완료! 당신은 ${rankNames[rank]}입니다.`, 'success');
+            }, 1000);
+        }, 100);
+
+    } else if (step === 2) {
+        // Phase 2: Learning Summary
+        title.textContent = '수사 기법 복기';
+        desc.textContent = '사건 해결에 사용된 5가지 프롬프트 엔지니어링 핵심 기법입니다.';
+        
+        const summaries = [
+            { icon: 'fa-user-secret', title: 'RCTF (역할)', desc: 'AI에게 명확한 페르소나와 임무를 부여하여 전문성을 높였습니다.' },
+            { icon: 'fa-lightbulb', title: 'Few-shot (예시)', desc: '실제 단서 예시를 학습시켜 AI의 추론 패턴을 가이드했습니다.' },
+            { icon: 'fa-thermometer-half', title: 'Temperature (온도)', desc: '창의성과 논리성 사이의 균형을 조절하여 최적의 답을 찾았습니다.' },
+            { icon: 'fa-filter', title: 'Negative (필터)', desc: '편견과 불필요한 추측을 차단하여 객관적인 수사를 유지했습니다.' },
+            { icon: 'fa-link', title: 'CoT (사고 사슬)', desc: '단계별 추론 과정을 설계하여 논리적 비약을 방지했습니다.' }
+        ];
+
+        let cardsHtml = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">';
+        summaries.forEach(s => {
+            cardsHtml += `
+                <div class="summary-card">
+                    <i class="fas ${s.icon} text-emerald-400"></i>
+                    <h4 class="font-bold mb-1">${s.title}</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">${s.desc}</p>
+                </div>
+            `;
+        });
+        cardsHtml += '</div>';
+        body.innerHTML += cardsHtml;
+        body.innerHTML += `
+            <div class="flex gap-4 w-full justify-center">
+                <button onclick="showFinalReport(1)" class="px-8 py-4 rounded-xl border border-white/10 hover:bg-white/5 transition-all">← 이전</button>
+                <button onclick="showFinalReport(3)" class="btn-primary flex-1 max-w-sm">실전 활용 가이드 →</button>
+            </div>
+        `;
+        anime({ targets: '.summary-card', opacity: [0,1], translateY: [20,0], delay: anime.stagger(100) });
+
+    } else if (step === 3) {
+        // Phase 3: Real-world Guide
+        title.textContent = '실전 수사 현장으로';
+        desc.textContent = '설계한 프롬프트는 실제 AI(Claude, GPT)에서 바로 사용 가능합니다.';
+
+        body.innerHTML += `
+            <div class="w-full bg-emerald-500/5 border border-emerald-500/20 rounded-3xl p-8 mb-8 text-left">
+                <h4 class="font-bold text-emerald-400 mb-4"><i class="fas fa-rocket mr-2"></i> 다음 단계 가이드</h4>
+                <div class="space-y-4 text-sm leading-relaxed text-slate-300">
+                    <p>1. <strong>[프롬프트 복사]</strong> 버튼을 눌러 완성된 설계를 복사하세요.</p>
+                    <p>2. <strong>Claude</strong>나 <strong>ChatGPT</strong>에 붙여넣어 실제 추리 성능을 확인해보세요.</p>
+                    <p>3. <strong>응용 팁:</strong> 사건 수사뿐만 아니라 '코드 리뷰어', '기획서 검토관' 등 다른 역할로 RCTF를 수정해 보세요.</p>
+                </div>
+            </div>
+            <div class="flex flex-col gap-4 w-full items-center">
+                <button onclick="copyPrompt();" class="btn-primary w-full py-6 text-xl"><i class="fas fa-copy mr-2"></i> 완성된 프롬프트 복사</button>
+                <div class="flex gap-4 w-full justify-center mt-4">
+                    <button onclick="showFinalReport(2)" class="px-8 py-4 rounded-xl border border-white/10 hover:bg-white/5 transition-all">← 이전</button>
+                    <button onclick="location.reload()" class="px-8 py-4 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 transition-all">수사 종료</button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ── Temperature Preview ──
+function updateTemp(v) {
+    document.getElementById('temp-val').textContent = v;
+    const map = {
+        '0.1': '극도로 엄격하게, 확인된 증거만으로 판단합니다.',
+        '0.2': '증거 중심의 보수적 추론을 합니다.',
+        '0.3': '증거에 기반한 논리적 분석을 합니다.',
+        '0.4': '논리와 직관을 4:6 비율로 결합합니다.',
+        '0.5': '증거와 직관을 균형 있게 활용합니다.',
+        '0.6': '다양한 가능성을 열어두고 분석합니다.',
+        '0.7': '직관적 유추를 적극적으로 사용합니다.',
+        '0.8': '창의적인 연결고리를 찾아냅니다.',
+        '0.9': '과감한 창의적 추론으로 예상 밖 결론을 냅니다.',
+        '1.0': '매우 창의적이지만 예측하기 어렵습니다.'
+    };
+    document.getElementById('temp-preview').textContent = map[parseFloat(v).toFixed(1)] || map['0.5'];
+}
+
+// ── Dialogue System ──
+function playDialogue(lines, cb) {
+    document.getElementById('dialogue-box').style.opacity = '1';
+    gameState.dialogueQueue = lines; gameState.dialogueIdx = 0; gameState.dialogueCallback = cb;
+    advanceDialogue();
+}
+function advanceDialogue() {
+    if (gameState.isTyping) return;
+    if (gameState.dialogueIdx < gameState.dialogueQueue.length) typeLine(gameState.dialogueQueue[gameState.dialogueIdx++]);
+    else if (gameState.dialogueCallback) { const c = gameState.dialogueCallback; gameState.dialogueCallback = null; c(); }
+}
+function typeLine(line) {
+    const container  = document.getElementById('dialogue-text');
+    const speakerEl  = document.getElementById('dialogue-speaker');
+    const indicator  = document.getElementById('next-indicator');
+    indicator.classList.add('hidden-stage');
+    gameState.isTyping = true;
+
+    const colonIdx = line.indexOf(': ');
+    let speaker = '', text = line;
+    if (colonIdx > 0 && colonIdx < 32) { speaker = line.substring(0, colonIdx); text = line.substring(colonIdx + 2); }
+    speakerEl.textContent = speaker;
+    speakerEl.className = 'dialogue-speaker ' + (speaker === '수사관' ? 'speaker-detective' : 'speaker-suspect');
+
+    // Phase 2: Character Reaction
+    const visual = document.getElementById('main-visual');
+    if (speaker === '수사관') visual.classList.add('detective-thinking');
+    else if (speaker !== '') visual.classList.add('suspect-talking');
+
+    container.innerHTML = ''; let i = 0;
+    const tick = () => {
+        if (i < text.length) { container.innerHTML += text[i++]; setTimeout(tick, 18); }
+        else { 
+            gameState.isTyping = false; 
+            indicator.classList.remove('hidden-stage'); 
+            visual.classList.remove('detective-thinking', 'suspect-talking');
+        }
+    };
+    tick();
+}
+</script>
+</body>
+</html>

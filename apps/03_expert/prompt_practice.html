@@ -851,7 +851,7 @@
                 <div class="rctf-dot h-1 flex-1 rounded-full bg-white/10 transition-all duration-300" data-field="p1-format"></div>
             </div>
 
-            <button onclick="submitStage1()" class="btn-primary w-full py-5 text-lg">프롬프트 전송하기</button>
+            <button onclick="submitStage1(this)" class="btn-primary w-full py-5 text-lg">프롬프트 전송하기</button>
         </div>
 
         <!-- Stage 2: Few-shot -->
@@ -905,7 +905,7 @@
                 <button id="add-ex4-btn" onclick="toggleEx4()" class="hidden-stage text-[10px] text-indigo-400 hover:text-indigo-300 font-bold transition-colors">+ 예시 추가</button>
             </div>
 
-            <button onclick="submitStage2()" class="btn-primary w-full py-5 text-lg">패턴 학습시키기</button>
+            <button onclick="submitStage2(this)" class="btn-primary w-full py-5 text-lg">패턴 학습시키기</button>
         </div>
 
         <!-- Stage 3: Temperature -->
@@ -956,7 +956,7 @@
                     oninput="gameState.prompt.tempReason = this.value; updatePromptPreview()">
             </div>
 
-            <button onclick="submitStage3()" class="btn-primary w-full py-5 text-lg">온도 적용하기</button>
+            <button onclick="submitStage3(this)" class="btn-primary w-full py-5 text-lg">온도 적용하기</button>
         </div>
 
         <!-- Stage 5: Chain of Thought (Bonus) -->
@@ -999,7 +999,7 @@
             <!-- CoT 단계 카운터 -->
             <div id="cot-step-count" class="text-[10px] text-slate-500 text-right">단계 수: 0 / 최소 2단계</div>
 
-            <button onclick="submitStage5()" class="btn-primary w-full py-5 text-lg">논리로 설득하기</button>
+            <button onclick="submitStage5(this)" class="btn-primary w-full py-5 text-lg">논리로 설득하기</button>
         </div>
 
         <!-- Stage 4: Negative Prompt -->
@@ -1038,7 +1038,7 @@
 
             <div id="neg-tags" class="flex flex-wrap gap-1.5 min-h-5"></div>
 
-            <button onclick="submitStage4()" class="btn-primary w-full py-5 text-lg">금기어 설정 완료</button>
+            <button onclick="submitStage4(this)" class="btn-primary w-full py-5 text-lg">금기어 설정 완료</button>
         </div>
 
         <!-- 누적 프롬프트 미리보기 -->
@@ -1447,6 +1447,10 @@
         }
 
         function playDialogue(lines, callback) {
+            // 기존 타이핑 작업 강제 종료 및 상태 초기화
+            if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
+            isTyping = false;
+            
             dialogueQueue = lines;
             dialogueIdx = 0;
             dialogueCallback = callback;
@@ -1455,6 +1459,7 @@
 
         function advanceDialogue() {
             if (isTyping) {
+                // 현재 대화가 진행 중이면 건너뛰기 수행
                 skipTyping();
                 return;
             }
@@ -1475,8 +1480,18 @@
         function skipTyping() {
             if (!isTyping) return;
             if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
-            const line = dialogueQueue[dialogueIdx - 1];
-            if (!line) return;
+            
+            // 인덱스 방어 로직 추가
+            const targetIdx = dialogueIdx - 1;
+            if (targetIdx < 0 || targetIdx >= dialogueQueue.length) {
+                isTyping = false;
+                return;
+            }
+            const line = dialogueQueue[targetIdx];
+            if (!line) {
+                isTyping = false;
+                return;
+            }
             const container = document.getElementById('dialogue-text');
             container.classList.remove('typing-active');
             const safeLine = String(line);
@@ -1547,23 +1562,31 @@
         function onTypingDone() {
             const indicator = document.getElementById('next-indicator');
             const guide = document.getElementById('next-action-guide');
+            const actionPanel = document.getElementById('action-panel');
+
             if (dialogueIdx < dialogueQueue.length) {
+                // 다음 대화가 더 있는 경우
                 indicator.classList.remove('hidden-stage');
-                document.getElementById('action-panel').classList.add('locked-panel');
-            } else if (!dialogueCallback) {
-                const stageGuides = {
-                    1: "Role → Context → Task → Format, 4가지를 모두 구체적으로 채워주세요!",
-                    2: "당신의 취향을 알 수 있는 예시를 3개 이상 콤마로 구분해 입력하세요!",
-                    3: "진심을 전하기 위해 슬라이더로 대화의 온도를 조절하세요!",
-                    4: "절대 하지 말아야 할 행동(Negative)을 입력해 오해를 푸세요!",
-                    5: "논리적인 단계(Step 1, 2, 3...)로 진심을 전달하세요!"
-                };
-                document.getElementById('guide-msg').innerText = stageGuides[gameState.stage] || "오른쪽 창을 확인하세요!";
-                guide.classList.remove('hidden-stage');
-                document.getElementById('action-panel').classList.remove('locked-panel');
-                document.getElementById('action-panel').classList.add('pulse-sidebar');
+                actionPanel.classList.add('locked-panel');
             } else {
+                // 마지막 대화 타이핑 종료
                 indicator.classList.remove('hidden-stage');
+                guide.classList.remove('hidden-stage'); 
+                
+                // 마지막 대화가 출력되면 즉시 패널 잠금을 해제하여 입력을 가능하게 함
+                actionPanel.classList.remove('locked-panel');
+
+                if (!dialogueCallback) {
+                    const stageGuides = {
+                        1: "Role → Context → Task → Format, 4가지를 모두 구체적으로 채워주세요!",
+                        2: "당신의 취향을 알 수 있는 예시를 3개 이상 콤마로 구분해 입력하세요!",
+                        3: "진심을 전하기 위해 슬라이더로 대화의 온도를 조절하세요!",
+                        4: "절대 하지 말아야 할 행동(Negative)을 입력해 오해를 푸세요!",
+                        5: "논리적인 단계(Step 1, 2, 3...)로 진심을 전달하세요!"
+                    };
+                    document.getElementById('guide-msg').innerText = stageGuides[gameState.stage] || "오른쪽 창을 확인하세요!";
+                    actionPanel.classList.add('pulse-sidebar');
+                }
             }
         }
 
@@ -1748,6 +1771,7 @@
             const nextBtn = document.getElementById('quiz-next-btn');
 
             options.forEach((opt, idx) => {
+                opt.style.pointerEvents = 'none';
                 if (idx === correct) opt.classList.add('correct');
                 if (idx === selected && idx !== correct) opt.classList.add('incorrect');
             });
@@ -1777,7 +1801,11 @@
                 const btn = document.createElement('button');
                 btn.className = "bg-white/10 hover:bg-white text-white hover:text-indigo-900 font-bold py-5 px-8 rounded-2xl border border-white/20 transition-all text-left flex justify-between items-center group";
                 btn.innerHTML = `<span>${c.text}</span> <i class="fas fa-chevron-right opacity-0 group-hover:opacity-100 transition-all"></i>`;
-                btn.onclick = () => { container.classList.add('hidden-stage'); c.action(); };
+                btn.onclick = () => { 
+                    list.querySelectorAll('button').forEach(b => b.style.pointerEvents = 'none');
+                    container.classList.add('hidden-stage'); 
+                    c.action(); 
+                };
                 list.appendChild(btn);
             });
 
@@ -1923,7 +1951,8 @@
             ];
         }
 
-        function submitStage1() {
+        function submitStage1(btn) {
+            if (btn) btn.disabled = true;
             document.getElementById('action-panel').classList.remove('pulse-sidebar');
             const r = sanitizeHTML(document.getElementById('p1-role').value);
             const c = sanitizeHTML(document.getElementById('p1-context').value);
@@ -1933,7 +1962,9 @@
 
             if (fullInput.includes("소꿉친구") && fullInput.includes("노을 지는 교실") && fullInput.includes("설레는 대화")) {
                 gameState.isCheating[1] = true; updateAffection(-20);
-                playDialogue(["아이리스: ...어디선가 들어본 말 같네. 혹시 다른 사람의 말을 그대로 베껴온 거야?", "(나: 모범 예시를 그대로 사용했어! 창의성 부족으로 호감도가 대폭 하락해.)"]);
+                playDialogue(["아이리스: ...어디선가 들어본 말 같네. 혹시 다른 사람의 말을 그대로 베껴온 거야?", "(나: 모범 예시를 그대로 사용했어! 창의성 부족으로 호감도가 대폭 하락해.)"], () => {
+                    if (btn) btn.disabled = false;
+                });
                 return;
             }
 
@@ -1943,7 +1974,9 @@
                 const msg = gameState.partner === 'iris'
                     ? [`아이리스: ...${emptyField}이 비어있어. 4가지 요소 중 하나라도 빠지면 대화를 시작할 수 없어.`, "(나: 빈 칸을 채워야 해! RCTF 4요소 모두 필요해.)"]
                     : [`카일: ${emptyField} 항목이 누락됐어. 프로토콜 불이행은 대화 거부 사유야.`, "(나: 빈 칸을 채워야 해! RCTF 4요소 모두 필요해.)"];
-                playDialogue(msg);
+                playDialogue(msg, () => {
+                    if (btn) btn.disabled = false;
+                });
                 return;
             }
             if (r.length < 5 || c.length < 5 || t.length < 5 || f.length < 3) {
@@ -1951,7 +1984,9 @@
                 const msg = gameState.partner === 'iris'
                     ? ["아이리스: 설정이 너무 짧아. 조금 더 구체적으로 나를 표현해줘.", "(나: 각 항목을 더 자세히 채워보자. 예: Role에 성격이나 특징을 추가!)"]
                     : ["카일: 데이터가 불충분해. 각 항목을 더 구체적으로 작성해줘.", "(나: 각 항목을 더 자세히 채워보자. 예: Context에 배경 상황을 추가!)"];
-                playDialogue(msg);
+                playDialogue(msg, () => {
+                    if (btn) btn.disabled = false;
+                });
                 return;
             }
 
@@ -1995,7 +2030,8 @@
             saveGame();
         }
 
-        function submitStage2() {
+        function submitStage2(btn) {
+            if (btn) btn.disabled = true;
             document.getElementById('action-panel').classList.remove('pulse-sidebar');
             const examples = ['p2-ex1','p2-ex2','p2-ex3','p2-ex4']
                 .map(id => sanitizeHTML(document.getElementById(id)?.value?.trim() || ''))
@@ -2008,7 +2044,9 @@
                 const msg = gameState.partner === 'iris'
                     ? "아이리스: 예시가 너무 뻔해. 나는 네 진짜 취향이 알고 싶어."
                     : "카일: 기존 예문을 그대로 사용했군요. 당신만의 데이터가 필요합니다.";
-                playDialogue([msg]);
+                playDialogue([msg], () => {
+                    if (btn) btn.disabled = false;
+                });
                 return;
             }
 
@@ -2017,7 +2055,9 @@
                 const msg = gameState.partner === 'iris'
                     ? ["아이리스: 예시가 부족해. 퓨샷은 최소 2~3개는 있어야 패턴을 파악할 수 있어.", "(나: 예시를 2개 이상 구체적으로 채워보자!)"]
                     : ["카일: 표본 부족입니다. 패턴 분석을 위해 최소 2개 이상의 데이터가 필요합니다.", "(나: 예시를 2개 이상 구체적으로 채워보자!)"];
-                playDialogue(msg);
+                playDialogue(msg, () => {
+                    if (btn) btn.disabled = false;
+                });
                 return;
             }
 
@@ -2078,7 +2118,8 @@
             _tempAnim = anime({ targets: preview, opacity: [0, 1], translateY: [5, 0], duration: 300, easing: 'easeOutQuad' });
         }
 
-        function submitStage3() {
+        function submitStage3(btn) {
+            if (btn) btn.disabled = true;
             document.getElementById('action-panel').classList.remove('pulse-sidebar');
             const temp   = parseFloat(document.getElementById('p3-temp').value);
             const reason = sanitizeHTML(document.getElementById('p3-reason')?.value?.trim() || '');
@@ -2093,7 +2134,9 @@
                     : (gameState.partner === 'iris'
                         ? ["아이리스: 미안, 무슨 소린지 모르겠어. 너무 횡설수설하는 거 아냐?", hint]
                         : ["카일: 논리적 개연성이 부족합니다. 감정이 과잉되어 메시지가 전달되지 않는군요.", hint]);
-                playDialogue(msg);
+                playDialogue(msg, () => {
+                    if (btn) btn.disabled = false;
+                });
                 return;
             }
 
@@ -2114,7 +2157,8 @@
             updateAffection(30);
         }
 
-        function submitStage4() {
+        function submitStage4(btn) {
+            if (btn) btn.disabled = true;
             document.getElementById('action-panel').classList.remove('pulse-sidebar');
             const neg = sanitizeHTML(document.getElementById('p4-negative').value.trim());
             const negatives = neg.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
@@ -2125,7 +2169,10 @@
                 const msg = gameState.partner === 'iris'
                     ? "아이리스: 정해진 목록을 그대로 쓰는 건 의미 없어. 네가 직접 생각해줘야 진심이지."
                     : "카일: 예시 목록을 복사하셨군요. 자신만의 제약 조건이 필요합니다.";
-                playDialogue([msg]); return;
+                playDialogue([msg], () => {
+                    if (btn) btn.disabled = false;
+                });
+                return;
             }
 
             if (neg.length < 5 || negatives.length === 0) {
@@ -2133,7 +2180,10 @@
                 const msg = gameState.partner === 'iris'
                     ? ["아이리스: 금기어가 없어. 사과에서 뭘 피해야 하는지 먼저 정의해줘.", "(나: '하지만' 금지, 변명 금지 같은 금기어를 입력하거나 빠른 추가 버튼을 눌러봐!)"]
                     : ["카일: 제약 조건이 비어있습니다. 무엇을 배제할지 명확히 정의해주십시오.", "(나: '하지만' 금지, 변명 금지 같은 금기어를 입력하거나 빠른 추가 버튼을 눌러봐!)"];
-                playDialogue(msg); return;
+                playDialogue(msg, () => {
+                    if (btn) btn.disabled = false;
+                });
+                return;
             }
 
             if (!neg.includes('하지만') && !neg.includes('변명')) {
@@ -2141,7 +2191,10 @@
                 const msg = gameState.partner === 'iris'
                     ? ["아이리스: 아직도 '하지만'이나 변명이 섞여드는 느낌이야. 그 단어들을 직접 금지시켜줘.", "(나: '하지만 금지', '변명 금지'를 반드시 포함시켜야 해!)"]
                     : ["카일: '하지만'과 변명이 차단되지 않았습니다. 핵심 노이즈를 명시적으로 제거하세요.", "(나: '하지만 금지', '변명 금지'를 반드시 포함시켜야 해!)"];
-                playDialogue(msg); return;
+                playDialogue(msg, () => {
+                    if (btn) btn.disabled = false;
+                });
+                return;
             }
 
             gameState.prompt.negatives = negatives;
@@ -2180,7 +2233,8 @@
             updateAffection(40);
         }
 
-        function submitStage5() {
+        function submitStage5(btn) {
+            if (btn) btn.disabled = true;
             document.getElementById('action-panel').classList.remove('pulse-sidebar');
             const cot = sanitizeHTML(document.getElementById('p5-cot').value.trim());
             const stepCount = (cot.match(/step\s*\d+|[①②③④⑤]|\d+\./gi) || []).length;
@@ -2192,7 +2246,10 @@
                 const msg = gameState.partner === 'iris'
                     ? "아이리스: ...이건 예시를 그대로 복사한 거잖아. 진짜 네 감정으로 써줘야 의미가 있어."
                     : "카일: 예시 텍스트를 그대로 제출하셨군요. 자신의 논리로 재구성해주십시오.";
-                playDialogue([msg]); return;
+                playDialogue([msg], () => {
+                    if (btn) btn.disabled = false;
+                });
+                return;
             }
 
             if (cot.length < 40 || stepCount < 2) {
@@ -2202,7 +2259,9 @@
                 const msg = gameState.partner === 'iris'
                     ? [`아이리스: ...이게 단계적 사고야? 논리 구조가 보이지 않아. 'Step 1:', 'Step 2:' 처럼 명확하게 단계를 나눠줘.`]
                     : [`카일: 논리적 근거가 불충분합니다. 최소 2단계 이상의 순서 있는 사고를 제시해주십시오.`];
-                playDialogue(msg);
+                playDialogue(msg, () => {
+                    if (btn) btn.disabled = false;
+                });
                 return;
             }
             gameState.prompt.cot = cot.split('\n').map(s => s.replace(/^step\s*\d+[:.：\s]*/i, '').trim()).filter(Boolean);
