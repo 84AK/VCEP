@@ -1166,7 +1166,7 @@
                 <div class="hint-box" style="border-color:var(--accent3);background:#e8f7f0;color:var(--accent3)">
                     💡 사용자가 앱을 켜서 끄기까지 어떤 순서로 화면을 보게 되나요?
                 </div>
-                <textarea id="flow_desc" rows="3" oninput="renderFlowchart(this.value, 'mermaid_step4')"
+                <textarea id="flow_desc" rows="3" oninput="renderFlowchartDebounced(this.value, 'mermaid_step4')"
                     placeholder="예) 홈 화면 → 기록하기 버튼 클릭 → 입력 화면 → 저장 → 홈 화면으로 돌아오기..."></textarea>
                 
                 <!-- Step 4 실시간 미리보기 추가 -->
@@ -1789,7 +1789,13 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function renderFlowchart(flowText, targetId) {
+        let flowTimer;
+        function renderFlowchartDebounced(flowText, targetId) {
+            clearTimeout(flowTimer);
+            flowTimer = setTimeout(() => renderFlowchart(flowText, targetId), 300);
+        }
+
+        async function renderFlowchart(flowText, targetId) {
             const chartDiv = document.getElementById(targetId);
             const container = document.getElementById(targetId + '_container');
             
@@ -1800,9 +1806,8 @@
 
             if (container) container.style.display = 'block';
             
-            // Basic natural language parsing for flowchart
-            // e.g. "홈 화면 -> 입력 화면 -> 결과 화면"
-            let flowLines = flowText.split(/[,.→\->\n]/).map(s => s.trim()).filter(s => s.length > 0);
+            // 개선된 파싱: ->, →, =>, 쉼표, 줄바꿈 등을 구분자로 사용
+            let flowLines = flowText.split(/->|→|=>|[,.\n]/).map(s => s.trim()).filter(s => s.length > 0);
             
             if (flowLines.length < 2) {
                 chartDiv.innerHTML = `<div style="color:var(--text-muted);font-size:12px;padding:10px">흐름도를 그리려면 두 개 이상의 단계를 '->'로 연결해보세요.</div>`;
@@ -1811,33 +1816,26 @@
 
             let mermaidCode = 'graph LR\n';
             for (let i = 0; i < flowLines.length - 1; i++) {
-                // Remove special characters for mermaid IDs but keep them for labels
-                let fromLabel = flowLines[i];
-                let toLabel = flowLines[i+1];
+                // 따옴표 처리 및 레이블 클리닝
+                let fromLabel = flowLines[i].replace(/"/g, "'");
+                let toLabel = flowLines[i+1].replace(/"/g, "'");
                 mermaidCode += `    step${i}["${fromLabel}"] --> step${i+1}["${toLabel}"]\n`;
             }
             
-            // Styling
-            mermaidCode += `    classDef default fill:#fff,stroke:var(--border),stroke-width:2px,color:var(--text),font-family:sans-serif,font-size:12px;\n`;
-            mermaidCode += `    classDef start fill:var(--accent),color:#fff,stroke:none;\n`;
+            // 스타일링 (CSS 변수 대신 고정값 사용으로 호환성 확보)
+            mermaidCode += `    classDef default fill:#fff,stroke:#e0dbd0,stroke-width:2px,color:#1a1814,font-family:sans-serif,font-size:12px;\n`;
+            mermaidCode += `    classDef start fill:#2d5be3,color:#fff,stroke:none;\n`;
             mermaidCode += `    class step0 start;\n`;
 
-            // Clear and render
-            chartDiv.removeAttribute('data-processed');
-            chartDiv.innerHTML = mermaidCode;
-            
+            // 렌더링 시도
             try {
-                mermaid.run({
+                chartDiv.removeAttribute('data-processed');
+                chartDiv.innerHTML = mermaidCode;
+                await mermaid.run({
                     nodes: [chartDiv]
                 });
             } catch (e) {
                 console.error("Mermaid rendering error:", e);
-                // Simple fallback if mermaid.run fails (older version support)
-                try {
-                    mermaid.init(undefined, chartDiv);
-                } catch(e2) {
-                    chartDiv.innerHTML = `<div style="color:var(--accent2);font-size:12px">흐름도 생성 중...</div>`;
-                }
             }
         }
 
