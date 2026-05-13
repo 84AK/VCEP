@@ -1246,8 +1246,6 @@
                 <button class="action-btn" onclick="copyAIPrompt()" style="background: #1e293b; color: white;">🤖 AI 최적화 프롬프트 복사</button>
             </div>
             <div class="result-actions" style="margin-top: 12px;">
-                <button class="action-btn" onclick="window.location.href='01_smartphone/smartphone_wellness_master.html'" style="background: #8b5cf6; color: white; border-color: #8b5cf6;">📱 웰니스 마스터 이동</button>
-                <button class="action-btn" onclick="window.location.href='02_mental/mental_wellness_master.html'" style="background: #0ea5e9; color: white; border-color: #0ea5e9;">🌊 멘탈 마스터 이동</button>
                 <button class="action-btn action-outline" onclick="resetAll()">↩️ 처음부터 다시</button>
             </div>
 
@@ -1336,6 +1334,163 @@
         let selectedOutcomes = [];
         let featureCount = 3;
 
+        // ── AUTO SAVE LOGIC ──
+        const STORAGE_KEY = 'vcep_app_planner_draft';
+
+        function saveDraft() {
+            const features = [];
+            document.querySelectorAll('#feature_list .feature-item').forEach(item => {
+                const input = item.querySelector('input');
+                if (input) {
+                    features.push({
+                        name: input.value,
+                        priority: input.dataset.priority
+                    });
+                }
+            });
+
+            const screens = [];
+            document.querySelectorAll('#screens_grid .screen-card').forEach(card => {
+                const nameInput = card.querySelector('.screen-label-input');
+                const contentTextarea = card.querySelector('textarea');
+                if (nameInput && contentTextarea) {
+                    screens.push({
+                        name: nameInput.value,
+                        content: contentTextarea.value
+                    });
+                }
+            });
+
+            const draft = {
+                currentStep,
+                selectedCat,
+                selectedOutcomes,
+                formData: {
+                    problem_desc: document.getElementById('problem_desc')?.value || '',
+                    cat_custom: document.getElementById('cat_custom')?.value || '',
+                    one_liner: document.getElementById('one_liner')?.value || '',
+                    persona_name: document.getElementById('persona_name')?.value || '',
+                    persona_grade: document.getElementById('persona_grade')?.value || '',
+                    persona_situation: document.getElementById('persona_situation')?.value || '',
+                    pain_point: document.getElementById('pain_point')?.value || '',
+                    outcome_custom: document.getElementById('outcome_custom')?.value || '',
+                    not_features: document.getElementById('not_features')?.value || '',
+                    flow_desc: document.getElementById('flow_desc')?.value || '',
+                    app_name1: document.getElementById('app_name1')?.value || '',
+                    app_name2: document.getElementById('app_name2')?.value || '',
+                    app_name3: document.getElementById('app_name3')?.value || '',
+                    app_tagline: document.getElementById('app_tagline')?.value || '',
+                    challenges: document.getElementById('challenges')?.value || '',
+                },
+                features,
+                screens
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+            console.log('Draft saved');
+        }
+
+        function loadDraft() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+
+            try {
+                const draft = JSON.parse(saved);
+                
+                // Restore basic fields
+                for (const key in draft.formData) {
+                    const el = document.getElementById(key);
+                    if (el) {
+                        el.value = draft.formData[key];
+                        // Trigger character counts
+                        if (key === 'problem_desc') document.getElementById('pd_count').textContent = el.value.length;
+                        if (key === 'one_liner') document.getElementById('ol_count').textContent = el.value.length;
+                    }
+                }
+
+                // Restore Category
+                selectedCat = draft.selectedCat;
+                if (selectedCat) {
+                    const opt = document.querySelector(`#cat_select .sel-option[data-val="${selectedCat}"]`);
+                    if (opt) opt.classList.add('selected');
+                    if (selectedCat === '기타') document.getElementById('cat_custom').style.display = 'block';
+                }
+
+                // Restore Outcomes
+                selectedOutcomes = draft.selectedOutcomes || [];
+                selectedOutcomes.forEach(val => {
+                    const tag = document.querySelector(`#outcome_tags .tag[data-val="${val}"]`);
+                    if (tag) tag.classList.add('selected');
+                });
+
+                // Restore Features (Clear existing first if they were default)
+                if (draft.features && draft.features.length > 0) {
+                    const list = document.getElementById('feature_list');
+                    list.innerHTML = '';
+                    draft.features.forEach((f, i) => {
+                        const div = document.createElement('div');
+                        div.className = 'feature-item';
+                        const priLabels = {
+                            'Must Have': { cls: 'pri-must', text: '🔴 Must' },
+                            'Should Have': { cls: 'pri-should', text: '🔵 Should' },
+                            'Nice to Have': { cls: 'pri-nice', text: '🟢 Nice' }
+                        };
+                        const label = priLabels[f.priority] || priLabels['Must Have'];
+                        div.innerHTML = `
+                            <span class="feature-priority ${label.cls}">${label.text}</span>
+                            <input type="text" placeholder="기능을 입력하세요..." data-priority="${f.priority}" value="${f.name}">
+                            <button onclick="this.parentElement.remove(); saveDraft();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 4px">×</button>
+                        `;
+                        list.appendChild(div);
+                    });
+                }
+
+                // Restore Screens
+                if (draft.screens && draft.screens.length > 0) {
+                    const grid = document.getElementById('screens_grid');
+                    grid.innerHTML = '';
+                    draft.screens.forEach(s => {
+                        const div = document.createElement('div');
+                        div.className = 'screen-card';
+                        div.innerHTML = `
+                            <div class="screen-top">
+                                <div class="screen-dots"><div class="screen-dot"></div><div class="screen-dot"></div><div class="screen-dot"></div></div>
+                                <input class="screen-label-input" placeholder="화면 이름" value="${s.name}">
+                                <button onclick="this.closest('.screen-card').remove(); saveDraft();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto">×</button>
+                            </div>
+                            <div class="screen-body">
+                                <textarea placeholder="이 화면에 있는 것들">${s.content}</textarea>
+                            </div>
+                        `;
+                        grid.appendChild(div);
+                    });
+                }
+
+                // Restore Step
+                if (draft.currentStep && draft.currentStep > 1) {
+                    goStep(draft.currentStep);
+                }
+
+                // Render flow if exists
+                if (draft.formData.flow_desc) {
+                    renderFlowchart(draft.formData.flow_desc, 'mermaid_step4');
+                }
+
+            } catch (e) {
+                console.error('Failed to load draft:', e);
+            }
+        }
+
+        // Debounce helper
+        function debounce(func, timeout = 1000) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
+            };
+        }
+
+        const debouncedSave = debounce(() => saveDraft());
+
         // ── STEP NAVIGATION ──
         function goStep(n) {
             if (n > currentStep && !validateStep(currentStep)) return;
@@ -1350,6 +1505,7 @@
             });
 
             currentStep = n;
+            saveDraft(); // Save step change
             const panel = document.getElementById(`step${n}`);
             if (panel) panel.classList.add('active');
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1400,6 +1556,7 @@
                 const customInput = document.getElementById('cat_custom');
                 if (selectedCat === '기타') customInput.style.display = 'block';
                 else { customInput.style.display = 'none'; customInput.value = ''; }
+                saveDraft();
             });
         });
 
@@ -1410,6 +1567,7 @@
                 const val = tag.dataset.val;
                 if (tag.classList.contains('selected')) selectedOutcomes.push(val);
                 else selectedOutcomes = selectedOutcomes.filter(v => v !== val);
+                saveDraft();
             });
         });
 
@@ -1437,9 +1595,10 @@
             div.innerHTML = `
     <span class="feature-priority ${labels[idx].cls}">${labels[idx].text}</span>
     <input type="text" placeholder="기능을 입력하세요..." data-priority="${priorities[idx]}">
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 4px">×</button>
+    <button onclick="this.parentElement.remove(); saveDraft();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 4px">×</button>
   `;
             list.appendChild(div);
+            saveDraft();
         }
 
         // ── ADD SCREEN ──
@@ -1451,13 +1610,14 @@
     <div class="screen-top">
       <div class="screen-dots"><div class="screen-dot"></div><div class="screen-dot"></div><div class="screen-dot"></div></div>
       <input class="screen-label-input" placeholder="화면 이름">
-      <button onclick="this.closest('.screen-card').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto">×</button>
+      <button onclick="this.closest('.screen-card').remove(); saveDraft();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;margin-left:auto">×</button>
     </div>
     <div class="screen-body">
       <textarea placeholder="이 화면에 있는 것들"></textarea>
     </div>
   `;
             grid.appendChild(div);
+            saveDraft();
         }
 
         // ── GENERATE RESULT ──
@@ -1785,8 +1945,21 @@ ${screenInfo}
 
         function resetAll() {
             if (!confirm('처음부터 다시 시작할까요? 입력한 내용이 모두 지워져요.')) return;
+            localStorage.removeItem(STORAGE_KEY);
             location.reload();
         }
+
+        // Initialize and Event Listeners
+        window.addEventListener('DOMContentLoaded', () => {
+            loadDraft();
+            
+            // Generic event listener for all inputs to trigger auto-save
+            document.querySelector('.wrap').addEventListener('input', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    debouncedSave();
+                }
+            });
+        });
 
         function toggleMenu() {
             const menu = document.getElementById('mobile-menu');
