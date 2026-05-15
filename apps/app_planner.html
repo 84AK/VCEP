@@ -6,6 +6,7 @@
     <title>VCEP App Planner - Logic Canvas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });</script>
     <style>
         :root {
@@ -471,6 +472,69 @@
         .pri-nice {
             background: #e8f7f0;
             color: var(--accent3);
+        }
+
+        /* FEATURE ITEM ENHANCEMENTS */
+        .feature-item {
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .feature-item.sortable-ghost {
+            opacity: 0.3;
+            background: var(--accent-light);
+            border: 2px dashed var(--accent);
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: var(--text-muted);
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .feature-item:hover .drag-handle {
+            opacity: 1;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .feature-priority {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .feature-priority:hover {
+            filter: brightness(0.95);
+            transform: translateY(-1px);
+        }
+
+        .feature-item .remove-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0 8px;
+            opacity: 0;
+            transition: opacity 0.2s, color 0.2s;
+        }
+
+        .feature-item:hover .remove-btn {
+            opacity: 1;
+        }
+
+        .feature-item .remove-btn:hover {
+            color: var(--accent2);
         }
 
         .add-feature-btn {
@@ -1072,18 +1136,7 @@
                     🟢 <strong>Nice to Have</strong> — 나중에 추가 가능
                 </div>
                 <div class="feature-list" id="feature_list">
-                    <div class="feature-item">
-                        <span class="feature-priority pri-must">🔴 Must</span>
-                        <input type="text" placeholder="핵심 기능을 써보세요... 예) 오늘 스크린타임 입력하기" data-priority="Must Have">
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-priority pri-should">🔵 Should</span>
-                        <input type="text" placeholder="있으면 좋을 기능... 예) 주간 통계 그래프" data-priority="Should Have">
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-priority pri-nice">🟢 Nice</span>
-                        <input type="text" placeholder="나중에 추가할 기능... 예) 친구와 비교하기" data-priority="Nice to Have">
-                    </div>
+                    <!-- Features will be added here -->
                 </div>
                 <button class="add-feature-btn" onclick="addFeature()" style="margin-top:8px">+ 기능 추가하기</button>
                 <div class="error-msg" id="err_feature">최소 한 가지 핵심 기능을 입력해주세요!</div>
@@ -1341,10 +1394,11 @@
             const features = [];
             document.querySelectorAll('#feature_list .feature-item').forEach(item => {
                 const input = item.querySelector('input');
+                const prioritySpan = item.querySelector('.feature-priority');
                 if (input) {
                     features.push({
                         name: input.value,
-                        priority: input.dataset.priority
+                        priority: input.dataset.priority || 'Must Have'
                     });
                 }
             });
@@ -1422,26 +1476,18 @@
                     if (tag) tag.classList.add('selected');
                 });
 
-                // Restore Features (Clear existing first if they were default)
+                // Restore Features
+                const list = document.getElementById('feature_list');
+                list.innerHTML = '';
                 if (draft.features && draft.features.length > 0) {
-                    const list = document.getElementById('feature_list');
-                    list.innerHTML = '';
-                    draft.features.forEach((f, i) => {
-                        const div = document.createElement('div');
-                        div.className = 'feature-item';
-                        const priLabels = {
-                            'Must Have': { cls: 'pri-must', text: '🔴 Must' },
-                            'Should Have': { cls: 'pri-should', text: '🔵 Should' },
-                            'Nice to Have': { cls: 'pri-nice', text: '🟢 Nice' }
-                        };
-                        const label = priLabels[f.priority] || priLabels['Must Have'];
-                        div.innerHTML = `
-                            <span class="feature-priority ${label.cls}">${label.text}</span>
-                            <input type="text" placeholder="기능을 입력하세요..." data-priority="${f.priority}" value="${f.name}">
-                            <button onclick="this.parentElement.remove(); saveDraft();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 4px">×</button>
-                        `;
-                        list.appendChild(div);
+                    draft.features.forEach(f => {
+                        addFeature(f.name, f.priority);
                     });
+                } else {
+                    // Default features if none saved
+                    addFeature('', 'Must Have');
+                    addFeature('', 'Should Have');
+                    addFeature('', 'Nice to Have');
                 }
 
                 // Restore Screens
@@ -1579,25 +1625,48 @@
             document.getElementById('ol_count').textContent = this.value.length;
         });
 
-        // ── ADD FEATURE ──
-        function addFeature() {
-            featureCount++;
+        // ── FEATURE MANAGEMENT ──
+        function addFeature(name = '', priority = 'Nice to Have') {
             const list = document.getElementById('feature_list');
-            const priorities = ['Must Have', 'Should Have', 'Nice to Have'];
-            const labels = [
-                { cls: 'pri-must', text: '🔴 Must' },
-                { cls: 'pri-should', text: '🔵 Should' },
-                { cls: 'pri-nice', text: '🟢 Nice' }
-            ];
-            const idx = Math.min(featureCount - 1, 2);
             const div = document.createElement('div');
             div.className = 'feature-item';
+            
+            const priConfig = {
+                'Must Have': { cls: 'pri-must', text: '🔴 Must' },
+                'Should Have': { cls: 'pri-should', text: '🔵 Should' },
+                'Nice to Have': { cls: 'pri-nice', text: '🟢 Nice' }
+            };
+            
+            const config = priConfig[priority] || priConfig['Nice to Have'];
+            
             div.innerHTML = `
-    <span class="feature-priority ${labels[idx].cls}">${labels[idx].text}</span>
-    <input type="text" placeholder="기능을 입력하세요..." data-priority="${priorities[idx]}">
-    <button onclick="this.parentElement.remove(); saveDraft();" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 4px">×</button>
-  `;
+                <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+                <span class="feature-priority ${config.cls}" onclick="togglePriority(this)">${config.text}</span>
+                <input type="text" placeholder="기능을 입력하세요..." data-priority="${priority}" value="${name}" oninput="debouncedSave()">
+                <button class="remove-btn" onclick="this.parentElement.remove(); saveDraft();" title="삭제">×</button>
+            `;
             list.appendChild(div);
+            if (name === '') saveDraft();
+        }
+
+        function togglePriority(el) {
+            const input = el.nextElementSibling;
+            const current = input.dataset.priority;
+            
+            const priorities = ['Must Have', 'Should Have', 'Nice to Have'];
+            const configs = {
+                'Must Have': { cls: 'pri-must', text: '🔴 Must' },
+                'Should Have': { cls: 'pri-should', text: '🔵 Should' },
+                'Nice to Have': { cls: 'pri-nice', text: '🟢 Nice' }
+            };
+            
+            let idx = priorities.indexOf(current);
+            idx = (idx + 1) % priorities.length;
+            const nextPri = priorities[idx];
+            
+            el.className = `feature-priority ${configs[nextPri].cls}`;
+            el.innerText = configs[nextPri].text;
+            input.dataset.priority = nextPri;
             saveDraft();
         }
 
@@ -1950,6 +2019,19 @@ ${screenInfo}
         // Initialize and Event Listeners
         window.addEventListener('DOMContentLoaded', () => {
             loadDraft();
+
+            // Initialize Sortable for feature list
+            const featureList = document.getElementById('feature_list');
+            if (featureList) {
+                Sortable.create(featureList, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: () => {
+                        saveDraft();
+                    }
+                });
+            }
             
             // Generic event listener for all inputs to trigger auto-save
             document.querySelector('.wrap').addEventListener('input', (e) => {
