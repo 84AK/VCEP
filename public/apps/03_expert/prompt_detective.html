@@ -30,7 +30,7 @@
         }
         #hud {
             position: fixed; top: 92px; left: 32px; right: 32px;
-            display: flex; justify-content: space-between; align-items: flex-start;
+            display: flex; justify-content: flex-start; align-items: flex-start; gap: 16px;
             z-index: 800; pointer-events: none;
         }
         .hud-badge {
@@ -253,7 +253,7 @@
         .scene-transitioning { filter: brightness(0) blur(20px); opacity: 0; }
 
         #progress-timeline {
-            position: fixed; top: 100px; left: 30px; width: 200px; z-index: 500;
+            position: fixed; top: 156px; left: 32px; width: 200px; z-index: 500;
             display: flex; flex-direction: column; gap: 8px;
         }
         .timeline-step {
@@ -895,6 +895,7 @@ function goBackStage() {
 }
 
 function showActionPanel(s) {
+    document.getElementById('hud').classList.add('hidden-stage');
     showConceptCard(s, () => {
         gameState.stage = s;
         if (s > gameState.maxStage) gameState.maxStage = s;
@@ -1055,6 +1056,7 @@ function submitStage(s) {
     updateTimeline();
 
     // ── 패널 닫기 ──
+    document.getElementById('hud').classList.remove('hidden-stage');
     document.getElementById('stage-overlay').classList.remove('active');
     document.getElementById('dialogue-box').style.opacity = '1';
     document.getElementById('action-panel').classList.add('hidden-stage');
