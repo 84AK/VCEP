@@ -27,6 +27,8 @@ export default function Home() {
   const [appCode, setAppCode] = useState("");
   const [gasCode, setGasCode] = useState("");
   const [toastMessage, setToastMessage] = useState("");
+  const [showPromptModal, setShowPromptModal] = useState(false);
+  const [promptCopied, setPromptCopied] = useState(false);
   
   // Ref for background close
   const modalRef = useRef(null);
@@ -298,9 +300,9 @@ export default function Home() {
     });
   };
 
-  const copyAskPrompt = () => {
-    if (!selectedApp || !appCode) return;
-    const prompt = `아래는 HTML 기반의 웹 앱 코드입니다.
+  const getAskPrompt = () => {
+    if (!selectedApp || !appCode) return "";
+    return `아래는 HTML 기반의 웹 앱 코드입니다.
 
 [앱 제목]: ${selectedApp.title}
 [앱 설명]: ${selectedApp.desc}
@@ -317,9 +319,18 @@ ${appCode}
 대화 진행 시 반드시 질문은 한 개씩만 하고, 전체 내용이 질문을 통해 계속해서 이어질 수 있도록 가이드해 주세요.
 
 먼저 사용자에게 첫 번째 질문으로 시작해주세요: 이 앱을 어떤 방향으로 바꾸고 싶으신가요?`;
+  };
 
-    navigator.clipboard.writeText(prompt).then(() => {
-      showToastMessage("질문하기 프롬프트가 복사되었습니다!");
+  const copyAskPrompt = () => {
+    if (!selectedApp || !appCode) return;
+    setPromptCopied(false);
+    setShowPromptModal(true);
+  };
+
+  const copyPromptFromModal = () => {
+    navigator.clipboard.writeText(getAskPrompt()).then(() => {
+      setPromptCopied(true);
+      setTimeout(() => setPromptCopied(false), 2500);
     });
   };
 
@@ -595,6 +606,93 @@ ${appCode}
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 질문하기 프롬프트 모달 */}
+      {showPromptModal && selectedApp && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl max-h-[88vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+
+            {/* 모달 헤더 */}
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-black text-slate-800">질문하기 프롬프트</h3>
+                <p className="text-xs text-slate-400 mt-0.5">{selectedApp.title}</p>
+              </div>
+              <button
+                onClick={() => setShowPromptModal(false)}
+                className="p-1 rounded-full hover:bg-slate-100 transition text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* 모달 본문 */}
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+
+              {/* 프롬프트 미리보기 */}
+              <div>
+                <p className="text-xs font-bold text-slate-400 mb-2">지침 프롬프트 + 원본 코드</p>
+                <pre className="bg-slate-900 text-slate-200 p-4 rounded-xl font-mono text-[11px] leading-relaxed overflow-auto max-h-52 whitespace-pre-wrap">
+                  {getAskPrompt()}
+                </pre>
+              </div>
+
+              {/* 복사 버튼 */}
+              <button
+                onClick={copyPromptFromModal}
+                className={`w-full flex items-center justify-center gap-2 font-bold py-3.5 rounded-2xl shadow-sm transition-all text-sm ${
+                  promptCopied
+                    ? "bg-emerald-500 text-white scale-[0.98]"
+                    : "bg-violet-600 hover:bg-violet-700 text-white"
+                }`}
+              >
+                {promptCopied ? (
+                  <><CheckCircle className="w-4 h-4" /> 복사 완료! 이제 Gemini에 붙여넣으세요</>
+                ) : (
+                  <><Copy className="w-4 h-4" /> 프롬프트 전체 복사하기</>
+                )}
+              </button>
+
+              {/* 구분선 */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-slate-200" />
+                <span className="text-xs font-bold text-slate-400 whitespace-nowrap">Gemini 사용 가이드</span>
+                <div className="flex-1 h-px bg-slate-200" />
+              </div>
+
+              {/* 단계별 가이드 */}
+              <div className="bg-blue-50 rounded-2xl p-5 space-y-3">
+                <p className="text-xs font-extrabold text-blue-800 mb-1">🤖 Gemini에서 이렇게 사용하세요</p>
+                {[
+                  "위 '프롬프트 전체 복사하기' 버튼을 눌러 내용을 복사하세요.",
+                  "아래 'Gemini 열기' 버튼으로 Gemini에 접속하세요.",
+                  "Gemini 입력창에 복사한 내용을 붙여넣기(Cmd+V / Ctrl+V) 후 전송하세요.",
+                  "Gemini가 '어떤 방향으로 바꾸고 싶으신가요?' 라고 물으면, 원하는 아이디어를 자유롭게 답하세요.",
+                  "대화를 이어가며 아이디어를 구체화하면 Gemini가 수정된 앱 코드를 완성해 줍니다!",
+                ].map((text, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                      {i + 1}
+                    </span>
+                    <p className="text-xs text-blue-700 leading-relaxed">{text}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Gemini 열기 버튼 */}
+              <a
+                href="https://gemini.google.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-sm transition text-sm"
+              >
+                Gemini 열기 <ExternalLink className="w-4 h-4" />
+              </a>
+
             </div>
           </div>
         </div>
